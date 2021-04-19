@@ -7,4 +7,5 @@ spring.submit run \
     --testpref wikitext-103-raw/wiki.test.bpe \
     --destdir data-bin/wikitext-103 \
     --already_numberized \
+    --not_append_eos
     --workers 60"

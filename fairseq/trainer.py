@@ -404,7 +404,7 @@ class Trainer(object):
         other ranks.
         """
         if pretrained_model_hf is not None:
-            self.model.from_pretrained_huggingface(pretrained_model_hf,self.task,self.model)
+            self.model.from_pretrained_huggingface(pretrained_model_hf,self.task,self.model,self.cfg)
         extra_state, self._optim_history, last_optim_state = None, [], None
 
         logger.info(f"Preparing to load checkpoint {filename}")

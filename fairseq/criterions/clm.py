@@ -47,7 +47,8 @@ class CrossEntropyCriterion(FairseqCriterion):
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lm_outputs, transformer_outputs = net_output
-        lprobs = model.get_normalized_probs(lm_outputs[..., :-1, :], log_probs=True)
+        lprobs = model.get_normalized_probs(net_output, log_probs=True)
+        lprobs = lprobs[..., :-1, :].contiguous()
         lprobs = lprobs.view(-1, lprobs.size(-1))
         target = model.get_targets(sample, lm_outputs).view(-1)
 

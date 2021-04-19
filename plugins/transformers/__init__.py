@@ -40,7 +40,7 @@ else:
 from typing import TYPE_CHECKING
 
 # Check the dependencies satisfy the minimal versions required.
-from . import dependency_versions_check
+#from . import dependency_versions_check
 from .file_utils import (
     _BaseLazyModule,
     is_flax_available,

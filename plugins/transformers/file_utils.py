@@ -46,7 +46,7 @@ from tqdm.auto import tqdm
 
 import requests
 from filelock import FileLock
-from transformers.utils.versions import importlib_metadata
+from plugins.transformers.utils.versions import importlib_metadata
 
 from . import __version__
 from .hf_api import HfFolder

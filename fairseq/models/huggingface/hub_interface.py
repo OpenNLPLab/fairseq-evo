@@ -11,11 +11,11 @@ import torch.nn.functional as F
 from fairseq import utils
 from fairseq.data import encoders
 
-def from_pretrained(pretrained_model_path, task=None, model=None, arch='hf_gpt2'):
+def from_pretrained(pretrained_model_path, task=None, model=None, cfg=None, arch='hf_gpt2'):
     from fairseq import tasks
-    args = options.get_args('data', task, arch)
-    cfg = convert_namespace_to_omegaconf(args)
     if task is None:
+        args = options.get_args('data', task, arch)
+        cfg = convert_namespace_to_omegaconf(args)
         task = tasks.setup_task(cfg.task)
     if model is None:
         model = task.build_model(cfg.model)
@@ -74,7 +74,7 @@ class GPT2HubInterface(nn.Module):
         self.task = task
         self.model = model
 
-        self.bpe = encoders.build_bpe('gpt2')
+        #self.bpe = encoders.build_bpe('gpt2')
 
         # this is useful for determining the device
         self.register_buffer("_float_tensor", torch.tensor([0], dtype=torch.float))

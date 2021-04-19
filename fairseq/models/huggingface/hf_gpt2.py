@@ -56,9 +56,10 @@ class HuggingFaceGPT2LanguageModel(FairseqLanguageModel):
             cls,
             model_name_or_path,
             task=None,
-            model=None):
+            model=None,
+            cfg=None):
         from .hub_interface import from_pretrained,GPT2HubInterface
-        x = from_pretrained(model_name_or_path, task, model)
+        x = from_pretrained(model_name_or_path, task, model,cfg)
         return GPT2HubInterface(x['args'], x['task'], x['models'])
 
 

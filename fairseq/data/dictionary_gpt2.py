@@ -223,11 +223,13 @@ class DictionaryGPT2:
         """
         if isinstance(f, str):
             try:
-                encoder_json = file_utils.cached_path(DEFAULT_ENCODER_JSON)
-                vocab_bpe = file_utils.cached_path(DEFAULT_VOCAB_BPE)
-                self.bpe = get_encoder(encoder_json,vocab_bpe)
-                if not os.path.exists(f):
-                    f = encoder_json
+                self.bpe = get_encoder(f, f.replace('encoder.json', 'vocab.bpe'))
+            except:
+                print('wget -O encoder.json "https://dl.fbaipublicfiles.com/fairseq/gpt2_bpe/encoder.json" \
+                      wget -O vocab.bpe "https://dl.fbaipublicfiles.com/fairseq/gpt2_bpe/vocab.gpe"')
+            try:
+                #encoder_json = file_utils.cached_path(DEFAULT_ENCODER_JSON)
+                #vocab_bpe = file_utils.cached_path(DEFAULT_VOCAB_BPE)
                 with open(PathManager.get_local_path(f), "r", encoding="utf-8") as fd:
                     self.add_from_file(fd)
             except FileNotFoundError as fnfe:
