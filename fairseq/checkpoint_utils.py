@@ -200,12 +200,14 @@ def load_checkpoint(cfg: CheckpointConfig, trainer, **passthrough_args):
             "--finetune-from-model and --restore-file (non-default value) "
             "can not be specified together: " + str(cfg)
         )
+    pretrained_model_hf = cfg.pretrained_model_hf
 
     extra_state = trainer.load_checkpoint(
         checkpoint_path,
         reset_optimizer,
         reset_lr_scheduler,
         optimizer_overrides,
+        pretrained_model_hf,
         reset_meters=reset_meters,
     )
 

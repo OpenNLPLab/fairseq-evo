@@ -158,7 +158,7 @@ def main(args):
         )
         merge_result(
             Binarizer.binarize(
-                input_file, vocab, lambda t: ds.add_item(t), offset=0, end=offsets[1]
+                input_file, vocab, lambda t: ds.add_item(t), append_eos=not args.not_append_eos, already_numberized=args.already_numberized,offset=0, end=offsets[1]
             )
         )
         if num_workers > 1:
@@ -344,7 +344,7 @@ def binarize(args, filename, vocab, output_prefix, lang, offset, end, append_eos
         ds.add_item(tensor)
 
     res = Binarizer.binarize(
-        filename, vocab, consumer, append_eos=append_eos, offset=offset, end=end
+        filename, vocab, consumer, append_eos=not args.not_append_eos,already_numberized=args.already_numberized, offset=offset, end=end
     )
     ds.finalize(dataset_dest_file(args, output_prefix, lang, "idx"))
     return res

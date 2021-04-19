@@ -530,6 +530,12 @@ class CheckpointConfig(FairseqDataclass):
             "help": "finetune from a pretrained model; note that meters and lr scheduler will be reset"
         },
     )
+    pretrained_model_hf: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "load a pretrained model from huggingface"
+        },
+    )
     reset_dataloader: bool = field(
         default=False,
         metadata={

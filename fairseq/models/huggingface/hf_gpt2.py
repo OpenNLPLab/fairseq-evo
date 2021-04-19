@@ -51,11 +51,22 @@ class HuggingFaceGPT2LanguageModel(FairseqLanguageModel):
         default_architecture(args)
         return cls(HuggingFaceGPT2Decoder(args, task))
 
+    @classmethod
+    def from_pretrained_huggingface(
+            cls,
+            model_name_or_path,
+            task=None,
+            model=None):
+        from .hub_interface import from_pretrained,GPT2HubInterface
+        x = from_pretrained(model_name_or_path, task, model)
+        return GPT2HubInterface(x['args'], x['task'], x['models'])
+
+
 
 class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
     def __init__(self, args, task):
         try:
-            from transformers import GPT2Config, GPT2LMHeadModel
+            from plugins.transformers import GPT2Config, GPT2LMHeadModel
         except ImportError:
             raise ImportError(
                 "\n\nPlease install huggingface/transformers with:"
@@ -66,7 +77,7 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
 
         config = GPT2Config(
             vocab_size=len(task.target_dictionary),
-            n_positions=args.max_target_positions + 1,
+            n_positions=args.max_target_positions,
             n_ctx=args.max_target_positions,
             n_embd=args.embed_dim,
             n_layer=args.num_layers,
@@ -74,7 +85,7 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
             resid_pdrop=args.dropout,
             embd_pdrop=args.dropout,
             attn_pdrop=args.attention_dropout,
-            layer_norm_epsilon=1e-6,
+            layer_norm_epsilon=1e-5,
         )
         self.model = GPT2LMHeadModel(config)
 
@@ -90,9 +101,9 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
         incremental_state: Optional[Dict[str, List[torch.Tensor]]] = None,
         encoder_out=None,
     ):
-        features = self.extract_features(prev_output_tokens, incremental_state)
+        features,transformer_outputs = self.extract_features(prev_output_tokens, incremental_state)
         lm_logits = self.model.lm_head(features)
-        return (lm_logits,)
+        return (lm_logits, transformer_outputs)
 
     def extract_features(
         self,
@@ -116,19 +127,18 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
 
         outputs = self.model.transformer(
             input_ids=prev_output_tokens,
-            past=past,
             attention_mask=attention_mask,
-            position_ids=position_ids,
+            position_ids=None,
         )
         last_hidden_states = outputs[0]
 
         if incremental_state:
             self.set_incremental_state(incremental_state, "past", outputs[1])
 
-        return last_hidden_states
+        return last_hidden_states,outputs
 
     def max_positions(self):
-        return self.model.config.n_positions - 1
+        return self.model.config.n_positions
 
 
 @register_model_architecture("hf_gpt2", "hf_gpt2")

@@ -395,6 +395,7 @@ class Trainer(object):
         reset_optimizer=False,
         reset_lr_scheduler=False,
         optimizer_overrides=None,
+        pretrained_model_hf=None,
         reset_meters=False,
     ):
         """
@@ -402,6 +403,8 @@ class Trainer(object):
         rank = 0 will load the checkpoint, and then broadcast it to all
         other ranks.
         """
+        if pretrained_model_hf is not None:
+            self.model.from_pretrained_huggingface(pretrained_model_hf,self.task,self.model)
         extra_state, self._optim_history, last_optim_state = None, [], None
 
         logger.info(f"Preparing to load checkpoint {filename}")

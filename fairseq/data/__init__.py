@@ -5,7 +5,7 @@
 """isort:skip_file"""
 
 from .dictionary import Dictionary, TruncatedDictionary
-
+from .dictionary_gpt2 import DictionaryGPT2
 from .fairseq_dataset import FairseqDataset, FairseqIterableDataset
 
 from .base_wrapper_dataset import BaseWrapperDataset
@@ -50,6 +50,7 @@ from .sort_dataset import SortDataset
 from .strip_token_dataset import StripTokenDataset
 from .subsample_dataset import SubsampleDataset
 from .token_block_dataset import TokenBlockDataset
+from .token_block_dataset_gpt2 import TokenBlockDatasetGPT2
 from .transform_eos_dataset import TransformEosDataset
 from .transform_eos_lang_pair_dataset import TransformEosLangPairDataset
 from .shorten_dataset import TruncateDataset, RandomCropDataset
@@ -76,6 +77,7 @@ __all__ = [
     "CountingIterator",
     "DenoisingDataset",
     "Dictionary",
+    "DictionaryGPT2",
     "EncodedFastaDataset",
     "EpochBatchIterator",
     "FairseqDataset",
@@ -117,6 +119,7 @@ __all__ = [
     "StripTokenDataset",
     "SubsampleDataset",
     "TokenBlockDataset",
+    "TokenBlockDatasetGPT2",
     "TransformEosDataset",
     "TransformEosLangPairDataset",
     "TruncateDataset",
