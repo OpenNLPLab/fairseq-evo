@@ -5,7 +5,8 @@
 
 import importlib
 import os
-
+from .hub_interface import *  # noqa
+from .hf_gpt2 import *
 
 # automatically import any Python files in the models/huggingface/ directory
 models_dir = os.path.dirname(__file__)

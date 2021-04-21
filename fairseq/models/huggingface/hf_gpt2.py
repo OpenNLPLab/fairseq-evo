@@ -43,6 +43,10 @@ class HuggingFaceGPT2LanguageModel(FairseqLanguageModel):
                                  'in the embeddings, encoder, and pooler')
         parser.add_argument('--attention-dropout', type=float, metavar='D',
                             help='dropout probability for attention weights')
+        parser.add_argument('--tie-word-embeddings', default=True,
+                            help='dropout probability for attention weights')
+        parser.add_argument('--num-labels', default=None,
+                            help='dropout probability for attention weights')
         # fmt: on
 
     @classmethod
@@ -60,14 +64,34 @@ class HuggingFaceGPT2LanguageModel(FairseqLanguageModel):
             cfg=None):
         from .hub_interface import from_pretrained,GPT2HubInterface
         x = from_pretrained(model_name_or_path, task, model,cfg)
-        return GPT2HubInterface(x['args'], x['task'], x['models'])
+        return GPT2HubInterface(x['args'], x['task'], x['models'][0])
 
-
+    @classmethod
+    def from_pretrained(
+            cls,
+            model_name_or_path,
+            checkpoint_file="model.pt",
+            data_name_or_path=".",
+            bpe="gpt2",
+            **kwargs,
+    ):
+        from fairseq import hub_utils
+        from .hub_interface import from_pretrained, GPT2HubInterface
+        x = hub_utils.from_pretrained(
+            model_name_or_path,
+            checkpoint_file,
+            data_name_or_path,
+            archive_map=cls.hub_models(),
+            bpe=bpe,
+            load_checkpoint_heads=True,
+            **kwargs,
+        )
+        return GPT2HubInterface(x['args'], x['task'], x['models'][0])
 
 class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
     def __init__(self, args, task):
         try:
-            from plugins.transformers import GPT2Config, GPT2LMHeadModel
+            from plugins.transformers import GPT2Config, GPT2LMHeadModel, GPT2ForSequenceClassification
         except ImportError:
             raise ImportError(
                 "\n\nPlease install huggingface/transformers with:"
@@ -75,7 +99,7 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
             )
 
         super().__init__(task.target_dictionary)
-
+        self.args = args
         config = GPT2Config(
             vocab_size=len(task.target_dictionary),
             n_positions=args.max_target_positions,
@@ -87,13 +111,18 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
             embd_pdrop=args.dropout,
             attn_pdrop=args.attention_dropout,
             layer_norm_epsilon=1e-5,
+            num_labele=args.num_labels,
+            tie_word_embeddings=args.tie_word_embeddings
         )
-        self.model = GPT2LMHeadModel(config)
+        if args.num_labels is None:
+            self.model = GPT2LMHeadModel(config)
+        else:
+            self.model = GPT2ForSequenceClassification(config)
 
         # set zero embedding for padding symbol
         self.pad_idx = task.target_dictionary.pad()
-        self.model.transformer.wte.weight.data[self.pad_idx].zero_()
-        self.model.transformer.wpe.weight.data[0].zero_()
+        #self.model.transformer.wte.weight.data[self.pad_idx].zero_()
+        #self.model.transformer.wpe.weight.data[0].zero_()
 
     def forward(
         self,
@@ -103,7 +132,10 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
         encoder_out=None,
     ):
         features,transformer_outputs = self.extract_features(prev_output_tokens, incremental_state)
-        lm_logits = self.model.lm_head(features)
+        if self.args.num_labels is None:
+            lm_logits = self.model.lm_head(features)
+        else:
+            lm_logits = self.model.score(features)
         return (lm_logits, transformer_outputs)
 
     def extract_features(
@@ -153,6 +185,8 @@ def default_architecture(args):
     args.num_layers = getattr(args, "num_layers", 12)
     args.dropout = getattr(args, "dropout", 0.1)
     args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.num_labels = getattr(args, "num_labels", None)
+    args.tie_word_embeddings = getattr(args, 'tie_word_embeddings', True)
 
 
 @register_model_architecture("hf_gpt2", "hf_gpt2_medium")

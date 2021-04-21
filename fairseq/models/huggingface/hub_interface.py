@@ -62,7 +62,7 @@ def from_pretrained(pretrained_model_path, task=None, model=None, cfg=None, arch
     return {
         "args": cfg,
         "task": task,
-        "models": model,
+        "models": [model],
     }
 
 
@@ -86,9 +86,11 @@ class GPT2HubInterface(nn.Module):
     def encode(
         self, sentence: str, *addl_sentences, no_separator=False
     ) -> torch.LongTensor:
-        tokens = self.task.source_dictionary.encode_line(
-            bpe_sentence, append_eos=False, add_if_not_exist=False
-        )
+        tokens = []
+        tokens.append(self.task.source_dictionary.encode_line(sentence))
+        for s in addl_sentences:
+            tokens.append(self.task.source_dictionary.encode_line(s))
+        tokens = torch.cat(tokens,dim=0)
         return tokens.long()
 
     def decode(self, tokens: torch.LongTensor):
@@ -114,17 +116,17 @@ class GPT2HubInterface(nn.Module):
                     tokens.size(-1), self.model.max_positions()
                 )
             )
-        lm_logits, transformer_outputs = self.model(
+        logits, transformer_outputs = self.model(
             tokens.to(device=self.device)
         )
-        return transformer_outputs[0]  # just the last layer's features
+        return logits,transformer_outputs[0]  # just the last layer's features
 
-    def predict(self, head: str, tokens: torch.LongTensor, return_logits: bool = False):
-        features = self.extract_features(tokens.to(device=self.device))
-        logits = self.lm_head(features)
+    def predict(self, tokens: torch.LongTensor, return_logits: bool = False):
+        logits,features = self.extract_features(tokens.to(device=self.device))
+        pooled_logits = logits[range(1), len(tokens)-1]
         if return_logits:
-            return logits
-        return F.log_softmax(logits, dim=-1)
+            return pooled_logits
+        return F.log_softmax(pooled_logits, dim=-1)
 
 
 
