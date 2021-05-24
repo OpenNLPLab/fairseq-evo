@@ -530,6 +530,12 @@ class CheckpointConfig(FairseqDataclass):
             "help": "finetune from a pretrained model; note that meters and lr scheduler will be reset"
         },
     )
+    pretrained_model: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "finetune from a pretrained model; note that meters and lr scheduler will be reset"
+        },
+    )
     pretrained_model_hf: Optional[str] = field(
         default=None,
         metadata={
@@ -566,7 +572,7 @@ class CheckpointConfig(FairseqDataclass):
         default=1, metadata={"help": "save a checkpoint every N epochs"}
     )
     save_interval_updates: int = field(
-        default=0, metadata={"help": "save a checkpoint (and validate) every N updates"}
+        default=1000, metadata={"help": "save a checkpoint (and validate) every N updates"}
     )
     keep_interval_updates: int = field(
         default=-1,

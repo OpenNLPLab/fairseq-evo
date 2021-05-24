@@ -201,13 +201,14 @@ def load_checkpoint(cfg: CheckpointConfig, trainer, **passthrough_args):
             "can not be specified together: " + str(cfg)
         )
     pretrained_model_hf = cfg.pretrained_model_hf
-
+    pretrained_model = cfg.pretrained_model
     extra_state = trainer.load_checkpoint(
         checkpoint_path,
         reset_optimizer,
         reset_lr_scheduler,
         optimizer_overrides,
         pretrained_model_hf,
+        pretrained_model,
         reset_meters=reset_meters,
     )
 

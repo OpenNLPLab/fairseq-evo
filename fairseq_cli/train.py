@@ -11,6 +11,7 @@ import argparse
 import logging
 import math
 import os
+import time
 import sys
 from typing import Dict, Optional, Any, List, Tuple, Callable
 
@@ -272,16 +273,26 @@ def train(
     should_stop = False
     num_updates = trainer.get_num_updates()
     logger.info("Start iterating over samples")
+    time_gap = 0
+    cnt = 0
     for i, samples in enumerate(progress):
         with metrics.aggregate("train_inner"), torch.autograd.profiler.record_function(
             "train_step-%d" % i
         ):
+            start_time = time.perf_counter()
             log_output = trainer.train_step(samples)
-
+            torch.cuda.synchronize()
+            end_time = time.perf_counter()
         if log_output is not None:  # not OOM, overflow, ...
             # log mid-epoch stats
+            time_gap += end_time - start_time
+            cnt += 1
             num_updates = trainer.get_num_updates()
             if num_updates % cfg.common.log_interval == 0:
+                if cfg.distributed_training.distributed_rank ==0:
+                    total_tokens = cfg.task.tokens_per_sample*update_freq*cfg.dataset.batch_size
+                    avg_time = time_gap/cnt
+                    logger.info(f'time {total_tokens / avg_time} tokens/s {cnt} iter')
                 stats = get_training_stats(metrics.get_smoothed_values("train_inner"))
                 progress.log(stats, tag="train_inner", step=num_updates)
 

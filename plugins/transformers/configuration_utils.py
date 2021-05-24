@@ -244,7 +244,11 @@ class PretrainedConfig(object):
             self.id2label = dict((int(key), value) for key, value in self.id2label.items())
             # Keys are always strings in JSON so convert ids to int here.
         else:
-            self.num_labels = kwargs.pop("num_labels", 2)
+            num_labels = kwargs.pop("num_labels", 2)
+            if num_labels == None:
+                self.num_labels = 2
+            else:
+                self.num_labels = num_labels
 
         # Tokenizer arguments TODO: eventually tokenizer and models should share the same config
         self.tokenizer_class = kwargs.pop("tokenizer_class", None)
@@ -305,6 +309,7 @@ class PretrainedConfig(object):
 
     @num_labels.setter
     def num_labels(self, num_labels: int):
+        num_labels = int(num_labels)
         if self.id2label is None or len(self.id2label) != num_labels:
             self.id2label = {i: f"LABEL_{i}" for i in range(num_labels)}
             self.label2id = dict(zip(self.id2label.values(), self.id2label.keys()))

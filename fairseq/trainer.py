@@ -204,7 +204,7 @@ class Trainer(object):
     def checkpoint_suffix(self) -> str:
         """Suffix to add to the checkpoint file name."""
         if self.cfg.distributed_training.ddp_backend == "fully_sharded":
-            return self.cfg.checkpoint.checkpoint_suffix + "-shard{0}".format(self.data_parallel_rank)
+            return self.cfg.checkpoint.checkpoint_suffix + "-shard{0}".format(0)
         else:
             return self.cfg.checkpoint.checkpoint_suffix or ""
 
@@ -336,6 +336,7 @@ class Trainer(object):
             self.optimizer.optimizer.consolidate_state_dict()
 
         elif self.cfg.distributed_training.ddp_backend == 'fully_sharded':
+            #self._gathered_optim_state= None
             self._gathered_optim_state = self.model.gather_full_optim_state_dict(self.optimizer,
                                                                                  recipient_rank=0)
 
@@ -396,6 +397,7 @@ class Trainer(object):
         reset_lr_scheduler=False,
         optimizer_overrides=None,
         pretrained_model_hf=None,
+        pretrained_model=None,
         reset_meters=False,
     ):
         """
@@ -406,7 +408,11 @@ class Trainer(object):
         if pretrained_model_hf is not None:
             self.model.from_pretrained_huggingface(pretrained_model_hf,self.task,self.model,self.cfg)
         extra_state, self._optim_history, last_optim_state = None, [], None
-
+        if pretrained_model is not None:
+            with open(pretrained_model, "rb") as f:
+                state = torch.load(f, map_location=torch.device("cpu"))
+                self.model.load_state_dict(
+                    state["model"], strict=False, model_cfg=self.cfg.model)
         logger.info(f"Preparing to load checkpoint {filename}")
         is_distributed = self.data_parallel_world_size > 1
         bexists = PathManager.isfile(filename)

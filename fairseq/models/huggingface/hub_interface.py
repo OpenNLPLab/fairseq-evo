@@ -14,7 +14,7 @@ from fairseq.data import encoders
 def from_pretrained(pretrained_model_path, task=None, model=None, cfg=None, arch='hf_gpt2'):
     from fairseq import tasks
     if task is None:
-        args = options.get_args('data', task, arch)
+        args = options.get_args('data-bin/wikitext-103/', 'lm_gpt2', arch)
         cfg = convert_namespace_to_omegaconf(args)
         task = tasks.setup_task(cfg.task)
     if model is None:
@@ -94,15 +94,8 @@ class GPT2HubInterface(nn.Module):
         return tokens.long()
 
     def decode(self, tokens: torch.LongTensor):
-        assert tokens.dim() == 1
-        eos_mask = tokens == self.task.source_dictionary.eos()
-        doc_mask = eos_mask[1:] & eos_mask[:-1]
-        sentences = np.split(tokens, doc_mask.nonzero()[0] + 1)
-        sentences = [
-            self.bpe.decode(self.task.source_dictionary.string(s)) for s in sentences
-        ]
-        if len(sentences) == 1:
-            return sentences[0]
+        sentences = tokens[:]
+        sentences = self.task.source_dictionary.bpe.decode([int(s) for s in sentences])
         return sentences
 
     def extract_features(
@@ -119,7 +112,7 @@ class GPT2HubInterface(nn.Module):
         logits, transformer_outputs = self.model(
             tokens.to(device=self.device)
         )
-        return logits,transformer_outputs[0]  # just the last layer's features
+        return logits,transformer_outputs  # just the last layer's features
 
     def predict(self, tokens: torch.LongTensor, return_logits: bool = False):
         logits,features = self.extract_features(tokens.to(device=self.device))

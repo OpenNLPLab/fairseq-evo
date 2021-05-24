@@ -4,12 +4,12 @@ LR=1e-05                # Peak LR for polynomial LR scheduler.
 NUM_CLASSES=2
 MAX_SENTENCES=8        # Batch size.
 MAX_POSITIONS=512
-MODEL_PATH='./pytorch_model.bin'
+MODEL_PATH='checkpoints/checkpoint_best.pt'
 DATA=$2
 spring.submit run --gpu -n$1 --ntasks-per-node 8 \
 "fairseq-train $DATA \
     --distributed-world-size $1 --distributed-port 12343
-    --pretrained-model-hf $MODEL_PATH \
+    --pretrained-model $MODEL_PATH
     --max-positions $MAX_POSITIONS
     --num-classes $NUM_CLASSES
     --batch-size $MAX_SENTENCES \

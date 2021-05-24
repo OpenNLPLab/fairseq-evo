@@ -45,7 +45,7 @@ class HuggingFaceGPT2LanguageModel(FairseqLanguageModel):
                             help='dropout probability for attention weights')
         parser.add_argument('--tie-word-embeddings', default=True,
                             help='dropout probability for attention weights')
-        parser.add_argument('--num-labels', default=None,
+        parser.add_argument('--num-labels', default=None,type=int,
                             help='dropout probability for attention weights')
         # fmt: on
 
@@ -111,7 +111,7 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
             embd_pdrop=args.dropout,
             attn_pdrop=args.attention_dropout,
             layer_norm_epsilon=1e-5,
-            num_labele=args.num_labels,
+            num_labels=args.num_labels,
             tie_word_embeddings=args.tie_word_embeddings
         )
         if args.num_labels is None:
@@ -144,10 +144,11 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
         incremental_state: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
         if incremental_state:
-            past = self.get_incremental_state("past")
+            past = self.get_incremental_state(incremental_state,"past")
         else:
             past = None
-
+        if past is None and incremental_state is not None:
+            past = incremental_state['past']
         # don't attend to padding symbols
         attention_mask = prev_output_tokens.ne(self.pad_idx).int()
 
@@ -161,6 +162,7 @@ class HuggingFaceGPT2Decoder(FairseqIncrementalDecoder):
         outputs = self.model.transformer(
             input_ids=prev_output_tokens,
             attention_mask=attention_mask,
+            past_key_values=past,
             position_ids=None,
         )
         last_hidden_states = outputs[0]
@@ -210,4 +212,10 @@ def hf_gpt2_xl(args):
     args.embed_dim = getattr(args, "embed_dim", 1600)
     args.num_attention_heads = getattr(args, "num_attention_heads", 25)
     args.num_layers = getattr(args, "num_layers", 48)
+    default_architecture(args)
+@register_model_architecture("hf_gpt2", "hf_gpt3_xl")
+def hf_gpt3_xl(args):
+    args.embed_dim = getattr(args, "embed_dim", 2048)
+    args.num_attention_heads = getattr(args, "num_attention_heads", 32)
+    args.num_layers = getattr(args, "num_layers", 24)
     default_architecture(args)

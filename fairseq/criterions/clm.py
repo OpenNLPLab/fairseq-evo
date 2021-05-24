@@ -63,14 +63,6 @@ class CrossEntropyCriterion(FairseqCriterion):
         #loss_fct = CrossEntropyLoss()
         #loss_ = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
-        result = CausalLMOutputWithCrossAttentions(
-            loss=loss,
-            logits=net_output,
-            past_key_values=transformer_outputs.past_key_values,
-            hidden_states=transformer_outputs.hidden_states,
-            attentions=transformer_outputs.attentions,
-            cross_attentions=transformer_outputs.cross_attentions,
-        )
         return loss, loss
 
     @staticmethod
