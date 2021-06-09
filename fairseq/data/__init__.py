@@ -6,6 +6,7 @@
 
 from .dictionary import Dictionary, TruncatedDictionary
 from .dictionary_gpt2 import DictionaryGPT2
+from .dictionary_gpt2_cn import DictionaryGPT2_CN
 from .fairseq_dataset import FairseqDataset, FairseqIterableDataset
 
 from .base_wrapper_dataset import BaseWrapperDataset

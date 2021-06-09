@@ -5,7 +5,7 @@
 
 import logging
 import os
-
+import torch.nn as nn
 import numpy as np
 from fairseq import utils
 from fairseq.data import (
@@ -268,11 +268,15 @@ class SentencePredictionGPT2Task(LegacyFairseqTask):
 
     def build_model(self, args):
         from fairseq import models
-
         model = models.build_model(args, self)
-
+        model.decoder.score = self.Linear(model.decoder.score.in_features, args.num_classes, bias=False)
         return model
-
+    def Linear(self,in_features, out_features, bias=True):
+        m = nn.Linear(in_features, out_features, bias)
+        nn.init.xavier_uniform_(m.weight)
+        if bias:
+            nn.init.constant_(m.bias, 0.0)
+        return m
     def max_positions(self):
         return self._max_positions
 

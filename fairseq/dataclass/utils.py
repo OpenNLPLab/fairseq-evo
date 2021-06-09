@@ -290,7 +290,6 @@ def override_module_args(args: Namespace) -> Tuple[List[str], List[str]]:
         overrides.extend(
             _override_attr(k, FairseqConfig.__dataclass_fields__[k].type, args)
         )
-
     if args is not None:
         if hasattr(args, "task"):
             from fairseq.tasks import TASK_DATACLASS_REGISTRY
@@ -337,7 +336,7 @@ def override_module_args(args: Namespace) -> Tuple[List[str], List[str]]:
                     no_dc = False
         if no_dc:
             deletes.append("model")
-
+        deletes.append("model")
     return overrides, deletes
 
 
@@ -351,7 +350,6 @@ def convert_namespace_to_omegaconf(args: Namespace) -> DictConfig:
     config_path = os.path.join("..", "config")
 
     GlobalHydra.instance().clear()
-
     with initialize(config_path=config_path):
         try:
             composed_cfg = compose("config", overrides=overrides, strict=False)

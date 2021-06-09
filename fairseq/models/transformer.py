@@ -657,7 +657,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         super().__init__(dictionary)
         self.register_buffer("version", torch.Tensor([3]))
         self._future_mask = torch.empty(0)
-
+        self.pad_idx = embed_tokens.padding_idx
         self.dropout_module = FairseqDropout(
             args.dropout, module_name=self.__class__.__name__
         )
@@ -734,9 +734,17 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         )
 
         self.adaptive_softmax = None
-        self.output_projection = output_projection
-        if self.output_projection is None:
-            self.build_output_projection(args, dictionary, embed_tokens)
+        if 'sentence_prediction' in args.task:
+            self.score = nn.Linear(
+                self.output_embed_dim, len(dictionary), bias=False
+            )
+            nn.init.normal_(
+                self.score.weight, mean=0, std=self.output_embed_dim ** -0.5
+            )
+        else:
+            self.output_projection = output_projection
+            if self.output_projection is None:
+                self.build_output_projection(args, dictionary, embed_tokens)
 
     def build_output_projection(self, args, dictionary, embed_tokens):
         if args.adaptive_softmax_cutoff is not None:
@@ -973,6 +981,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         """Project features to the vocabulary size."""
         if self.adaptive_softmax is None:
             # project back to size of vocabulary
+            if 'sentence_prediction' in self.args.task:
+                return self.score(features)
             return self.output_projection(features)
         else:
             return features
