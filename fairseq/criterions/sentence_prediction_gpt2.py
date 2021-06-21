@@ -44,9 +44,9 @@ class SentencePredictionCriterionGPT2(FairseqCriterion):
         if input_ids is not None:
             sequence_lengths = torch.ne(input_ids, model.decoder.pad_idx).sum(-1) - 1
         pooled_logits = logits[range(sample_size), sequence_lengths]
-
         if not self.regression_target:
             pooled_logits = F.log_softmax(pooled_logits, dim=-1, dtype=torch.float32)
+            targets = torch.where(targets<0,0,targets)
             loss = F.nll_loss(pooled_logits, targets, reduction="sum")
         else:
             pooled_logits = pooled_logits.view(-1).float()

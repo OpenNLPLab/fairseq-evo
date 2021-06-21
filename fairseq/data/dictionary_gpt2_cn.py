@@ -366,7 +366,10 @@ class GPT2BPE_CN(object):
         return res
 
     def decode(self, tokens):
-        tokens = [int(tok) if tok not in {"<unk>", "<mask>"} else tok for tok in tokens.split()]
+        if isinstance(tokens,str):
+            tokens = [int(tok) if tok not in {"<unk>", "<mask>"} else tok for tok in tokens.split()]
+        elif isinstance(tokens,list):
+            tokens = [int(tok) for tok in tokens]
         text = self.sp.decode(tokens)
         text = text.replace(' ', '').replace('\u2582', ' ').replace('\u2583', '\n')
         return text
