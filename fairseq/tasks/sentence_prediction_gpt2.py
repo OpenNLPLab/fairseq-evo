@@ -269,7 +269,10 @@ class SentencePredictionGPT2Task(LegacyFairseqTask):
     def build_model(self, args):
         from fairseq import models
         model = models.build_model(args, self)
-        model.decoder.score = self.Linear(model.decoder.score.in_features, args.num_classes, bias=False)
+        try:
+            model.decoder.score = self.Linear(model.decoder.score.in_features, args.num_classes, bias=False)
+        except:
+            pass
         return model
     def Linear(self,in_features, out_features, bias=True):
         m = nn.Linear(in_features, out_features, bias)
