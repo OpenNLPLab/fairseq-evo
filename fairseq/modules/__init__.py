@@ -37,6 +37,10 @@ from .unfold import unfold1d
 from .transformer_layer import TransformerDecoderLayer, TransformerEncoderLayer
 from .vggblock import VGGBlock
 
+# add
+from .multihead_rfa_attention import MultiheadRfaAttention
+from .transformer_rfa_layer import TransformerRfaEncoderLayer, TransformerRfaDecoderLayer
+
 __all__ = [
     "AdaptiveInput",
     "AdaptiveSoftmax",
@@ -75,4 +79,8 @@ __all__ = [
     "TransposeLast",
     "VGGBlock",
     "unfold1d",
+    # add
+    "MultiheadRfaAttention",
+    "TransformerRfaEncoderLayer", 
+    "TransformerRfaDecoderLayer"
 ]
