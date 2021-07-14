@@ -39,6 +39,7 @@ from .vggblock import VGGBlock
 
 # add
 from .multihead_rfa_attention import MultiheadRfaAttention
+from .multihead_rfa_causal_attention import MultiheadRfaCausalAttention
 from .transformer_rfa_layer import TransformerRfaEncoderLayer, TransformerRfaDecoderLayer
 
 __all__ = [
@@ -80,7 +81,8 @@ __all__ = [
     "VGGBlock",
     "unfold1d",
     # add
+    "MultiheadRfaCausalAttention",
     "MultiheadRfaAttention",
     "TransformerRfaEncoderLayer", 
-    "TransformerRfaDecoderLayer"
+    "TransformerRfaDecoderLayer",
 ]

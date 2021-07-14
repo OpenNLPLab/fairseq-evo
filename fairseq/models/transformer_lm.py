@@ -624,6 +624,11 @@ def transformer_lm_rfa_wiki103(args):
     args.activation_dropout = getattr(args, "activation_dropout", 0.1)
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    # add
+    args.proj_dim = getattr(args, "proj_dim", 64)
+    args.tau = getattr(args, "tau", 1.0)
+    args.reparam_proj = getattr(args, "reparam_proj", True)
+    args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
     transformer_lm_big(args)
 
 @register_model_architecture("transformer_rfa_lm", "transformer_lm_rfa_small_wiki103")
@@ -642,4 +647,9 @@ def transformer_lm_rfa_small_wiki103(args):
     args.activation_dropout = getattr(args, "activation_dropout", 0.1)
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    # add
+    args.proj_dim = getattr(args, "proj_dim", 40)
+    args.tau = getattr(args, "tau", 1.0)
+    args.reparam_proj = getattr(args, "reparam_proj", True)
+    args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
     transformer_lm_big(args)
