@@ -39,8 +39,11 @@ from .vggblock import VGGBlock
 
 # rfa
 from .multihead_rfa_attention import MultiheadRfaAttention
-from .multihead_rfa_causal_attention import MultiheadRfaCausalAttention
+from .multihead_rfa_causal_attention import MultiheadRfaCausalAttention, MultiheadRfaCausalAttentionDebug
 from .transformer_rfa_layer import TransformerRfaEncoderLayer, TransformerRfaDecoderLayer
+# debug
+from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
+from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
 # performer
 from .multihead_performer_attention import MultiheadPerformerAttention
 from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
@@ -88,6 +91,9 @@ __all__ = [
     "MultiheadRfaAttention",
     "TransformerRfaEncoderLayer", 
     "TransformerRfaDecoderLayer",
+    # debug
+    "MultiheadRfaCausalAttentionDebug",
+    "TransformerRfaDecoderDebugLayer",
     # performer
     "MultiheadPerformerAttention",
     "PerformerEncoderLayer",
