@@ -37,10 +37,13 @@ from .unfold import unfold1d
 from .transformer_layer import TransformerDecoderLayer, TransformerEncoderLayer
 from .vggblock import VGGBlock
 
-# add
+# rfa
 from .multihead_rfa_attention import MultiheadRfaAttention
 from .multihead_rfa_causal_attention import MultiheadRfaCausalAttention
 from .transformer_rfa_layer import TransformerRfaEncoderLayer, TransformerRfaDecoderLayer
+# performer
+from .multihead_performer_attention import MultiheadPerformerAttention
+from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -80,9 +83,13 @@ __all__ = [
     "TransposeLast",
     "VGGBlock",
     "unfold1d",
-    # add
+    # rfa
     "MultiheadRfaCausalAttention",
     "MultiheadRfaAttention",
     "TransformerRfaEncoderLayer", 
     "TransformerRfaDecoderLayer",
+    # performer
+    "MultiheadPerformerAttention",
+    "PerformerEncoderLayer",
+    "PerformerDecoderLayer"
 ]

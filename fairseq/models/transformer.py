@@ -27,8 +27,12 @@ from fairseq.modules import (
     SinusoidalPositionalEmbedding,
     TransformerDecoderLayer,
     TransformerEncoderLayer,
+    # rfa
     TransformerRfaDecoderLayer,
-    TransformerRfaEncoderLayer
+    TransformerRfaEncoderLayer,
+    # performer
+    PerformerEncoderLayer,
+    PerformerDecoderLayer,
 )
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
@@ -1085,6 +1089,33 @@ class TransformerRfaDecoder(TransformerDecoder):
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = TransformerRfaDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+# add performer
+class PerformerDecoder(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = PerformerDecoderLayer(args, no_encoder_attn)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)

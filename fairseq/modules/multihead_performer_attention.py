@@ -15,10 +15,10 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
 # add
-from random_feature_attention import CrossAttention, CrossAttentionProjectLayer
+from performer_pytorch import Attention, SelfAttention
 
 @with_incremental_state
-class MultiheadRfaAttention(nn.Module):
+class MultiheadPerformerAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -38,7 +38,28 @@ class MultiheadRfaAttention(nn.Module):
         encoder_decoder_attention=False,
         q_noise=0.0,
         qn_block_size=8,
+        # add
+        # dim,
+        causal=True,
+        # heads=8,
+        # dim_head=64,
+        local_heads=0,
+        local_window_size=256,
+        nb_features=None,
+        feature_redraw_interval=1000,
+        generalized_attention=False,
+        kernel_fn=nn.ReLU(),
+        # dropout=0.,
+        no_projection=False,
+        qkv_bias=False,
+        attn_out_bias=True
     ):
+        '''
+        dim = embed_dim
+        heads = num_heads
+        dim_head = head_dim
+        修改causal默认为true
+        '''
         super().__init__()
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
@@ -63,20 +84,6 @@ class MultiheadRfaAttention(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
 
-        self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        self.v_proj = quant_noise(
-            nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-
-        self.out_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
             self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
@@ -85,37 +92,29 @@ class MultiheadRfaAttention(nn.Module):
 
         self.add_zero_attn = add_zero_attn
 
-        self.reset_parameters()
+        
 
         self.onnx_trace = False
 
-        # add
-        self.proj_dim = 64
-        self.tau = 1.0
-        self.reparam_proj = True
-        self.proj = CrossAttentionProjectLayer(embed_dim=self.embed_dim, num_heads=self.num_heads, head_dim=self.head_dim,
-                                  proj_dim=self.proj_dim, tau=self.tau, reparam_proj=self.reparam_proj)
-        self.cross_att = CrossAttention(embed_dim=self.embed_dim, num_heads=self.num_heads, head_dim=self.head_dim,
-                                  proj_dim=self.proj_dim, tau=self.tau, reparam_proj=self.reparam_proj)
+        # add performer
+        dim = self.embed_dim
+        heads = self.num_heads
+        dim_head = self.head_dim
+
+        self.attention = SelfAttention(dim, causal, heads, dim_head, local_heads,
+                                       local_window_size, nb_features, feature_redraw_interval,
+                                       generalized_attention, kernel_fn, dropout, no_projection,
+                                       qkv_bias, attn_out_bias)
+
+        # 使用默认的方法
+        # self.reset_parameters()
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        if self.qkv_same_dim:
-            # Empirically observed the convergence to be much better with
-            # the scaled initialization
-            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
-        else:
-            nn.init.xavier_uniform_(self.k_proj.weight)
-            nn.init.xavier_uniform_(self.v_proj.weight)
-            nn.init.xavier_uniform_(self.q_proj.weight)
-
-        nn.init.xavier_uniform_(self.out_proj.weight)
-        if self.out_proj.bias is not None:
-            nn.init.constant_(self.out_proj.bias, 0.0)
+        # self.causal_att.reset_parameters()
+        # self.attention.reset_parameters()
         if self.bias_k is not None:
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
@@ -135,11 +134,21 @@ class MultiheadRfaAttention(nn.Module):
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
         attn_weights = None
-        # to do, should be change
-        random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
-        mask = None
-        state = self.proj(encoder_output=query, random_matrices=random_matrices, mask=mask)
-        attn = self.cross_att(query=query, state=state)
+        # todo mask的对应关系存疑
+        # random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
+        # print("mask")
+        # if (key_padding_mask != None):
+        #     print(key_padding_mask.dtype)
+        #     print(key_padding_mask)
+        # print("context_mask")
+        # if (attn_mask != None):
+        #     print(attn_mask.dtype)
+        #     print(attn_mask)
+        # attn = self.attention(x=query, mask=key_padding_mask, context_mask=attn_mask)
+        
+        # print("query")
+        # print(query.dtype)
+        attn = self.attention(x=query)
 
         return attn, attn_weights
 

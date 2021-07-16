@@ -207,7 +207,7 @@ class MultiheadRfaCausalAttention(nn.Module):
         items_to_add = {}
         keys_to_remove = []
         for k in state_dict.keys():
-            print(k)
+            # print(k)
             if k.endswith(prefix + "in_proj_weight"):
                 # in_proj_weight used to be q + k + v with same dimensions
                 dim = int(state_dict[k].shape[0] / 3)
