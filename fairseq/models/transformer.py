@@ -33,8 +33,8 @@ from fairseq.modules import (
     # debug
     TransformerRfaDecoderDebugLayer,
     # performer
-    PerformerEncoderLayer,
-    PerformerDecoderLayer,
+    # PerformerEncoderLayer,
+   #  PerformerDecoderLayer,
 )
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_

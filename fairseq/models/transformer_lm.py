@@ -837,7 +837,7 @@ def transformer_lm_rfa_debug_wiki103(args):
     args.tau = getattr(args, "tau", 1.0)
     args.reparam_proj = getattr(args, "reparam_proj", True)
     args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
-    args.sample_num = getattr(args, "sample_num", 200)
+    args.sample_num = getattr(args, "sample_num", 20)
     transformer_lm_big(args)
 
 # performer

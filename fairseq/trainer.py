@@ -459,9 +459,12 @@ class Trainer(object):
 
             # load model parameters
             try:
+                import pdb
+                # pdb.set_trace()
                 self.model.load_state_dict(
                     state["model"], strict=True, model_cfg=self.cfg.model
                 )
+                # pdb.set_trace()
                 # save memory for later steps
                 del state["model"]
                 if utils.has_parameters(self.get_criterion()):
@@ -469,6 +472,7 @@ class Trainer(object):
                         state["criterion"], strict=True
                     )
                     del state["criterion"]
+                # pdb.set_trace()
 
             except Exception:
                 raise Exception(
