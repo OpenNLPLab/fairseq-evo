@@ -33,16 +33,11 @@ from fairseq.modules import (
     # debug
     TransformerRfaDecoderDebugLayer,
     # performer
-<<<<<<< HEAD
     # PerformerEncoderLayer,
-   #  PerformerDecoderLayer,
-=======
-    PerformerEncoderLayer,
-    PerformerDecoderLayer,
+    # PerformerDecoderLayer,
     # sparse transformer
     SparseTransformerEncoderLayer,
     SparseTransformerDecoderLayer
->>>>>>> ff363ac5d0c45f58b5906c3d7fdb4bd1d369fb2e
 )
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
