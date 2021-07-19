@@ -17,7 +17,7 @@ from torch.nn import Parameter
 import numpy as np
 # add
 #from causal_attention import incremental_rfa, masked_rfa, cuda_causal_rfa, CausalAttention
-from random_feature_attention import CausalAttention
+from random_feature_attention import CausalAttention, NormalCausalAttention
 
 @with_incremental_state
 class MultiheadRfaCausalAttention(nn.Module):

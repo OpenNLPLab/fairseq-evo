@@ -7,6 +7,8 @@ MIN_LR=0.00001
 Warmup=6000
 MAX_UPDATES=150000
 MAX_UPDATES=300000
+ARCH=sparse_transformer_lm_wiki103
+
 spring.submit arun \
     --gpu \
     -n$1 \
@@ -14,9 +16,9 @@ spring.submit arun \
     --ntasks-per-node 8 --cpus-per-task 4 \
     "fairseq-train --task language_modeling \
     $DATA_DIR \
-    --save-dir checkpoints/transformer_wikitext103_lr \
+    --save-dir checkpoints/$ARCH \
     --distributed-world-size $1  --distributed-port 12343\
-    --arch transformer_lm_rfa_wiki103 \
+    --arch $ARCH \
     --max-update $MAX_UPDATES --lr $LR --t-mult 2 --lr-period-updates 270000 --lr-scheduler cosine --lr-shrink 0.75 \
     --warmup-updates $Warmup --warmup-init-lr 1e-07 --stop-min-lr 1e-09 --optimizer nag --min-lr $MIN_LR --clip-norm 0.1 \
     --criterion adaptive_loss --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
