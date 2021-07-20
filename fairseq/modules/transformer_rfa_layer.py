@@ -8,12 +8,14 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 from fairseq import utils
-from fairseq.modules import LayerNorm, MultiheadRfaAttention, MultiheadRfaCausalAttention, TransformerEncoderLayer, TransformerDecoderLayer
-# add
-from fairseq.modules import MultiheadRfaCausalAttentionDebug
+from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecoderLayer
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
+# rfa
+from fairseq.modules import MultiheadRfaAttention, MultiheadRfaCausalAttention
+# debug
+from fairseq.modules import MultiheadRfaCausalAttentionDebug
 
 # class TransformerRfaEncoderLayer(TransformerEncoderLayer):
 #     def __init__(self, args):

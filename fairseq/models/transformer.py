@@ -33,13 +33,24 @@ from fairseq.modules import (
     # debug
     TransformerRfaDecoderDebugLayer,
     # performer
+<<<<<<< HEAD
+    # PerformerEncoderLayer,
+   #  PerformerDecoderLayer,
+=======
     PerformerEncoderLayer,
     PerformerDecoderLayer,
+<<<<<<< HEAD
     # longformer
     TransformerLongformerDecoderLayer,
     TransformerLongformerEncoderLayer
 
 
+=======
+    # sparse transformer
+    SparseTransformerEncoderLayer,
+    SparseTransformerDecoderLayer
+>>>>>>> ff363ac5d0c45f58b5906c3d7fdb4bd1d369fb2e
+>>>>>>> 76f3a580e179d17d6189c1d517e73c1353e7ee62
 )
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
@@ -1163,8 +1174,13 @@ class PerformerDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+<<<<<<< HEAD
 # add longformer
 class TransformerLongformerDecoder(TransformerDecoder):
+=======
+# add sparse transformer
+class SparseTransformerDecoder(TransformerDecoder):
+>>>>>>> 76f3a580e179d17d6189c1d517e73c1353e7ee62
     def __init__(
         self,
         args,
@@ -1174,9 +1190,15 @@ class TransformerLongformerDecoder(TransformerDecoder):
         output_projection=None,
     ):
         super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+<<<<<<< HEAD
  
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = TransformerLongformerDecoderLayer(args, no_encoder_attn)
+=======
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = SparseTransformerDecoderLayer(args, no_encoder_attn)
+>>>>>>> 76f3a580e179d17d6189c1d517e73c1353e7ee62
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -1189,6 +1211,7 @@ class TransformerLongformerDecoder(TransformerDecoder):
         )
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
+        
 
 @register_model_architecture("transformer", "transformer_tiny")
 def tiny_architecture(args):

@@ -17,7 +17,7 @@ from torch.nn import Parameter
 import numpy as np
 # add
 #from causal_attention import incremental_rfa, masked_rfa, cuda_causal_rfa, CausalAttention
-from random_feature_attention import CausalAttention
+from random_feature_attention import CausalAttention#, NormalCausalAttention
 
 @with_incremental_state
 class MultiheadRfaCausalAttention(nn.Module):
@@ -118,7 +118,8 @@ class MultiheadRfaCausalAttention(nn.Module):
     ) -> Tuple[Tensor, Optional[Tensor]]:
         attn_weights = None
         # 标准正态分布
-        random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
+        with torch.no_grad():
+            random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
         attn = self.causal_att(x=query, random_matrices=random_matrices, 
                                key_padding_mask=key_padding_mask, attn_mask=attn_mask)
 
@@ -339,7 +340,8 @@ class MultiheadRfaCausalAttentionDebug(nn.Module):
         attn_weights = None
         # 标准正态分布
         # random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
-        random_matrices = self.gaussian[np.random.randint(0, self.sample_num)]
+        with torch.no_grad():
+            random_matrices = self.gaussian[np.random.randint(0, self.sample_num)]
         attn = self.causal_att(x=query, random_matrices=random_matrices, 
                                key_padding_mask=key_padding_mask, attn_mask=attn_mask)
 

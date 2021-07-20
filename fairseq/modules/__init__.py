@@ -55,14 +55,7 @@ from .transformer_rfa_layer import (
 )
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
-# from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
-
-# longformer
-from .multihead_longformer_attention import LongformerSelfAttention
-from .transformer_longformer_layer import (
-    TransformerLongformerEncoderLayer, 
-    TransformerLongformerDecoderLayer,
-    )
+from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
 
 
 
