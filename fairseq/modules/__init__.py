@@ -37,16 +37,44 @@ from .unfold import unfold1d
 from .transformer_layer import TransformerDecoderLayer, TransformerEncoderLayer
 from .vggblock import VGGBlock
 
+
 # rfa
 from .multihead_rfa_attention import MultiheadRfaAttention
-from .multihead_rfa_causal_attention import MultiheadRfaCausalAttention, MultiheadRfaCausalAttentionDebug
-from .transformer_rfa_layer import TransformerRfaEncoderLayer, TransformerRfaDecoderLayer
+from .multihead_rfa_causal_attention import (
+    # rfa
+    MultiheadRfaCausalAttention,
+    # rfa debug
+    MultiheadRfaCausalAttentionDebug,
+)
+from .transformer_rfa_layer import (
+    # rfa
+    TransformerRfaEncoderLayer,
+    TransformerRfaDecoderLayer,
+    # rfa debug
+    TransformerRfaDecoderDebugLayer,
+)
+# sparse
+from .sparse_multihead_attention import SparseMultiheadAttention
+# from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+
+# longformer
+from .multihead_longformer_attention import LongformerSelfAttention
+from .transformer_longformer_layer import (
+    TransformerLongformerEncoderLayer, 
+    TransformerLongformerDecoderLayer,
+    )
+
+
+
+# norm rfa
+#from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
+#from .transformer_rfa_layer import TransformerRfaNormDecoderLayer
 # debug
-from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
-from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
+#from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
+#from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
 # performer
-from .multihead_performer_attention import MultiheadPerformerAttention
-from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
+# from .multihead_performer_attention import MultiheadPerformerAttention
+# from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -97,5 +125,14 @@ __all__ = [
     # performer
     "MultiheadPerformerAttention",
     "PerformerEncoderLayer",
-    "PerformerDecoderLayer"
+    "PerformerDecoderLayer",
+    # sparse attention
+    "SparseMultiheadAttention",
+    "SparseTransformerEncoderLayer",
+    "SparseTransformerDecoderLayer"
+    # longformer
+    'LongformerSelfAttention',
+    'TransformerLongformerEncoderLayer'
+    'TransformerLongformerDecoderLayer'
+
 ]
