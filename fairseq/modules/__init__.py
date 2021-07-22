@@ -55,6 +55,15 @@ from .transformer_rfa_layer import (
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+# linear
+from .linear_transformer_attention import MultiheadLinearAttention
+from .linear_transformer_layer import LinearTransformerEncoderLayer, LinearTransformerDecoderLayer
+# reformer
+from .reformer_attention import ReformerAttention_
+# lsh
+from .lsh_attention import LSHAttention
+from .reformer_layer import ReformerEncoderLayer, ReformerDecoderLayer
+
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
@@ -119,5 +128,14 @@ __all__ = [
     # sparse attention
     "SparseMultiheadAttention",
     "SparseTransformerEncoderLayer",
-    "SparseTransformerDecoderLayer"
+    "SparseTransformerDecoderLayer",
+    # linear attention
+    "MultiheadLinearAttention",
+    "LinearTransformerEncoderLayer", 
+    "LinearTransformerDecoderLayer",
+    # reformer
+    "ReformerAttention_",
+    "ReformerEncoderLayer", 
+    "ReformerDecoderLayer",
+    "LSHAttention"
 ]

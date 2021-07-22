@@ -12,27 +12,21 @@ from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecod
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
-# rfa
-from fairseq.modules import SparseMultiheadAttention
+# linear transformer
+from fast_transformers.attention import CausalLinearAttention, AttentionLayer
+from fairseq.modules import MultiheadLinearAttention
 
-class SparseTransformerEncoderLayer(TransformerEncoderLayer):
+class LinearTransformerEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):
         super().__init__(args)
 
     def build_self_attention(self, embed_dim, args):
-        return SparseMultiheadAttention(
-            embed_dim,
-            args.encoder_attention_heads,
-            dropout=args.attention_dropout,
-            self_attention=True,
-            add_bias_kv=False,
-            add_zero_attn=False,
-            is_bidirectional=True,
-            stride=32,
-            expressivity=8,
+        return MultiheadLinearAttention(
+            d_model=embed_dim,
+            n_heads=args.encoder_attention_heads
         )
 
-class SparseTransformerDecoderLayer(TransformerDecoderLayer):
+class LinearTransformerDecoderLayer(TransformerDecoderLayer):
     def __init__(
         self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
@@ -41,15 +35,7 @@ class SparseTransformerDecoderLayer(TransformerDecoderLayer):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
-        return SparseMultiheadAttention(
-            embed_dim,
-            args.decoder_attention_heads,
-            dropout=args.attention_dropout,
-            self_attention=True,
-            add_bias_kv=False,
-            add_zero_attn=False,
-            # for test
-            is_bidirectional=False,
-            stride=32,
-            expressivity=8,
+        return MultiheadLinearAttention(
+            d_model=embed_dim,
+            n_heads=args.decoder_attention_heads
         )

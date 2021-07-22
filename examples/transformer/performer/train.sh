@@ -10,10 +10,10 @@ BATCH_SIZE=1
 ARCH=performer_lm_small_wiki103
 #ARCH=transformer_lm_rfa_small_wiki103
 #ARCH=transformer_lm_small_wiki103
-JOB_NAME=$ARCH
+# JOB_NAME=$ARCH
 
 spring.submit arun --gpu -n$1 --ntasks-per-node 8 --cpus-per-task 4 \
---job-name=$JOB_NAME \
+--job-name=$ARCH \
 "fairseq-train --task language_modeling \
     $DATA_DIR \
     --ddp-backend=legacy_ddp \

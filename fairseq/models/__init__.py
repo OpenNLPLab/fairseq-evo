@@ -179,6 +179,7 @@ def register_model_architecture(model_name, arch_name):
                 )
             )
         if arch_name in ARCH_MODEL_REGISTRY:
+            print(arch_name)
             raise ValueError(
                 "Cannot register duplicate model architecture ({})".format(arch_name)
             )

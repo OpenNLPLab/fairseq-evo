@@ -23,7 +23,11 @@ from fairseq.models.transformer import (
     # debug
     TransformerRfaDebugDecoder,
     # sparse transformer
-    SparseTransformerDecoder
+    SparseTransformerDecoder,
+    # linear transformer
+    LinearTransformerDecoder,
+    # reformer
+    ReformerDecoder
 )
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
@@ -357,7 +361,7 @@ class TransformerRfaLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
-# debug
+# rfa debug
 @register_model("transformer_rfa_debug_lm", dataclass=TransformerLanguageModelConfig)
 class TransformerRfaDebugLanguageModel(TransformerLanguageModel):
     def __init__(self, decoder):
@@ -524,6 +528,120 @@ class SparseTransformerLanguageModel(TransformerLanguageModel):
             assert args.decoder_input_dim == args.decoder_output_dim
 
         decoder = SparseTransformerDecoder(
+            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
+        )
+        return cls(decoder)
+
+# add for linear transformer
+@register_model("linear_transformer_lm", dataclass=TransformerLanguageModelConfig)
+class LinearTransformerLanguageModel(TransformerLanguageModel):
+    def __init__(self, decoder):
+        super(LinearTransformerLanguageModel, self).__init__(decoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        if args.decoder_layers_to_keep:
+            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
+
+        if getattr(args, "max_target_positions", None) is None:
+            args.max_target_positions = getattr(
+                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
+            )
+
+        if args.character_embeddings:
+            embed_tokens = CharacterTokenEmbedder(
+                task.source_dictionary,
+                eval(args.character_filters),
+                args.character_embedding_dim,
+                args.decoder_embed_dim,
+                args.char_embedder_highway_layers,
+            )
+        elif args.adaptive_input:
+            embed_tokens = AdaptiveInput(
+                len(task.source_dictionary),
+                task.source_dictionary.pad(),
+                args.decoder_input_dim,
+                args.adaptive_input_factor,
+                args.decoder_embed_dim,
+                options.eval_str_list(args.adaptive_input_cutoff, type=int),
+                args.quant_noise_pq,
+                args.quant_noise_pq_block_size,
+            )
+        else:
+            embed_tokens = cls.build_embedding(
+                args, task.source_dictionary, args.decoder_input_dim
+            )
+
+        if args.tie_adaptive_weights:
+            assert args.adaptive_input
+            assert args.adaptive_input_factor == args.adaptive_softmax_factor
+            assert (
+                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
+            ), "{} != {}".format(
+                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
+            )
+            assert args.decoder_input_dim == args.decoder_output_dim
+
+        decoder = LinearTransformerDecoder(
+            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
+        )
+        return cls(decoder)
+
+# add for reformer
+@register_model("reformer_lm", dataclass=TransformerLanguageModelConfig)
+class ReformerLanguageModel(TransformerLanguageModel):
+    def __init__(self, decoder):
+        super(ReformerLanguageModel, self).__init__(decoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        if args.decoder_layers_to_keep:
+            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
+
+        if getattr(args, "max_target_positions", None) is None:
+            args.max_target_positions = getattr(
+                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
+            )
+
+        if args.character_embeddings:
+            embed_tokens = CharacterTokenEmbedder(
+                task.source_dictionary,
+                eval(args.character_filters),
+                args.character_embedding_dim,
+                args.decoder_embed_dim,
+                args.char_embedder_highway_layers,
+            )
+        elif args.adaptive_input:
+            embed_tokens = AdaptiveInput(
+                len(task.source_dictionary),
+                task.source_dictionary.pad(),
+                args.decoder_input_dim,
+                args.adaptive_input_factor,
+                args.decoder_embed_dim,
+                options.eval_str_list(args.adaptive_input_cutoff, type=int),
+                args.quant_noise_pq,
+                args.quant_noise_pq_block_size,
+            )
+        else:
+            embed_tokens = cls.build_embedding(
+                args, task.source_dictionary, args.decoder_input_dim
+            )
+
+        if args.tie_adaptive_weights:
+            assert args.adaptive_input
+            assert args.adaptive_input_factor == args.adaptive_softmax_factor
+            assert (
+                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
+            ), "{} != {}".format(
+                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
+            )
+            assert args.decoder_input_dim == args.decoder_output_dim
+
+        decoder = ReformerDecoder(
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
@@ -919,6 +1037,33 @@ def performer_lm_small_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
+    # add
+    args.causal = getattr(args, "causal", True)
+    args.local_heads = getattr(args, "local_heads", 0)
+    args.local_window_size = getattr(args, "local_window_size", 256)
+
+# performer
+@register_model_architecture("performer_lm", "performer_lm_wiki103")
+def performer_lm_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    # add
+    args.causal = getattr(args, "causal", True)
+    args.local_heads = getattr(args, "local_heads", 0)
+    args.local_window_size = getattr(args, "local_window_size", 256)
 
 # sparse transformer
 @register_model_architecture("sparse_transformer_lm", "sparse_transformer_lm_wiki103")
@@ -938,10 +1083,6 @@ def sparse_transformer_lm_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     # add
-    args.proj_dim = getattr(args, "proj_dim", 64)
-    args.tau = getattr(args, "tau", 1.0)
-    args.reparam_proj = getattr(args, "reparam_proj", True)
-    args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
     transformer_lm_big(args)
 
 @register_model_architecture("sparse_transformer_lm", "sparse_transformer_lm_small_wiki103")
@@ -966,3 +1107,89 @@ def sparse_transformer_lm_small_wiki103(args):
     args.reparam_proj = getattr(args, "reparam_proj", True)
     args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
     transformer_lm_big(args)
+
+# linear transformer
+@register_model_architecture("linear_transformer_lm", "linear_transformer_lm_small_wiki103")
+def linear_transformer_lm_small_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 1)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    # add
+    transformer_lm_big(args)
+
+@register_model_architecture("linear_transformer_lm", "linear_transformer_lm_wiki103")
+def linear_transformer_lm_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    # add
+    transformer_lm_big(args)
+
+# reformer
+@register_model_architecture("reformer_lm", "reformer_lm_small_wiki103")
+def reformer_lm_small_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 1)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    # add
+    args.causal = getattr(args, "causal", True)
+    args.bucket_size = getattr(args, "bucket_size", 64)
+    args.n_hashes = getattr(args, "n_hashes", 8)
+    args.attn_chunks = getattr(args, "attn_chunks", 1)
+
+@register_model_architecture("reformer_lm", "reformer_lm_wiki103")
+def reformer_lm_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    # add
+    args.causal = getattr(args, "causal", True)
+    args.bucket_size = getattr(args, "bucket_size", 64)
+    args.n_hashes = getattr(args, "n_hashes", 8)
+    args.attn_chunks = getattr(args, "attn_chunks", 1)

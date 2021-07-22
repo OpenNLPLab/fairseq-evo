@@ -15,10 +15,13 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
 # add
-from performer_pytorch import Attention, SelfAttention
+from fast_transformers.attention import CausalLinearAttention, AttentionLayer
+from fast_transformers.masking import TriangularCausalMask, FullMask, LengthMask
+from fast_transformers.events import EventDispatcher, QKVEvent
+from torch.nn import Linear
 
 @with_incremental_state
-class MultiheadPerformerAttention(nn.Module):
+class MultiheadLinearAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -26,88 +29,31 @@ class MultiheadPerformerAttention(nn.Module):
 
     def __init__(
         self,
-        embed_dim,
-        num_heads,
-        kdim=None,
-        vdim=None,
-        dropout=0.0,
-        bias=True,
-        add_bias_kv=False,
-        add_zero_attn=False,
-        self_attention=False,
-        encoder_decoder_attention=False,
-        q_noise=0.0,
-        qn_block_size=8,
-        # add
-        causal=True,
-        local_heads=0,
-        local_window_size=256,
-        nb_features=None,
-        feature_redraw_interval=1000,
-        generalized_attention=False,
-        kernel_fn=nn.ReLU(),
-        no_projection=False,
-        qkv_bias=False,
-        attn_out_bias=True
+        d_model, 
+        n_heads, 
+        d_keys=None,
+        d_values=None,
+        event_dispatcher="",
     ):
-        '''
-        dim = embed_dim
-        heads = num_heads
-        dim_head = head_dim
-        修改causal默认为true
-        '''
         super().__init__()
-        self.embed_dim = embed_dim
-        self.kdim = kdim if kdim is not None else embed_dim
-        self.vdim = vdim if vdim is not None else embed_dim
-        self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
+        # Fill d_keys and d_values
+        d_keys = d_keys or (d_model//n_heads)
+        d_values = d_values or (d_model//n_heads)
 
-        self.num_heads = num_heads
-        self.dropout_module = FairseqDropout(
-            dropout, module_name=self.__class__.__name__
-        )
+        self.inner_attention = CausalLinearAttention(d_model)
+        # self.attention = AttentionLayer(self.inner_attention, d_model, n_heads)
 
-        self.head_dim = embed_dim // num_heads
-        assert (
-            self.head_dim * num_heads == self.embed_dim
-        ), "embed_dim must be divisible by num_heads"
-        self.scaling = self.head_dim ** -0.5
-
-        self.self_attention = self_attention
-        self.encoder_decoder_attention = encoder_decoder_attention
-
-        assert not self.self_attention or self.qkv_same_dim, (
-            "Self-attention requires query, key and " "value to be of the same size"
-        )
-
-        if add_bias_kv:
-            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
-            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
-        else:
-            self.bias_k = self.bias_v = None
-
-        self.add_zero_attn = add_zero_attn
-
-        self.onnx_trace = False
-
-        # add performer
-        dim = self.embed_dim
-        heads = self.num_heads
-        dim_head = self.head_dim
-
-        self.attention = SelfAttention(dim, causal, heads, dim_head, local_heads,
-                                       local_window_size, nb_features, feature_redraw_interval,
-                                       generalized_attention, kernel_fn, dropout, no_projection,
-                                       qkv_bias, attn_out_bias)
+        self.query_projection = Linear(d_model, d_keys * n_heads)
+        self.key_projection = Linear(d_model, d_keys * n_heads)
+        self.value_projection = Linear(d_model, d_values * n_heads)
+        self.out_projection = Linear(d_values * n_heads, d_model)
+        self.n_heads = n_heads
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        if self.bias_k is not None:
-            nn.init.xavier_normal_(self.bias_k)
-        if self.bias_v is not None:
-            nn.init.xavier_normal_(self.bias_v)
+        return
 
     def forward(
         self,
@@ -123,19 +69,38 @@ class MultiheadPerformerAttention(nn.Module):
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
         attn_weights = None
-        # todo mask的对应关系存疑
-        # random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
-        # print("mask")
-        # if (key_padding_mask != None):
-        #     print(key_padding_mask.dtype)
-        #     print(key_padding_mask)
-        # print("context_mask")
-        # if (attn_mask != None):
-        #     print(attn_mask.dtype)
-        #     print(attn_mask)
-        # attn = self.attention(x=query, mask=key_padding_mask, context_mask=attn_mask)
 
-        attn = self.attention(x=query)
+        # add
+        # (L, N, E) -> (N, L, E)
+        query.transpose_(0, 1)
+        # (S, N, E) -> (N, S, E)
+        key.transpose_(1, 0)
+        value.transpose_(1, 0)
+        
+        N, L, _ = query.shape
+        _, S, _ = key.shape
+
+        H = self.n_heads
+        with torch.no_grad():
+            attn_mask = TriangularCausalMask(L, device=query.device)
+            x_lengh_mask = LengthMask(query.new_full((N,), L, dtype=torch.int64), device=query.device)
+
+        # Project the queries/keys/values
+        queries = self.query_projection(query).view(N, L, H, -1)
+        keys = self.key_projection(key).view(N, S, H, -1)
+        values = self.value_projection(value).view(N, S, H, -1)
+
+        # Compute the attention
+        new_values = self.inner_attention(
+            queries,
+            keys,
+            values,
+            attn_mask=attn_mask,
+            query_lengths=x_lengh_mask,
+            key_lengths=x_lengh_mask
+        ).view(N, L, -1)
+
+        attn = self.out_projection(new_values)
 
         return attn, attn_weights
 
