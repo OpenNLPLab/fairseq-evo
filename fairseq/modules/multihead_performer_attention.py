@@ -15,7 +15,8 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
 # add
-from performer_pytorch import Attention, SelfAttention
+# from performer_pytorch import Attention, SelfAttention
+from performer_pytorch import  SelfAttention
 
 @with_incremental_state
 class MultiheadPerformerAttention(nn.Module):
