@@ -1188,10 +1188,104 @@ class TransformerLongformerDecoder(TransformerDecoder):
         no_encoder_attn=False,
         output_projection=None,
     ):
-        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+        self.args = args
+        super(TransformerDecoder, self).__init__(dictionary)
+        self.register_buffer("version", torch.Tensor([3]))
+        self._future_mask = torch.empty(0)
+        self.pad_idx = embed_tokens.padding_idx
+        self.dropout_module = FairseqDropout(
+            args.dropout, module_name=self.__class__.__name__
+        )
+        self.decoder_layerdrop = args.decoder_layerdrop
+        self.share_input_output_embed = args.share_decoder_input_output_embed
+
+        input_embed_dim = embed_tokens.embedding_dim
+        embed_dim = args.decoder_embed_dim
+        self.embed_dim = embed_dim
+        self.output_embed_dim = args.decoder_output_dim
+
+        self.padding_idx = embed_tokens.padding_idx
+        self.max_target_positions = args.max_target_positions
+
+        self.embed_tokens = embed_tokens
+
+        self.embed_scale = 1.0 if args.no_scale_embedding else math.sqrt(embed_dim)
+
+        if not args.adaptive_input and args.quant_noise_pq > 0:
+            self.quant_noise = apply_quant_noise_(
+                nn.Linear(embed_dim, embed_dim, bias=False),
+                args.quant_noise_pq,
+                args.quant_noise_pq_block_size,
+            )
+        else:
+            self.quant_noise = None
+
+        self.project_in_dim = (
+            Linear(input_embed_dim, embed_dim, bias=False)
+            if embed_dim != input_embed_dim
+            else None
+        )
+        self.embed_positions = (
+            PositionalEmbedding(
+                self.max_target_positions,
+                embed_dim,
+                self.padding_idx,
+                learned=args.decoder_learned_pos,
+            )
+            if not args.no_token_positional_embeddings
+            else None
+        )
+
+        if getattr(args, "layernorm_embedding", False):
+            self.layernorm_embedding = LayerNorm(embed_dim)
+        else:
+            self.layernorm_embedding = None
+
+        self.cross_self_attention = getattr(args, "cross_self_attention", False)
+
+        if self.decoder_layerdrop > 0.0:
+            self.layers = LayerDropModuleList(p=self.decoder_layerdrop)
+        else:
+            self.layers = nn.ModuleList([])
+        self.layers.extend(
+            [
+                self.build_decoder_layer(args, layer_id, no_encoder_attn)
+                for layer_id in range(args.decoder_layers)
+            ]
+        )
+
+        self.num_layers = len(self.layers)
+
+        if args.decoder_normalize_before and not getattr(
+            args, "no_decoder_final_norm", False
+        ):
+            self.layer_norm = LayerNorm(embed_dim)
+        else:
+            self.layer_norm = None
+
+        self.project_out_dim = (
+            Linear(embed_dim, self.output_embed_dim, bias=False)
+            if embed_dim != self.output_embed_dim and not args.tie_adaptive_weights
+            else None
+        )
+
+        self.adaptive_softmax = None
+        if 'sentence_prediction' in args.task:
+            self.score = nn.Linear(
+                self.output_embed_dim, len(dictionary), bias=False
+            )
+            nn.init.normal_(
+                self.score.weight, mean=0, std=self.output_embed_dim ** -0.5
+            )
+        else:
+            self.output_projection = output_projection
+            if self.output_projection is None:
+                self.build_output_projection(args, dictionary, embed_tokens)
+        
  
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = TransformerLongformerDecoderLayer(args, no_encoder_attn)
+    def build_decoder_layer(self, args, layer_id, no_encoder_attn=False):
+        layer = TransformerLongformerDecoderLayer(args, layer_id, no_encoder_attn)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)

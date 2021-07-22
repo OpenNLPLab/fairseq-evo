@@ -15,7 +15,7 @@ from fairseq.models import (
     register_model_architecture,
 )
 from fairseq.models.transformer import (
-    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder, 
+    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder, TransformerLongformerDecoder, 
     # rfa
     TransformerRfaDecoder, 
     # performer
@@ -23,7 +23,8 @@ from fairseq.models.transformer import (
     # debug
     TransformerRfaDebugDecoder,
     # sparse transformer
-    SparseTransformerDecoder
+    # SparseTransformerDecoder,
+    TransformerLongformerDecoder
 )
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
@@ -651,6 +652,9 @@ class TransformerLongformerLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
+    
+
+
 # longformer
 @register_model_architecture("transformer_longformer_lm", "transformer_lm_longformer_wiki103")
 def transformer_lm_lomgformer_wiki103(args):
@@ -669,10 +673,10 @@ def transformer_lm_lomgformer_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     # add
-    args.attention_window =  getattr(args, "attention_window", 64)
-    args.attention_dilation =  getattr(args, "attention_dilation", 64)
-    args.autoregressive =  getattr(args, "autoregressive", True)
-    args.attention_mode =  getattr(args, "attention_mode", 'sliding_chunks')
+    args.attention_window =  getattr(args, "attention_window", [64]*20)
+    args.attention_dilation =  getattr(args, "attention_dilation", [1]*20)
+    args.autoregressive =  getattr(args, "autoregressive", False)
+    args.attention_mode =  getattr(args, "attention_mode", 'sliding_chunks_no_overlap')  # ['tvm', 'sliding_chunks', 'n2', 'sliding_chunks_no_overlap']
     transformer_lm_big(args)
 
 # add for rfa test
