@@ -33,7 +33,7 @@ from fairseq.modules import (
     # debug
     TransformerRfaDecoderDebugLayer,
     # performer
-    PerformerEncoderLayer,
+    # PerformerEncoderLayer,
     PerformerDecoderLayer,
     # sparse transformer
     SparseTransformerEncoderLayer,
