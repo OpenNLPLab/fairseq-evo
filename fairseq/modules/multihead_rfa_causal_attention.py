@@ -17,7 +17,7 @@ from torch.nn import Parameter
 import numpy as np
 # add
 #from causal_attention import incremental_rfa, masked_rfa, cuda_causal_rfa, CausalAttention
-from random_feature_attention import CausalAttention#, NormalCausalAttention
+from random_feature_attention import CausalAttention
 
 @with_incremental_state
 class MultiheadRfaCausalAttention(nn.Module):
@@ -204,12 +204,10 @@ class MultiheadRfaCausalAttention(nn.Module):
         return attn_weights
 
     def upgrade_state_dict_named(self, state_dict, name):
-        # print("rfa")
         prefix = name + "." if name != "" else ""
         items_to_add = {}
         keys_to_remove = []
         for k in state_dict.keys():
-            # print(k)
             if k.endswith(prefix + "in_proj_weight"):
                 # in_proj_weight used to be q + k + v with same dimensions
                 dim = int(state_dict[k].shape[0] / 3)
@@ -426,12 +424,10 @@ class MultiheadRfaCausalAttentionDebug(nn.Module):
         return attn_weights
 
     def upgrade_state_dict_named(self, state_dict, name):
-        # print("rfa")
         prefix = name + "." if name != "" else ""
         items_to_add = {}
         keys_to_remove = []
         for k in state_dict.keys():
-            # print(k)
             if k.endswith(prefix + "in_proj_weight"):
                 # in_proj_weight used to be q + k + v with same dimensions
                 dim = int(state_dict[k].shape[0] / 3)

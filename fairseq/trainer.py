@@ -681,6 +681,8 @@ class Trainer(object):
                         ignore_grad=is_dummy_batch,
                     )
                     del loss
+                    # save the memory add by yiran
+                    torch.cuda.empty_cache()
 
                 logging_outputs.append(logging_output)
                 sample_size += sample_size_i

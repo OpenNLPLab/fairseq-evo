@@ -29,7 +29,7 @@ class PerformerEncoderLayer(TransformerEncoderLayer):
 
 class PerformerDecoderLayer(TransformerDecoderLayer):
     def __init__(
-        elf, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
+        self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
         super().__init__(args, no_encoder_attn, add_bias_kv, add_zero_attn)
 
@@ -46,4 +46,7 @@ class PerformerDecoderLayer(TransformerDecoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # add
+            causal=args.causal,
+            local_heads=args.local_heads,
+            local_window_size=args.local_window_size
         )

@@ -15,100 +15,78 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
 # add
-# from performer_pytorch import Attention, SelfAttention
-from performer_pytorch import  SelfAttention
+from reformer_pytorch import LSHSelfAttention
 
 @with_incremental_state
-class MultiheadPerformerAttention(nn.Module):
-    """Multi-headed attention.
+class LSHAttention(nn.Module):
+    """Implement the attention module of the paper "Reformer the efficient
+    transformer"
 
-    See "Attention Is All You Need" for more details.
+    Arguments
+    ---------
+        chunk_size  : Chunk size for each block (default: 32)
+        bits        : Number of bits for hashing (default: 8)
+        rounds      : Number of rounds of attention computation (default: 4)
+        masked      : If true, the query does not attend to itsself (default: False)
+        softmax_temp: The temperature to use for the softmax attention.
+                      (default: 1/sqrt(d_keys) where d_keys is computed at
+                      runtime)
+        attention_dropout: The dropout rate to apply to the attention
+                           (default: 0.1)
+        event_dispatcher: str or EventDispatcher instance to be used by this
+                          module for dispatching events (default: the default
+                          global dispatcher)
     """
 
     def __init__(
-        self,
-        embed_dim,
-        num_heads,
-        kdim=None,
-        vdim=None,
-        dropout=0.0,
-        bias=True,
-        add_bias_kv=False,
-        add_zero_attn=False,
-        self_attention=False,
-        encoder_decoder_attention=False,
-        q_noise=0.0,
-        qn_block_size=8,
-        # add
-        causal=True,
-        local_heads=0,
-        local_window_size=256,
-        nb_features=None,
-        feature_redraw_interval=1000,
-        generalized_attention=False,
-        kernel_fn=nn.ReLU(),
-        no_projection=False,
-        qkv_bias=False,
-        attn_out_bias=True
+        self, 
+        # attention layer
+        dim, 
+        heads = 8, 
+        bucket_size = 64, 
+        n_hashes = 8, 
+        causal = False, 
+        dim_head = None, 
+        attn_chunks = 1, 
+        random_rotations_per_head = False, 
+        attend_across_buckets = True, 
+        allow_duplicate_attention = True, 
+        num_mem_kv = 0, 
+        one_value_head = False, 
+        use_full_attn = False, 
+        full_attn_thres = None, 
+        return_attn = False, 
+        post_attn_dropout = 0., 
+        dropout = 0., 
+        n_local_attn_heads = 0
     ):
-        '''
-        dim = embed_dim
-        heads = num_heads
-        dim_head = head_dim
-        修改causal默认为true
-        '''
         super().__init__()
-        self.embed_dim = embed_dim
-        self.kdim = kdim if kdim is not None else embed_dim
-        self.vdim = vdim if vdim is not None else embed_dim
-        self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
-
-        self.num_heads = num_heads
-        self.dropout_module = FairseqDropout(
-            dropout, module_name=self.__class__.__name__
+        self.attention = LSHSelfAttention(
+            dim, 
+            heads, 
+            bucket_size, 
+            n_hashes, 
+            causal, 
+            dim_head, 
+            attn_chunks, 
+            random_rotations_per_head, 
+            attend_across_buckets, 
+            allow_duplicate_attention, 
+            num_mem_kv, 
+            one_value_head, 
+            use_full_attn, 
+            full_attn_thres, 
+            return_attn, 
+            post_attn_dropout, 
+            dropout, 
+            n_local_attn_heads
         )
-
-        self.head_dim = embed_dim // num_heads
-        assert (
-            self.head_dim * num_heads == self.embed_dim
-        ), "embed_dim must be divisible by num_heads"
-        self.scaling = self.head_dim ** -0.5
-
-        self.self_attention = self_attention
-        self.encoder_decoder_attention = encoder_decoder_attention
-
-        assert not self.self_attention or self.qkv_same_dim, (
-            "Self-attention requires query, key and " "value to be of the same size"
-        )
-
-        if add_bias_kv:
-            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
-            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
-        else:
-            self.bias_k = self.bias_v = None
-
-        self.add_zero_attn = add_zero_attn
-
-        self.onnx_trace = False
-
-        # add performer
-        dim = self.embed_dim
-        heads = self.num_heads
-        dim_head = self.head_dim
-
-        self.attention = SelfAttention(dim, causal, heads, dim_head, local_heads,
-                                       local_window_size, nb_features, feature_redraw_interval,
-                                       generalized_attention, kernel_fn, dropout, no_projection,
-                                       qkv_bias, attn_out_bias)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        if self.bias_k is not None:
-            nn.init.xavier_normal_(self.bias_k)
-        if self.bias_v is not None:
-            nn.init.xavier_normal_(self.bias_v)
+        return
 
     def forward(
         self,
@@ -124,22 +102,7 @@ class MultiheadPerformerAttention(nn.Module):
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
         attn_weights = None
-        # todo mask的对应关系存疑
-        # random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
-        # print("mask")
-        # if (key_padding_mask != None):
-        #     print(key_padding_mask.dtype)
-        #     print(key_padding_mask)
-        # print("context_mask")
-        # if (attn_mask != None):
-        #     print(attn_mask.dtype)
-        #     print(attn_mask)
-        # attn = self.attention(x=query, mask=key_padding_mask, context_mask=attn_mask)
-        
-        # print("query")
-        # print(query.dtype)
-        with torch.autograd.profiler.record_function("multihead-performer-attention"):
-            attn = self.attention(x=query)
+        attn = self.attention(query)
 
         return attn, attn_weights
 

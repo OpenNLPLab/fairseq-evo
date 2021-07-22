@@ -55,6 +55,7 @@ from .transformer_rfa_layer import (
 )
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
+<<<<<<< HEAD
 # from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
 
 # Longformer
@@ -63,6 +64,17 @@ from .transformer_longformer_layer import (
     TransformerLongformerEncoderLayer, 
     TransformerLongformerDecoderLayer,
     )
+=======
+from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+# linear
+from .linear_transformer_attention import MultiheadLinearAttention
+from .linear_transformer_layer import LinearTransformerEncoderLayer, LinearTransformerDecoderLayer
+# reformer
+from .reformer_attention import ReformerAttention_
+# lsh
+from .lsh_attention import LSHAttention
+from .reformer_layer import ReformerEncoderLayer, ReformerDecoderLayer
+>>>>>>> c4590fc6aa0dc4e9739415c5ccd8d9c84840e39e
 
 
 # norm rfa
@@ -72,8 +84,8 @@ from .transformer_longformer_layer import (
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
 #from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
 # performer
-# from .multihead_performer_attention import MultiheadPerformerAttention
-# from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
+from .multihead_performer_attention import MultiheadPerformerAttention
+from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -128,10 +140,23 @@ __all__ = [
     # sparse attention
     "SparseMultiheadAttention",
     "SparseTransformerEncoderLayer",
+<<<<<<< HEAD
     "SparseTransformerDecoderLayer"
     # longformer
     'LongformerSelfAttention',
     'TransformerLongformerEncoderLayer'
     'TransformerLongformerDecoderLayer'
 
+=======
+    "SparseTransformerDecoderLayer",
+    # linear attention
+    "MultiheadLinearAttention",
+    "LinearTransformerEncoderLayer", 
+    "LinearTransformerDecoderLayer",
+    # reformer
+    "ReformerAttention_",
+    "ReformerEncoderLayer", 
+    "ReformerDecoderLayer",
+    "LSHAttention"
+>>>>>>> c4590fc6aa0dc4e9739415c5ccd8d9c84840e39e
 ]
