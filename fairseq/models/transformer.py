@@ -33,25 +33,16 @@ from fairseq.modules import (
     # debug
     TransformerRfaDecoderDebugLayer,
     # performer
-<<<<<<< HEAD
     # PerformerEncoderLayer,
    #  PerformerDecoderLayer,
-=======
-    PerformerEncoderLayer,
-    PerformerDecoderLayer,
-<<<<<<< HEAD
-    # longformer
-    TransformerLongformerDecoderLayer,
-    TransformerLongformerEncoderLayer
-
-
-=======
+   # PerformerEncoderLayer,
+    # PerformerDecoderLayer,
     # sparse transformer
-    SparseTransformerEncoderLayer,
-    SparseTransformerDecoderLayer
->>>>>>> ff363ac5d0c45f58b5906c3d7fdb4bd1d369fb2e
->>>>>>> 76f3a580e179d17d6189c1d517e73c1353e7ee62
+    # SparseTransformerEncoderLayer,
+    # SparseTransformerDecoderLayer,
+    TransformerLongformerDecoderLayer
 )
+
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
@@ -59,7 +50,6 @@ from torch import Tensor
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
-
 
 DEFAULT_MIN_PARAMS_TO_WRAP = int(1e8)
 
@@ -636,7 +626,7 @@ class TransformerEncoder(FairseqEncoder):
         if isinstance(self.embed_positions, SinusoidalPositionalEmbedding):
             weights_key = "{}.embed_positions.weights".format(name)
             if weights_key in state_dict:
-                print("deleting {0}".format(weights_key))
+                #print("deleting {0}".format(weights_key))
                 del state_dict[weights_key]
             state_dict[
                 "{}.embed_positions._float_tensor".format(name)
@@ -912,6 +902,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 - a dictionary with any model-specific outputs
         """
         bs, slen = prev_output_tokens.size()
+        #print('transformer decoder input:', prev_output_tokens.shape)
         if alignment_layer is None:
             alignment_layer = self.num_layers - 1
 
@@ -936,25 +927,34 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             if positions is not None:
                 positions = positions[:, -1:]
 
+        
         # embed tokens and positions
         x = self.embed_scale * self.embed_tokens(prev_output_tokens)
+        #print(x.shape)
 
         if self.quant_noise is not None:
             x = self.quant_noise(x)
+        #print(x.shape)
 
         if self.project_in_dim is not None:
             x = self.project_in_dim(x)
+        #print(x.shape)
 
         if positions is not None:
             x += positions
+        #print(x.shape)
 
         if self.layernorm_embedding is not None:
             x = self.layernorm_embedding(x)
+        #print(x.shape)
 
         x = self.dropout_module(x)
+        #print(x.shape)
+
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
+        #print(x.shape)
 
         self_attn_padding_mask: Optional[Tensor] = None
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
@@ -969,6 +969,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             else:
                 self_attn_mask = None
 
+            #print(idx, 'x: ', x.shape)
             x, layer_attn, _ = layer(
                 x,
                 enc,
@@ -979,6 +980,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
             )
+
+            #print(idx, 'x after layer:', x.shape)
+
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
                 attn = layer_attn.float().to(x)
@@ -1174,13 +1178,8 @@ class PerformerDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
-<<<<<<< HEAD
 # add longformer
 class TransformerLongformerDecoder(TransformerDecoder):
-=======
-# add sparse transformer
-class SparseTransformerDecoder(TransformerDecoder):
->>>>>>> 76f3a580e179d17d6189c1d517e73c1353e7ee62
     def __init__(
         self,
         args,
@@ -1190,15 +1189,9 @@ class SparseTransformerDecoder(TransformerDecoder):
         output_projection=None,
     ):
         super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
-<<<<<<< HEAD
  
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = TransformerLongformerDecoderLayer(args, no_encoder_attn)
-=======
-
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = SparseTransformerDecoderLayer(args, no_encoder_attn)
->>>>>>> 76f3a580e179d17d6189c1d517e73c1353e7ee62
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
