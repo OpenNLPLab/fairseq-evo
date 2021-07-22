@@ -148,7 +148,8 @@ class MultiheadPerformerAttention(nn.Module):
         
         # print("query")
         # print(query.dtype)
-        attn = self.attention(x=query)
+        with torch.autograd.profiler.record_function("multihead-performer-attention"):
+            attn = self.attention(x=query)
 
         return attn, attn_weights
 
