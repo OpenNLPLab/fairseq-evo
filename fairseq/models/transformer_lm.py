@@ -23,16 +23,13 @@ from fairseq.models.transformer import (
     # debug
     TransformerRfaDebugDecoder,
     # sparse transformer
-<<<<<<< HEAD
-    # SparseTransformerDecoder,
-    TransformerLongformerDecoder
-=======
     SparseTransformerDecoder,
     # linear transformer
     LinearTransformerDecoder,
     # reformer
-    ReformerDecoder
->>>>>>> c4590fc6aa0dc4e9739415c5ccd8d9c84840e39e
+    ReformerDecoder,
+    # longformer
+    TransformerLongformerDecoder
 )
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
