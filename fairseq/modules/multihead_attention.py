@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import numpy as np
 from typing import Dict, Optional, Tuple
 
 import torch
@@ -37,7 +38,12 @@ class MultiheadAttention(nn.Module):
         encoder_decoder_attention=False,
         q_noise=0.0,
         qn_block_size=8,
+        # add
+        index=0,
     ):
+        # add
+        self.index = index
+
         super().__init__()
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
@@ -168,6 +174,38 @@ class MultiheadAttention(nn.Module):
             and not torch.jit.is_scripting()
         ):
             assert key is not None and value is not None
+            ## add begin
+            # need_weights = True
+            # attn, attn_weights = F.multi_head_attention_forward(
+            #     query,
+            #     key,
+            #     value,
+            #     self.embed_dim,
+            #     self.num_heads,
+            #     torch.empty([0]),
+            #     torch.cat((self.q_proj.bias, self.k_proj.bias, self.v_proj.bias)),
+            #     self.bias_k,
+            #     self.bias_v,
+            #     self.add_zero_attn,
+            #     self.dropout_module.p,
+            #     self.out_proj.weight,
+            #     self.out_proj.bias,
+            #     self.training or self.dropout_module.apply_during_inference,
+            #     key_padding_mask,
+            #     need_weights,
+            #     attn_mask,
+            #     use_separate_proj_weight=True,
+            #     q_proj_weight=self.q_proj.weight,
+            #     k_proj_weight=self.k_proj.weight,
+            #     v_proj_weight=self.v_proj.weight,
+            # )
+
+            # with open(f"{self.index}.npy", "ab+") as f:
+            #     np.save(f, attn_weights.cpu().detach().numpy())
+
+            # return attn, attn_weights
+            ## add end
+
             return F.multi_head_attention_forward(
                 query,
                 key,

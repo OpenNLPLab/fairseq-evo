@@ -964,7 +964,7 @@ def transformer_lm_rfa_small_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     # add
-    args.proj_dim = getattr(args, "proj_dim", 40)
+    args.proj_dim = getattr(args, "proj_dim", 64)
     args.tau = getattr(args, "tau", 1.0)
     args.reparam_proj = getattr(args, "reparam_proj", True)
     args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
@@ -988,12 +988,14 @@ def transformer_lm_rfa_debug_small_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     # add
-    args.proj_dim = getattr(args, "proj_dim", 40)
+    args.proj_dim = getattr(args, "proj_dim", 64)
     args.tau = getattr(args, "tau", 1.0)
     args.reparam_proj = getattr(args, "reparam_proj", True)
-    args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
+    args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", True)
+    # args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
     args.sample_num = getattr(args, "sample_num", 200)
-    transformer_lm_big(args)
+    # transformer_lm_big(args)
+    transformer_lm_small(args)
 
 @register_model_architecture("transformer_rfa_debug_lm", "transformer_lm_rfa_debug_wiki103")
 def transformer_lm_rfa_debug_wiki103(args):
@@ -1012,11 +1014,11 @@ def transformer_lm_rfa_debug_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     # add
-    args.proj_dim = getattr(args, "proj_dim", 40)
+    args.proj_dim = getattr(args, "proj_dim", 64)
     args.tau = getattr(args, "tau", 1.0)
     args.reparam_proj = getattr(args, "reparam_proj", True)
     args.cuda_causal_rfa = getattr(args, "cuda_causal_rfa", False)
-    args.sample_num = getattr(args, "sample_num", 20)
+    args.sample_num = getattr(args, "sample_num", 200)
     transformer_lm_big(args)
 
 # performer
@@ -1190,6 +1192,7 @@ def reformer_lm_wiki103(args):
     transformer_lm_big(args)
     # add
     args.causal = getattr(args, "causal", True)
-    args.bucket_size = getattr(args, "bucket_size", 64)
+    # args.bucket_size = getattr(args, "bucket_size", 64)
+    args.bucket_size = getattr(args, "bucket_size", 128)
     args.n_hashes = getattr(args, "n_hashes", 8)
     args.attn_chunks = getattr(args, "attn_chunks", 1)

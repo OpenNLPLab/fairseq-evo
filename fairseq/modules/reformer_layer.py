@@ -36,8 +36,6 @@ class ReformerDecoderLayer(TransformerDecoderLayer):
     def __init__(
         self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
-        print("init")
-        print(args)
         super().__init__(args, no_encoder_attn, add_bias_kv, add_zero_attn)
 
     def build_self_attention(

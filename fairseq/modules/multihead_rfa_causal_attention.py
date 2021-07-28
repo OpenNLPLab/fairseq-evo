@@ -261,6 +261,8 @@ class MultiheadRfaCausalAttentionDebug(nn.Module):
         reparam_proj=True,
         cuda_causal_rfa=False,
         sample_num=200,
+        # 8为更新频率
+        recycle_num=125 * 8,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -294,8 +296,6 @@ class MultiheadRfaCausalAttentionDebug(nn.Module):
 
         self.add_zero_attn = add_zero_attn
 
-        
-
         self.onnx_trace = False
 
         # add
@@ -303,12 +303,18 @@ class MultiheadRfaCausalAttentionDebug(nn.Module):
         self.tau = tau
         self.reparam_proj = reparam_proj
         # 默认不使用cuda_causal_rfa, 因为没有attention mask, 并且cuda_causal_rfa有bug
+        # debug, set cuda_causal_rfa = True
         self.causal_att = CausalAttention(embed_dim=self.embed_dim, num_heads=self.num_heads, head_dim=self.head_dim,
                                           proj_dim=self.proj_dim, tau=self.tau, reparam_proj=self.reparam_proj,
-                                          cuda_causal_rfa=False)
-        # 第一次集中采样
+                                          cuda_causal_rfa=cuda_causal_rfa)
+        # 集中采样sample_num个数据
         self.sample_num = sample_num
-        self.gaussian = torch.randn(self.sample_num, self.num_heads, self.proj_dim, self.head_dim)
+        with torch.no_grad():
+            self.gaussian = torch.randn(self.sample_num, self.num_heads, self.proj_dim, self.head_dim)
+        # self.gaussian = torch.randn(self.sample_num, self.num_heads, self.proj_dim, self.head_dim)
+        self.recycle_num = recycle_num
+        self.cnt = 0
+        self.random_matrices = None
 
         self.reset_parameters()
 
@@ -337,10 +343,12 @@ class MultiheadRfaCausalAttentionDebug(nn.Module):
     ) -> Tuple[Tensor, Optional[Tensor]]:
         attn_weights = None
         # 标准正态分布
-        # random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
-        with torch.no_grad():
-            random_matrices = self.gaussian[np.random.randint(0, self.sample_num)]
-        attn = self.causal_att(x=query, random_matrices=random_matrices, 
+        if self.cnt % self.recycle_num == 0:
+            self.random_matrices = self.gaussian[np.random.randint(0, self.sample_num)]
+        self.cnt += 1
+        # with torch.no_grad():
+        #     self.random_matrices = torch.randn(self.num_heads, self.proj_dim, self.head_dim)
+        attn = self.causal_att(x=query, random_matrices=self.random_matrices, 
                                key_padding_mask=key_padding_mask, attn_mask=attn_mask)
 
         return attn, attn_weights
