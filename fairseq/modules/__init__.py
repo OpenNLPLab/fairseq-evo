@@ -37,6 +37,7 @@ from .unfold import unfold1d
 from .transformer_layer import TransformerDecoderLayer, TransformerEncoderLayer
 from .vggblock import VGGBlock
 
+
 # rfa
 from .multihead_rfa_attention import MultiheadRfaAttention
 from .multihead_rfa_causal_attention import (
@@ -54,6 +55,16 @@ from .transformer_rfa_layer import (
 )
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
+<<<<<<< HEAD
+# from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+
+# Longformer
+from .multihead_longformer_attention import LongformerSelfAttention
+from .transformer_longformer_layer import (
+    TransformerLongformerEncoderLayer, 
+    TransformerLongformerDecoderLayer,
+    )
+=======
 from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
 # linear
 from .linear_transformer_attention import MultiheadLinearAttention
@@ -63,6 +74,7 @@ from .reformer_attention import ReformerAttention_
 # lsh
 from .lsh_attention import LSHAttention
 from .reformer_layer import ReformerEncoderLayer, ReformerDecoderLayer
+>>>>>>> c4590fc6aa0dc4e9739415c5ccd8d9c84840e39e
 
 
 # norm rfa
@@ -128,6 +140,14 @@ __all__ = [
     # sparse attention
     "SparseMultiheadAttention",
     "SparseTransformerEncoderLayer",
+<<<<<<< HEAD
+    "SparseTransformerDecoderLayer"
+    # longformer
+    'LongformerSelfAttention',
+    'TransformerLongformerEncoderLayer'
+    'TransformerLongformerDecoderLayer'
+
+=======
     "SparseTransformerDecoderLayer",
     # linear attention
     "MultiheadLinearAttention",
@@ -138,4 +158,5 @@ __all__ = [
     "ReformerEncoderLayer", 
     "ReformerDecoderLayer",
     "LSHAttention"
+>>>>>>> c4590fc6aa0dc4e9739415c5ccd8d9c84840e39e
 ]

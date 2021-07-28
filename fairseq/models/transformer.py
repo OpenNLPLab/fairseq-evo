@@ -34,6 +34,15 @@ from fairseq.modules import (
     TransformerRfaDecoderDebugLayer,
     # performer
     # PerformerEncoderLayer,
+<<<<<<< HEAD
+   #  PerformerDecoderLayer,
+   # PerformerEncoderLayer,
+    # PerformerDecoderLayer,
+    # sparse transformer
+    # SparseTransformerEncoderLayer,
+    # SparseTransformerDecoderLayer,
+    TransformerLongformerDecoderLayer
+=======
     PerformerDecoderLayer,
     # sparse transformer
     SparseTransformerEncoderLayer,
@@ -44,7 +53,9 @@ from fairseq.modules import (
     # reformer
     ReformerEncoderLayer,
     ReformerDecoderLayer
+>>>>>>> c4590fc6aa0dc4e9739415c5ccd8d9c84840e39e
 )
+
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
@@ -52,7 +63,6 @@ from torch import Tensor
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
-
 
 DEFAULT_MIN_PARAMS_TO_WRAP = int(1e8)
 
@@ -629,7 +639,7 @@ class TransformerEncoder(FairseqEncoder):
         if isinstance(self.embed_positions, SinusoidalPositionalEmbedding):
             weights_key = "{}.embed_positions.weights".format(name)
             if weights_key in state_dict:
-                print("deleting {0}".format(weights_key))
+                #print("deleting {0}".format(weights_key))
                 del state_dict[weights_key]
             state_dict[
                 "{}.embed_positions._float_tensor".format(name)
@@ -913,6 +923,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 - a dictionary with any model-specific outputs
         """
         bs, slen = prev_output_tokens.size()
+        #print('transformer decoder input:', prev_output_tokens.shape)
         if alignment_layer is None:
             alignment_layer = self.num_layers - 1
 
@@ -937,25 +948,34 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             if positions is not None:
                 positions = positions[:, -1:]
 
+        
         # embed tokens and positions
         x = self.embed_scale * self.embed_tokens(prev_output_tokens)
+        #print(x.shape)
 
         if self.quant_noise is not None:
             x = self.quant_noise(x)
+        #print(x.shape)
 
         if self.project_in_dim is not None:
             x = self.project_in_dim(x)
+        #print(x.shape)
 
         if positions is not None:
             x += positions
+        #print(x.shape)
 
         if self.layernorm_embedding is not None:
             x = self.layernorm_embedding(x)
+        #print(x.shape)
 
         x = self.dropout_module(x)
+        #print(x.shape)
+
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
+        #print(x.shape)
 
         self_attn_padding_mask: Optional[Tensor] = None
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
@@ -970,6 +990,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             else:
                 self_attn_mask = None
 
+            #print(idx, 'x: ', x.shape)
             x, layer_attn, _ = layer(
                 x,
                 enc,
@@ -980,6 +1001,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
             )
+
+            #print(idx, 'x after layer:', x.shape)
+
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
                 attn = layer_attn.float().to(x)
@@ -1175,8 +1199,8 @@ class PerformerDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
-# add sparse transformer
-class SparseTransformerDecoder(TransformerDecoder):
+# add longformer
+class TransformerLongformerDecoder(TransformerDecoder):
     def __init__(
         self,
         args,
@@ -1185,10 +1209,104 @@ class SparseTransformerDecoder(TransformerDecoder):
         no_encoder_attn=False,
         output_projection=None,
     ):
-        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
 
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = SparseTransformerDecoderLayer(args, no_encoder_attn)
+        self.args = args
+        super(TransformerDecoder, self).__init__(dictionary)
+        self.register_buffer("version", torch.Tensor([3]))
+        self._future_mask = torch.empty(0)
+        self.pad_idx = embed_tokens.padding_idx
+        self.dropout_module = FairseqDropout(
+            args.dropout, module_name=self.__class__.__name__
+        )
+        self.decoder_layerdrop = args.decoder_layerdrop
+        self.share_input_output_embed = args.share_decoder_input_output_embed
+
+        input_embed_dim = embed_tokens.embedding_dim
+        embed_dim = args.decoder_embed_dim
+        self.embed_dim = embed_dim
+        self.output_embed_dim = args.decoder_output_dim
+
+        self.padding_idx = embed_tokens.padding_idx
+        self.max_target_positions = args.max_target_positions
+
+        self.embed_tokens = embed_tokens
+
+        self.embed_scale = 1.0 if args.no_scale_embedding else math.sqrt(embed_dim)
+
+        if not args.adaptive_input and args.quant_noise_pq > 0:
+            self.quant_noise = apply_quant_noise_(
+                nn.Linear(embed_dim, embed_dim, bias=False),
+                args.quant_noise_pq,
+                args.quant_noise_pq_block_size,
+            )
+        else:
+            self.quant_noise = None
+
+        self.project_in_dim = (
+            Linear(input_embed_dim, embed_dim, bias=False)
+            if embed_dim != input_embed_dim
+            else None
+        )
+        self.embed_positions = (
+            PositionalEmbedding(
+                self.max_target_positions,
+                embed_dim,
+                self.padding_idx,
+                learned=args.decoder_learned_pos,
+            )
+            if not args.no_token_positional_embeddings
+            else None
+        )
+
+        if getattr(args, "layernorm_embedding", False):
+            self.layernorm_embedding = LayerNorm(embed_dim)
+        else:
+            self.layernorm_embedding = None
+
+        self.cross_self_attention = getattr(args, "cross_self_attention", False)
+
+        if self.decoder_layerdrop > 0.0:
+            self.layers = LayerDropModuleList(p=self.decoder_layerdrop)
+        else:
+            self.layers = nn.ModuleList([])
+        self.layers.extend(
+            [
+                self.build_decoder_layer(args, layer_id, no_encoder_attn)
+                for layer_id in range(args.decoder_layers)
+            ]
+        )
+
+        self.num_layers = len(self.layers)
+
+        if args.decoder_normalize_before and not getattr(
+            args, "no_decoder_final_norm", False
+        ):
+            self.layer_norm = LayerNorm(embed_dim)
+        else:
+            self.layer_norm = None
+
+        self.project_out_dim = (
+            Linear(embed_dim, self.output_embed_dim, bias=False)
+            if embed_dim != self.output_embed_dim and not args.tie_adaptive_weights
+            else None
+        )
+
+        self.adaptive_softmax = None
+        if 'sentence_prediction' in args.task:
+            self.score = nn.Linear(
+                self.output_embed_dim, len(dictionary), bias=False
+            )
+            nn.init.normal_(
+                self.score.weight, mean=0, std=self.output_embed_dim ** -0.5
+            )
+        else:
+            self.output_projection = output_projection
+            if self.output_projection is None:
+                self.build_output_projection(args, dictionary, embed_tokens)
+        
+ 
+    def build_decoder_layer(self, args, layer_id, no_encoder_attn=False):
+        layer = TransformerLongformerDecoderLayer(args, layer_id, no_encoder_attn)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -1201,6 +1319,7 @@ class SparseTransformerDecoder(TransformerDecoder):
         )
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
+        
 
 # add linear transformer
 class LinearTransformerDecoder(TransformerDecoder):
