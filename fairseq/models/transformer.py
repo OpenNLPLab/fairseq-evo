@@ -45,7 +45,13 @@ from fairseq.modules import (
     ReformerEncoderLayer,
     ReformerDecoderLayer,
     # longformer
-    TransformerLongformerDecoderLayer
+    TransformerLongformerDecoderLayer,
+    # merge transformer
+    TransformerMergeDecoderLayer,
+    TransformerMergeEncoderLayer,
+    # simple transformer
+    TransformerSimpleDecoderLayer,
+    TransformerSimpleEncoderLayer,
 )
 
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
@@ -1367,6 +1373,35 @@ class ReformerDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+class ReformerEncoder(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = ReformerEncoderLayer(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
 # add sparse transformer
 class SparseTransformerDecoder(TransformerDecoder):
     def __init__(
@@ -1381,6 +1416,153 @@ class SparseTransformerDecoder(TransformerDecoder):
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = SparseTransformerDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+# add simple transformer
+class TransformerSimpleDecoder(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = TransformerSimpleDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+class TransformerSimpleEncoder(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = TransformerSimpleEncoderLayer(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+@register_model("transformersimple")
+class TransformerSimpleModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return TransformerSimpleEncoder(args, src_dict, embed_tokens)
+
+    @classmethod
+    def build_decoder(cls, args, tgt_dict, embed_tokens):
+        return TransformerSimpleDecoder(
+            args,
+            tgt_dict,
+            embed_tokens,
+            no_encoder_attn=getattr(args, "no_cross_attention", False),
+        )
+
+
+# add merge transformer
+class TransformerMergeDecoder(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = TransformerMergeDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+class TransformerMergeEncoder(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = TransformerMergeEncoderLayer(args)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -1460,6 +1642,11 @@ def base_architecture(args):
     args.quant_noise_pq_block_size = getattr(args, "quant_noise_pq_block_size", 8)
     args.quant_noise_scalar = getattr(args, "quant_noise_scalar", 0)
 
+# simple start
+@register_model_architecture("transformersimple", "transformer_simple_wmt_en_de")
+def transformer_simple_wmt_en_de(args):
+    base_architecture(args)
+# simple end
 
 @register_model_architecture("transformer", "transformer_iwslt_de_en")
 def transformer_iwslt_de_en(args):

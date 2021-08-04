@@ -17,6 +17,9 @@ from fairseq.models.transformer import (
     TransformerEncoder,
     TransformerModel,
     base_architecture,
+    # simple
+    TransformerSimpleDecoder,
+    TransformerSimpleEncoder,
 )
 
 
@@ -203,6 +206,31 @@ class MultilingualTransformerModel(FairseqMultiModel):
                 del state_dict_subset[k]
         super().load_state_dict(state_dict_subset, strict=strict, model_cfg=model_cfg)
 
+# add simple transformer
+@register_model("multilingual_simple_transformer")
+class MultilingualSimpleTransformerModel(MultilingualTransformerModel):
+    """Train Transformer models for multiple language pairs simultaneously.
+
+    Requires `--task multilingual_translation`.
+
+    We inherit all arguments from TransformerModel and assume that all language
+    pairs use a single Transformer architecture. In addition, we provide several
+    options that are specific to the multilingual setting.
+
+    Args:
+        --share-encoder-embeddings: share encoder embeddings across all source languages
+        --share-decoder-embeddings: share decoder embeddings across all target languages
+        --share-encoders: share all encoder params (incl. embeddings) across all source languages
+        --share-decoders: share all decoder params (incl. embeddings) across all target languages
+    """
+
+    def __init__(self, encoders, decoders):
+        super().__init__(encoders, decoders)
+
+    @classmethod
+    def _get_module_class(cls, is_encoder, args, lang_dict, embed_tokens, langs):
+        module_class = TransformerSimpleEncoder if is_encoder else TransformerSimpleDecoder
+        return module_class(args, lang_dict, embed_tokens)
 
 @register_model_architecture("multilingual_transformer", "multilingual_transformer")
 def base_multilingual_architecture(args):
@@ -217,6 +245,21 @@ def base_multilingual_architecture(args):
     "multilingual_transformer", "multilingual_transformer_iwslt_de_en"
 )
 def multilingual_transformer_iwslt_de_en(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 512)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 1024)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 4)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 512)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 1024)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 4)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    base_multilingual_architecture(args)
+
+# add simple transformer
+@register_model_architecture(
+    "multilingual_simple_transformer", "multilingual_simple_transformer_iwslt_de_en"
+)
+def multilingual_simple_transformer_iwslt_de_en(args):
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 512)
     args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 1024)
     args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 4)

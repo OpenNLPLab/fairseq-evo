@@ -1,9 +1,5 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
 import math
+import numpy as np
 from typing import Dict, Optional, Tuple
 
 import torch
@@ -14,79 +10,100 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
-# add
-from reformer_pytorch import LSHSelfAttention
+
 
 @with_incremental_state
-class LSHAttention(nn.Module):
-    """Implement the attention module of the paper "Reformer the efficient
-    transformer"
+class MultiheadMergeAttention(nn.Module):
+    """Multi-headed attention.
 
-    Arguments
-    ---------
-        chunk_size  : Chunk size for each block (default: 32)
-        bits        : Number of bits for hashing (default: 8)
-        rounds      : Number of rounds of attention computation (default: 4)
-        masked      : If true, the query does not attend to itsself (default: False)
-        softmax_temp: The temperature to use for the softmax attention.
-                      (default: 1/sqrt(d_keys) where d_keys is computed at
-                      runtime)
-        attention_dropout: The dropout rate to apply to the attention
-                           (default: 0.1)
-        event_dispatcher: str or EventDispatcher instance to be used by this
-                          module for dispatching events (default: the default
-                          global dispatcher)
+    See "Attention Is All You Need" for more details.
     """
 
     def __init__(
-        self, 
-        # attention layer
-        dim, 
-        heads = 8, 
-        bucket_size = 64, 
-        n_hashes = 8, 
-        causal = False, 
-        dim_head = None, 
-        attn_chunks = 1, 
-        random_rotations_per_head = False, 
-        attend_across_buckets = True, 
-        allow_duplicate_attention = True, 
-        num_mem_kv = 0, 
-        one_value_head = False, 
-        use_full_attn = False, 
-        full_attn_thres = None, 
-        return_attn = False, 
-        post_attn_dropout = 0., 
-        dropout = 0., 
-        n_local_attn_heads = 0
+        self,
+        embed_dim,
+        num_heads,
+        kdim=None,
+        vdim=None,
+        dropout=0.0,
+        bias=True,
+        add_bias_kv=False,
+        add_zero_attn=False,
+        self_attention=False,
+        encoder_decoder_attention=False,
+        q_noise=0.0,
+        qn_block_size=8,
+        # add
+        index=0,
     ):
+        # add
+        self.index = index
+
         super().__init__()
-        self.attention = LSHSelfAttention(
-            dim, 
-            heads, 
-            bucket_size, 
-            n_hashes, 
-            causal, 
-            dim_head, 
-            attn_chunks, 
-            random_rotations_per_head, 
-            attend_across_buckets, 
-            allow_duplicate_attention, 
-            num_mem_kv, 
-            one_value_head, 
-            use_full_attn, 
-            full_attn_thres, 
-            return_attn, 
-            post_attn_dropout, 
-            dropout, 
-            n_local_attn_heads
+        self.embed_dim = embed_dim
+        self.kdim = kdim if kdim is not None else embed_dim
+        self.vdim = vdim if vdim is not None else embed_dim
+        self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
+
+        self.num_heads = num_heads
+        self.dropout_module = FairseqDropout(
+            dropout, module_name=self.__class__.__name__
         )
+
+        self.head_dim = embed_dim // num_heads
+        assert (
+            self.head_dim * num_heads == self.embed_dim
+        ), "embed_dim must be divisible by num_heads"
+        self.scaling = self.head_dim ** -0.5
+
+        self.self_attention = self_attention
+        self.encoder_decoder_attention = encoder_decoder_attention
+
+        assert not self.self_attention or self.qkv_same_dim, (
+            "Self-attention requires query, key and " "value to be of the same size"
+        )
+
+        self.k_proj = quant_noise(
+            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+        self.v_proj = quant_noise(
+            nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+        self.q_proj = quant_noise(
+            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+
+        if add_bias_kv:
+            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
+            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
+        else:
+            self.bias_k = self.bias_v = None
+
+        self.add_zero_attn = add_zero_attn
+
+        self.reset_parameters()
+
+        self.onnx_trace = False
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        return
+        if self.qkv_same_dim:
+            # Empirically observed the convergence to be much better with
+            # the scaled initialization
+            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
+        else:
+            nn.init.xavier_uniform_(self.k_proj.weight)
+            nn.init.xavier_uniform_(self.v_proj.weight)
+            nn.init.xavier_uniform_(self.q_proj.weight)
+
+        if self.bias_k is not None:
+            nn.init.xavier_normal_(self.bias_k)
+        if self.bias_v is not None:
+            nn.init.xavier_normal_(self.bias_v)
 
     def forward(
         self,
@@ -101,10 +118,74 @@ class LSHAttention(nn.Module):
         before_softmax: bool = False,
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
-        attn_weights = None
-        attn = self.attention(query)
+        """Input shape: Time x Batch x Channel
 
-        return attn, attn_weights
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        head_dim = embed_dim // num_heads
+
+        tgt_len, bsz, embed_dim = query.size()
+        # N, L, E
+        q = self.q_proj(query).transpose(0, 1)
+        # N, S, E
+        k = self.k_proj(key).transpose(0, 1)
+        # N, S, E
+        value = value.transpose(0, 1)
+    
+        # test for roberta
+        scaling = float(embed_dim) ** -0.5
+        q = q * scaling
+
+        # N, L, S
+        attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+
+        if attn_mask is not None:
+            attn_output_weights += attn_mask
+       
+        # N, L, S
+        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        # dropout
+        attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+        # N, L, E
+        attn_output = torch.bmm(attn_output_weights, value)
+        # L, N, E
+        attn_output = attn_output.transpose(0, 1)
+        # L, N, E
+        attn_output = self.v_proj(attn_output)
+
+        if need_weights:
+            return attn_output, attn_output_weights
+        else:
+            return attn_output, None
 
     @staticmethod
     def _append_prev_key_padding_mask(

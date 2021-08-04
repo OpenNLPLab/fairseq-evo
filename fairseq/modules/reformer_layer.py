@@ -29,7 +29,11 @@ class ReformerEncoderLayer(TransformerEncoderLayer):
 
         return LSHAttention(
             dim=embed_dim,
-            heads=args.encoder_attention_heads
+            heads=args.encoder_attention_heads,
+            causal=args.causal,
+            bucket_size=args.bucket_size,
+            n_hashes=args.n_hashes,
+            attn_chunks=args.attn_chunks
         )
 
 class ReformerDecoderLayer(TransformerDecoderLayer):

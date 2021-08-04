@@ -25,6 +25,10 @@ from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
 from .hub_interface import RobertaHubInterface
 
+# reformer
+from fairseq.models.transformer import ReformerEncoder, TransformerMergeEncoder
+# simple
+from fairseq.models.transformer import TransformerSimpleEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -507,6 +511,95 @@ class RobertaEncoder(FairseqEncoder):
         """Maximum output length supported by the encoder."""
         return self.args.max_positions
 
+# reformer
+class RobertaLSHEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = ReformerEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_lsh")
+class RobertaLSHModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaLSHEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+# merge
+class RobertaMergeEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerMergeEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_merge")
+class RobertaMergeModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaMergeEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+# simple
+class RobertaSimpleEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerSimpleEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_simple")
+class RobertaSimpleModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaSimpleEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
@@ -579,4 +672,24 @@ def xlm_architecture(args):
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1280)
     args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 1280 * 4)
     args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 16)
+    base_architecture(args)
+
+# reformer
+@register_model_architecture("roberta_lsh", "roberta_lsh_base")
+def roberta_lsh_base_architecture(args):
+    # add
+    args.causal = getattr(args, "causal", False)
+    args.bucket_size = getattr(args, "bucket_size", 128)
+    args.n_hashes = getattr(args, "n_hashes", 8)
+    args.attn_chunks = getattr(args, "attn_chunks", 1)
+    base_architecture(args)
+
+# merge
+@register_model_architecture("roberta_merge", "roberta_merge_base")
+def roberta_merge_architecture(args):
+    base_architecture(args)
+
+# simple
+@register_model_architecture("roberta_simple", "roberta_simple_base")
+def roberta_simple_architecture(args):
     base_architecture(args)

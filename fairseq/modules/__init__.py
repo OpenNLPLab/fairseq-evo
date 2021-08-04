@@ -81,6 +81,13 @@ from .transformer_longformer_layer import (
 # performer
 from .multihead_performer_attention import MultiheadPerformerAttention
 from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
+# transformer merge
+from .multihead_merge_attention import MultiheadMergeAttention
+from .transformer_merge_layer import TransformerMergeDecoderLayer, TransformerMergeEncoderLayer
+# simple attention
+from .multihead_simple_attention import MultiheadSimpleAttention
+from .transformer_simple_layer import TransformerSimpleEncoderLayer, TransformerSimpleDecoderLayer
+
 
 __all__ = [
     "AdaptiveInput",
@@ -147,6 +154,14 @@ __all__ = [
     "LSHAttention",
      # longformer
     'LongformerSelfAttention',
-    'TransformerLongformerEncoderLayer'
-    'TransformerLongformerDecoderLayer'
+    'TransformerLongformerEncoderLayer',
+    'TransformerLongformerDecoderLayer',
+    # merge attention
+    "MultiheadMergeAttention",
+    "TransformerMergeDecoderLayer",
+    "TransformerMergeEncoderLayer",
+    # simple attention'
+    "MultiheadSimpleAttention",
+    "TransformerSimpleEncoderLayer", 
+    "TransformerSimpleDecoderLayer"
 ]
