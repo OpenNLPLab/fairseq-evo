@@ -29,6 +29,8 @@ from .hub_interface import RobertaHubInterface
 from fairseq.models.transformer import ReformerEncoder, TransformerMergeEncoder
 # simple
 from fairseq.models.transformer import TransformerSimpleEncoder
+# head
+from fairseq.models.transformer import TransformerHeadEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -601,6 +603,36 @@ class RobertaSimpleModel(RobertaModel):
         encoder = RobertaSimpleEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# head
+class RobertaHeadEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerHeadEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_head")
+class RobertaHeadModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaHeadEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -692,4 +724,9 @@ def roberta_merge_architecture(args):
 # simple
 @register_model_architecture("roberta_simple", "roberta_simple_base")
 def roberta_simple_architecture(args):
+    base_architecture(args)
+
+# head
+@register_model_architecture("roberta_head", "roberta_head_base")
+def roberta_head_architecture(args):
     base_architecture(args)

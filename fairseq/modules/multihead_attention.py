@@ -174,6 +174,75 @@ class MultiheadAttention(nn.Module):
             and not torch.jit.is_scripting()
         ):
             assert key is not None and value is not None
+            ## query, key begin
+            num_heads = self.num_heads
+            tgt_len, bsz, embed_dim = query.size()
+            src_len = key.size(0)
+            head_dim = embed_dim // num_heads
+
+            tgt_len, bsz, embed_dim = query.size()
+            # L, N, E
+            q = self.q_proj(query)
+            # S, N, E
+            k = self.k_proj(key)
+            # S, N, E
+            v = self.v_proj(value)
+
+            with open(f"q_{self.index}.npy", "ab+") as f:
+                np.save(f, q.transpose(0, 1).cpu().detach().numpy())
+
+            with open(f"k_{self.index}.npy", "ab+") as f:
+                np.save(f, k.transpose(0, 1).cpu().detach().numpy())
+
+            # N * h, L, d
+            q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
+            # N * h, S, d
+            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
+
+
+            scaling = float(head_dim) ** -0.5
+            q = q * scaling
+
+            # N * h, L, S
+            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+
+            # attn_mask
+            if attn_mask is not None:
+                if attn_mask.dim() == 2:
+                    attn_mask = attn_mask.unsqueeze(0)
+                    if list(attn_mask.size()) != [1, query.size(0), key.size(0)]:
+                        raise RuntimeError('The size of the 2D attn_mask is not correct.')
+                elif attn_mask.dim() == 3:
+                    if list(attn_mask.size()) != [bsz * num_heads, query.size(0), key.size(0)]:
+                        raise RuntimeError('The size of the 3D attn_mask is not correct.')
+                else:
+                    raise RuntimeError("attn_mask's dimension {} is not supported".format(attn_mask.dim()))
+            # attn_mask's dim is 3 now.
+
+            if attn_mask is not None:
+                attn_output_weights += attn_mask
+        
+            # N * h, L, S
+            attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+            # dropout
+            attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+            # N * h, L, d
+            attn_output = torch.bmm(attn_output_weights, v)
+            # L, N, E
+            attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+            # L, N, E
+            attn_output = self.out_proj(attn_output)
+
+            if need_weights:
+                attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
+                return attn_output, attn_output_weights
+            else:
+                return attn_output, None
+
+            ## query, key end
+
             ## add begin
             # need_weights = True
             # attn, attn_weights = F.multi_head_attention_forward(
@@ -206,29 +275,29 @@ class MultiheadAttention(nn.Module):
             # return attn, attn_weights
             ## add end
 
-            return F.multi_head_attention_forward(
-                query,
-                key,
-                value,
-                self.embed_dim,
-                self.num_heads,
-                torch.empty([0]),
-                torch.cat((self.q_proj.bias, self.k_proj.bias, self.v_proj.bias)),
-                self.bias_k,
-                self.bias_v,
-                self.add_zero_attn,
-                self.dropout_module.p,
-                self.out_proj.weight,
-                self.out_proj.bias,
-                self.training or self.dropout_module.apply_during_inference,
-                key_padding_mask,
-                need_weights,
-                attn_mask,
-                use_separate_proj_weight=True,
-                q_proj_weight=self.q_proj.weight,
-                k_proj_weight=self.k_proj.weight,
-                v_proj_weight=self.v_proj.weight,
-            )
+            # return F.multi_head_attention_forward(
+            #     query,
+            #     key,
+            #     value,
+            #     self.embed_dim,
+            #     self.num_heads,
+            #     torch.empty([0]),
+            #     torch.cat((self.q_proj.bias, self.k_proj.bias, self.v_proj.bias)),
+            #     self.bias_k,
+            #     self.bias_v,
+            #     self.add_zero_attn,
+            #     self.dropout_module.p,
+            #     self.out_proj.weight,
+            #     self.out_proj.bias,
+            #     self.training or self.dropout_module.apply_during_inference,
+            #     key_padding_mask,
+            #     need_weights,
+            #     attn_mask,
+            #     use_separate_proj_weight=True,
+            #     q_proj_weight=self.q_proj.weight,
+            #     k_proj_weight=self.k_proj.weight,
+            #     v_proj_weight=self.v_proj.weight,
+            # )
 
         if incremental_state is not None:
             saved_state = self._get_input_buffer(incremental_state)

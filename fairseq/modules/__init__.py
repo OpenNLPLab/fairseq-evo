@@ -87,7 +87,9 @@ from .transformer_merge_layer import TransformerMergeDecoderLayer, TransformerMe
 # simple attention
 from .multihead_simple_attention import MultiheadSimpleAttention
 from .transformer_simple_layer import TransformerSimpleEncoderLayer, TransformerSimpleDecoderLayer
-
+# attention with head weight
+from .multihead_attention_ import MultiheadAttention_
+from .transformer_layer_ import TransformerDecoderLayer_, TransformerEncoderLayer_
 
 __all__ = [
     "AdaptiveInput",
@@ -163,5 +165,9 @@ __all__ = [
     # simple attention'
     "MultiheadSimpleAttention",
     "TransformerSimpleEncoderLayer", 
-    "TransformerSimpleDecoderLayer"
+    "TransformerSimpleDecoderLayer",
+    # attention with weight
+    "MultiheadAttention_",
+    "TransformerDecoderLayer_", 
+    "TransformerEncoderLayer_"
 ]
