@@ -290,7 +290,10 @@ def train(
             num_updates = trainer.get_num_updates()
             if num_updates % cfg.common.log_interval == 0:
                 if cfg.distributed_training.distributed_rank ==0:
-                    total_tokens = cfg.task.tokens_per_sample*update_freq*cfg.dataset.batch_size
+                    if "tokens_per_sample" in cfg.task:
+                        total_tokens = cfg.task.tokens_per_sample*update_freq*cfg.dataset.batch_size
+                    else:
+                        total_tokens = cfg.dataset.max_tokens*update_freq*cfg.dataset.batch_size
                     avg_time = time_gap/cnt
                     logger.info(f'time {total_tokens / avg_time} tokens/s {cnt} iter')
                 stats = get_training_stats(metrics.get_smoothed_values("train_inner"))
