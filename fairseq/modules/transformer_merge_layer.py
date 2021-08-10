@@ -48,3 +48,15 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
         )
+
+    def build_encoder_attention(self, embed_dim, args):
+        return MultiheadMergeAttention(
+            embed_dim,
+            args.decoder_attention_heads,
+            kdim=getattr(args, "encoder_embed_dim", None),
+            vdim=getattr(args, "encoder_embed_dim", None),
+            dropout=args.attention_dropout,
+            encoder_decoder_attention=True,
+            q_noise=self.quant_noise,
+            qn_block_size=self.quant_noise_block_size,
+        )

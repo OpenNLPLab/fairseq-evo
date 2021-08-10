@@ -90,6 +90,8 @@ from .transformer_simple_layer import TransformerSimpleEncoderLayer, Transformer
 # attention with head weight
 from .multihead_attention_ import MultiheadAttention_
 from .transformer_layer_ import TransformerDecoderLayer_, TransformerEncoderLayer_
+# simformer
+from .simformer_layer import SimformerDecoderLayer, SimformerEncoderLayer, FFN
 
 __all__ = [
     "AdaptiveInput",
@@ -169,5 +171,9 @@ __all__ = [
     # attention with weight
     "MultiheadAttention_",
     "TransformerDecoderLayer_", 
-    "TransformerEncoderLayer_"
+    "TransformerEncoderLayer_",
+    # simformer
+    "SimformerDecoderLayer", 
+    "SimformerEncoderLayer",
+    "FFN"
 ]

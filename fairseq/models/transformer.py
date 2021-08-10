@@ -1579,6 +1579,40 @@ class TransformerMergeEncoder(TransformerEncoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+@register_model("transformermerge")
+class TransformerMergeModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return TransformerMergeEncoder(args, src_dict, embed_tokens)
+
+    @classmethod
+    def build_decoder(cls, args, tgt_dict, embed_tokens):
+        return TransformerMergeDecoder(
+            args,
+            tgt_dict,
+            embed_tokens,
+            no_encoder_attn=getattr(args, "no_cross_attention", False),
+        )
+
 # head
 class TransformerHeadDecoder(TransformerDecoder):
     def __init__(
@@ -1705,7 +1739,26 @@ def base_architecture(args):
 @register_model_architecture("transformersimple", "transformer_simple_wmt_en_de")
 def transformer_simple_wmt_en_de(args):
     base_architecture(args)
+
 # simple end
+
+# merge start
+@register_model_architecture("transformermerge", "transformer_merge_base_wmt_en_de")
+def transformer_merge_base_wmt_en_de(args):
+    base_architecture(args)
+
+@register_model_architecture("transformermerge", "transformer_merge_wmt_en_de")
+def transformer_merge_wmt_en_de(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4096)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 16)
+    args.encoder_normalize_before = getattr(args, "encoder_normalize_before", False)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    args.dropout = getattr(args, "dropout", 0.3)
+    base_architecture(args)
+# merge end
 
 @register_model_architecture("transformer", "transformer_iwslt_de_en")
 def transformer_iwslt_de_en(args):
