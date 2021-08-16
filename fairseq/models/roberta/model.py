@@ -31,6 +31,10 @@ from fairseq.models.transformer import ReformerEncoder, TransformerMergeEncoder
 from fairseq.models.transformer import TransformerSimpleEncoder
 # head
 from fairseq.models.transformer import TransformerHeadEncoder
+# simformer
+from fairseq.models.simformer import SimformerEncoder
+# mix
+from fairseq.models.simformer import TransformerMixEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -633,6 +637,66 @@ class RobertaHeadModel(RobertaModel):
         encoder = RobertaHeadEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# simformer
+class RobertaSimformerEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = SimformerEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_simformer")
+class RobertaSimformerModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaSimformerEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+# mix
+class RobertaMixEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerMixEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_mix")
+class RobertaMixModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaMixEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -729,4 +793,14 @@ def roberta_simple_architecture(args):
 # head
 @register_model_architecture("roberta_head", "roberta_head_base")
 def roberta_head_architecture(args):
+    base_architecture(args)
+
+# simformer
+@register_model_architecture("roberta_simformer", "roberta_simformer_base")
+def roberta_simformer_architecture(args):
+    base_architecture(args)
+
+# mix
+@register_model_architecture("roberta_mix", "roberta_mix_base")
+def roberta_mix_architecture(args):
     base_architecture(args)
