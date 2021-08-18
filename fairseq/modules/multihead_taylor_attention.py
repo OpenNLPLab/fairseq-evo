@@ -195,25 +195,29 @@ class MultiheadTaylorAttention(nn.Module):
         # S, N, E
         k = self.k_proj(key)
     
-        # scaling = float(embed_dim) ** -0.5
+        scaling = float(embed_dim) ** -0.5
         # q *= self.scaling
 
         # N, L, E
         q = q.transpose(0, 1)
         # |q| ^ (-1) q
-        q = torch.nn.functional.normalize(q, dim=-1)
+        q = F.normalize(q, p=2, dim=-1)
+        q *= scaling
         # N, S, E
         k = k.transpose(0, 1)
         # |k| ^ (-1) k
-        k = torch.nn.functional.normalizie(k, dim=-1)
+        k = F.normalize(k, p=2, dim=-1)
         # N, L, S
         # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
         attn_output_weights = 1 + torch.bmm(q, k.transpose(1, 2))
         if attn_mask is not None:
-            attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("inf"), 0)
-        print(attn_output_weights)
+            attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
+        # print(attn_output_weights)
         # N, L, S
-        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
+        # tmp = torch.sum(attn_output_weights, axis=-1)
+        # print(tmp)
         # dropout
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         # N, S, E
@@ -226,9 +230,6 @@ class MultiheadTaylorAttention(nn.Module):
         # L, N, E
         attn_output = self.v_proj(attn_output)
 
-        # add
-        if self.has_out:
-            attn_output = self.out_proj(attn_output)
 
         if need_weights:
             return attn_output, attn_output_weights

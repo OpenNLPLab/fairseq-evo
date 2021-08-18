@@ -699,7 +699,7 @@ class RobertaMixModel(RobertaModel):
         encoder = RobertaMixEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
-# merge
+# taylor
 class RobertaTaylorEncoder(RobertaEncoder):
     """RoBERTa encoder."""
 
