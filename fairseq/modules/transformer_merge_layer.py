@@ -27,6 +27,16 @@ class TransformerMergeEncoderLayer(TransformerEncoderLayer):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            is_base=getattr(args, "is_base", True),
+            is_ada_q=getattr(args, "is_ada_q", False),
+            is_ada_k=getattr(args, "is_ada_k", False),
+            lambda_=getattr(args, "lambda_", 0.99),
+            up_fq=getattr(args, "up_fq", 16),
+            dropout_before=getattr(args, "dropout_before", False),
+            has_out=getattr(args, "has_out", False),
+            use_q=getattr(args, "use_q", False),
+            use_k=getattr(args, "use_k", False),
         )
 
 class TransformerMergeDecoderLayer(TransformerDecoderLayer):
@@ -47,6 +57,16 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             self_attention=not getattr(args, "cross_self_attention", False),
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            is_base=getattr(args, "is_base", True),
+            is_ada_q=getattr(args, "is_ada_q", False),
+            is_ada_k=getattr(args, "is_ada_k", False),
+            lambda_=getattr(args, "lambda_", 0.99),
+            up_fq=getattr(args, "up_fq", 16),
+            dropout_before=getattr(args, "dropout_before", False),
+            has_out=getattr(args, "has_out", False),
+            use_q=getattr(args, "use_q", False),
+            use_k=getattr(args, "use_k", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -59,4 +79,14 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            is_base=getattr(args, "is_base", True),
+            is_ada_q=getattr(args, "is_ada_q", False),
+            is_ada_k=getattr(args, "is_ada_k", False),
+            lambda_=getattr(args, "lambda_", 0.99),
+            up_fq=getattr(args, "up_fq", 16),
+            dropout_before=getattr(args, "dropout_before", False),
+            has_out=getattr(args, "has_out", False),
+            use_q=getattr(args, "use_q", False),
+            use_k=getattr(args, "use_k", False),
         )

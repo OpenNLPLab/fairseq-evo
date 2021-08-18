@@ -804,3 +804,30 @@ def roberta_simformer_architecture(args):
 @register_model_architecture("roberta_mix", "roberta_mix_base")
 def roberta_mix_architecture(args):
     base_architecture(args)
+
+# dp_bf
+@register_model_architecture("roberta_merge", "roberta_dp_bf")
+def roberta_mix_architecture(args):
+    # args.is_base = getattr(args, "is_base", True)
+    # args.is_ada_q = getattr(args, "is_ada_q", False)
+    # args.is_ada_k = getattr(args, "is_ada_k", False)
+    # args.lambda_ = getattr(args, "lambda_", 0.99)
+    # args.up_fq = getattr(args, "up_fq", 16)
+    args.dropout_before = getattr(args, "dropout_before", True)
+    base_architecture(args)
+
+# ada q
+@register_model_architecture("roberta_merge", "roberta_ada_q")
+def roberta_mix_architecture(args):
+    args.is_ada_q = getattr(args, "is_ada_q", True)
+    args.is_ada_k = getattr(args, "is_ada_k", True)
+    args.lambda_ = getattr(args, "lambda_", 0.99)
+    args.use_q = getattr(args, "use_q", True),
+    args.use_k = getattr(args, "use_k", False),
+    base_architecture(args)
+
+# with o
+@register_model_architecture("roberta_merge", "roberta_with_o")
+def roberta_mix_architecture(args):
+    args.has_out = getattr(args, "has_out", True)
+    base_architecture(args)
