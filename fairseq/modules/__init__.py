@@ -69,8 +69,13 @@ from .multihead_longformer_attention import LongformerSelfAttention
 from .transformer_longformer_layer import (
     TransformerLongformerEncoderLayer, 
     TransformerLongformerDecoderLayer,
-    )
-
+)
+# taylor
+from .multihead_taylor_attention import MultiheadTaylorAttention
+from .transformer_taylor_layer import (
+    TransformerTaylorDecoderLayer,
+    TransformerTaylorEncoderLayer,
+)
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm

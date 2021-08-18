@@ -35,6 +35,8 @@ from fairseq.models.transformer import TransformerHeadEncoder
 from fairseq.models.simformer import SimformerEncoder
 # mix
 from fairseq.models.simformer import TransformerMixEncoder
+# taylor
+from fairseq.models.transformer import TransformerTaylorEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -697,6 +699,37 @@ class RobertaMixModel(RobertaModel):
         encoder = RobertaMixEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# merge
+class RobertaTaylorEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerTaylorEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_taylor")
+class RobertaTaylorModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaTaylorEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -829,5 +862,11 @@ def roberta_mix_architecture(args):
 # with o
 @register_model_architecture("roberta_merge", "roberta_with_o")
 def roberta_mix_architecture(args):
+    args.has_out = getattr(args, "has_out", True)
+    base_architecture(args)
+
+# taylor
+@register_model_architecture("roberta_taylor", "roberta_taylor_base")
+def roberta_taylor_architecture(args):
     args.has_out = getattr(args, "has_out", True)
     base_architecture(args)
