@@ -2552,7 +2552,7 @@ class MultiheadMergeAttention(nn.Module):
             )
         # add end
 
-        print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
+        # print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
