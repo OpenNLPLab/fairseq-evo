@@ -34,9 +34,13 @@ class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
             lambda_=getattr(args, "lambda_", 0.99),
             up_fq=getattr(args, "up_fq", 16),
             dropout_before=getattr(args, "dropout_before", False),
-            has_out=getattr(args, "has_out", False),
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
+            # add
+            low_d=getattr(args, "low_d", False),
+            has_out=getattr(args, "has_out", False),
+            do_scale=getattr(args, "do_scale", True),
+            norm_taylor=getattr(args, "norm_taylor", True),
         )
 
 class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
@@ -64,9 +68,13 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             lambda_=getattr(args, "lambda_", 0.99),
             up_fq=getattr(args, "up_fq", 16),
             dropout_before=getattr(args, "dropout_before", False),
-            has_out=getattr(args, "has_out", False),
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
+            # add
+            low_d=getattr(args, "low_d", False),
+            has_out=getattr(args, "has_out", False),
+            do_scale=getattr(args, "do_scale", True),
+            norm_taylor=getattr(args, "norm_taylor", True),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -86,7 +94,11 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             lambda_=getattr(args, "lambda_", 0.99),
             up_fq=getattr(args, "up_fq", 16),
             dropout_before=getattr(args, "dropout_before", False),
-            has_out=getattr(args, "has_out", False),
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
+            # add
+            low_d=getattr(args, "low_d", False),
+            has_out=getattr(args, "has_out", False),
+            do_scale=getattr(args, "do_scale", True),
+            norm_taylor=getattr(args, "norm_taylor", True),
         )

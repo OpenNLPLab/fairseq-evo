@@ -868,5 +868,44 @@ def roberta_mix_architecture(args):
 # taylor
 @register_model_architecture("roberta_taylor", "roberta_taylor_base")
 def roberta_taylor_architecture(args):
+    base_architecture(args)
+
+# taylor
+@register_model_architecture("roberta_taylor", "roberta_taylor_low_base")
+def roberta_taylor_architecture(args):
+    args.low_d = getattr(args, "low_d", True)
+    base_architecture(args)
+
+# taylor
+@register_model_architecture("roberta_taylor", "roberta_taylor_out_base")
+def roberta_taylor_architecture(args):
     args.has_out = getattr(args, "has_out", True)
     base_architecture(args)
+
+# taylor no scale
+@register_model_architecture("roberta_taylor", "roberta_taylor_no_scale_base")
+def roberta_taylor_architecture(args):
+    args.do_scale = getattr(args, "do_scale", False)
+    base_architecture(args)
+
+# taylor no scale ada
+@register_model_architecture("roberta_taylor", "roberta_taylor_no_scale_ada_base")
+def roberta_taylor_architecture(args):
+    args.is_ada_q = getattr(args, "is_ada_q", True)
+    args.use_q = getattr(args, "use_q", True)
+    args.do_scale = getattr(args, "do_scale", False)
+    base_architecture(args)
+
+# taylor scale ada
+@register_model_architecture("roberta_taylor", "roberta_taylor_scale_ada_base")
+def roberta_taylor_architecture(args):
+    args.is_ada_q = getattr(args, "is_ada_q", True)
+    args.use_q = getattr(args, "use_q", True)
+    base_architecture(args)
+
+# linear
+@register_model_architecture("roberta_taylor", "roberta_taylor_linear_base")
+def roberta_taylor_architecture(args):
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+    

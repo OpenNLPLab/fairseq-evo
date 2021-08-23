@@ -43,9 +43,13 @@ class MultiheadTaylorAttention(nn.Module):
         lambda_=0.99,
         up_fq=16,
         dropout_before=False,
-        has_out=False,
         use_q=False,
         use_k=False,
+        # add
+        low_d=False,
+        has_out=False,
+        do_scale=True,
+        norm_taylor=True,
     ):
         # add
         self.index = index
@@ -65,7 +69,7 @@ class MultiheadTaylorAttention(nn.Module):
         assert (
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
-        self.scaling = self.head_dim ** -0.5
+        
 
         self.self_attention = self_attention
         self.encoder_decoder_attention = encoder_decoder_attention
@@ -74,37 +78,50 @@ class MultiheadTaylorAttention(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
 
+        # add
+        self.has_out = has_out
+        self.low_d = low_d
+        self.do_scale = do_scale
+
+        if self.low_d:
+            dim = embed_dim // 2
+        else:
+            dim = embed_dim
+        self.scaling = dim ** -0.5
+        
+
         self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(self.kdim, dim, bias=bias), q_noise, qn_block_size
         )
         self.v_proj = quant_noise(
             nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
         )
         self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(embed_dim, dim, bias=bias), q_noise, qn_block_size
         )
 
-        # # add begin
-        # self.is_ada_q = is_ada_q
-        # self.is_ada_k = is_ada_k
-        # self.lambda_ = lambda_
-        # self.scaling = self.embed_dim ** -0.5
-        # self.up_fq = up_fq
-        # self.cnt = 0
-        # self.dropout_before = dropout_before
-        # self.has_out = has_out
-        # self.use_q = use_q
-        # self.use_k = use_k
-        # # 1 * E
-        # if self.is_ada_q:
-        #     self.qsigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
-        # if self.is_ada_k:
-        #     self.ksigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
+        # add begin
+        self.is_ada_q = is_ada_q
+        self.is_ada_k = is_ada_k
+        self.lambda_ = lambda_
+        self.scaling = dim ** -0.5
+        self.up_fq = up_fq
+        self.cnt = 0
+        self.dropout_before = dropout_before
+        self.has_out = has_out
+        self.use_q = use_q
+        self.use_k = use_k
+        self.norm_taylor = norm_taylor
+        # 1 * E
+        if self.is_ada_q:
+            self.qsigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
+        if self.is_ada_k:
+            self.ksigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
 
-        # if self.has_out:
-        #     self.out_proj = quant_noise(
-        #         nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        #     )
+        if self.has_out:
+            self.out_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
         # add end
 
         # print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
@@ -121,6 +138,10 @@ class MultiheadTaylorAttention(nn.Module):
 
         self.onnx_trace = False
 
+        print(dim, embed_dim)
+        print(self.do_scale)
+        print(self.norm_taylor)
+
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
@@ -136,6 +157,11 @@ class MultiheadTaylorAttention(nn.Module):
             nn.init.xavier_uniform_(self.v_proj.weight)
             nn.init.xavier_uniform_(self.q_proj.weight)
 
+        if self.has_out:
+            nn.init.xavier_uniform_(self.out_proj.weight)
+            if self.out_proj.bias is not None:
+                nn.init.constant_(self.out_proj.bias, 0.0)
+        
         if self.bias_k is not None:
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
@@ -194,31 +220,112 @@ class MultiheadTaylorAttention(nn.Module):
         q = self.q_proj(query)
         # S, N, E
         k = self.k_proj(key)
-    
-        scaling = float(embed_dim) ** -0.5
-        # q *= self.scaling
 
-        # N, L, E
-        q = q.transpose(0, 1)
-        # |q| ^ (-1) q
-        q = F.normalize(q, p=2, dim=-1)
-        q *= scaling
-        # N, S, E
-        k = k.transpose(0, 1)
-        # |k| ^ (-1) k
-        k = F.normalize(k, p=2, dim=-1)
-        # N, L, S
-        # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
-        attn_output_weights = 1 + torch.bmm(q, k.transpose(1, 2))
-        if attn_mask is not None:
-            attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-        # print(attn_output_weights)
-        # N, L, S
-        # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-        attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
-        # tmp = torch.sum(attn_output_weights, axis=-1)
-        # print(tmp)
-        # dropout
+        if self.training:
+            # L * N, E -> (1, E)
+            # sigma2 = torch.nn.Parameter(torch.var(q.view(-1, self.embed_dim), dim=0, keepdim=True), requires_grad=False)
+            self.cnt += 1
+            if self.cnt % self.up_fq == 0:
+                # print(self.cnt, self.up_fq)
+                with torch.no_grad():
+                    if self.is_ada_q:
+                        # print("q")
+                        qsigma2 = torch.var(q.view(-1, self.embed_dim), dim=0, keepdim=True)
+                        self.qsigma2 *= self.lambda_
+                        self.qsigma2 += (1 - self.lambda_) * qsigma2
+
+                    if self.is_ada_k:
+                        # print("k")
+                        ksigma2 = torch.var(k.view(-1, self.embed_dim), dim=0, keepdim=True)
+                        self.ksigma2 *= self.lambda_
+                        self.ksigma2 += (1 - self.lambda_) * ksigma2
+
+    
+        # scaling = float(embed_dim) ** -0.5
+        # q *= self.scaling
+        if self.do_scale:
+            q = q * self.scaling
+
+        if self.use_q:
+            # print("q1")
+            q /= torch.sqrt(self.qsigma2)
+        if self.use_k:
+            # print("k1")
+            k /= torch.sqrt(self.ksigma2)
+
+        if self.norm_taylor:
+            # N, L, E
+            q = q.transpose(0, 1)
+            # |q| ^ (-1) q
+            q = F.normalize(q, p=2, dim=-1)
+            # q *= scaling
+            # N, S, E
+            k = k.transpose(0, 1)
+            # |k| ^ (-1) k
+            k = F.normalize(k, p=2, dim=-1)
+            # N, L, S
+            # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
+            attn_output_weights = 1 + torch.bmm(q, k.transpose(1, 2))
+            if attn_mask is not None:
+                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
+            # print(attn_mask)
+            # print(attn_output_weights)
+            # N, L, S
+            # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+            # tmp = F.softmax(attn_output_weights, dim=-1)
+            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
+            # print(torch.mean(torch.norm(tmp - attn_output_weights)))
+            # print(tmp, attn_output_weights)
+            # tmp = torch.sum(attn_output_weights, axis=-1)
+            # print(tmp)
+            # dropout
+            # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+        else:
+            # N, L, E
+            q = q.transpose(0, 1)
+            # |q| ^ (-1) q
+            # q = F.normalize(q, p=2, dim=-1)
+            # q *= scaling
+            # N, S, E
+            k = k.transpose(0, 1)
+            # |k| ^ (-1) k
+            # k = F.normalize(k, p=2, dim=-1)
+            # N, L, S
+            # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
+            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+
+            # grad
+            # 1 , S
+            tmp = attn_output_weights[0][0]
+            l1 = torch.norm(tmp, p=1)
+            print(l1)
+            print(l1 < 1e-12)
+            print(l1.shape)
+            grad = -torch.abs(tmp) / (l1 ** 2)
+            print(grad)
+            grad[0] += l1
+            print(grad)
+            
+            if attn_mask is not None:
+                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
+            # print(attn_mask)
+            # print(attn_output_weights)
+            # N, L, S
+            # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+            # tmp = F.softmax(attn_output_weights, dim=-1)
+            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
+
+
+
+
+            # print(torch.mean(torch.norm(tmp - attn_output_weights)))
+            # print(tmp, attn_output_weights)
+            # t1 = torch.abs(attn_output_weights)
+            # t2 = torch.sum(t1, axis=-1)
+            # print(attn_output_weights)
+            # print(t2)
+            # print(tmp)
+            # dropout
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         # N, S, E
         value = value.transpose(0, 1)
@@ -229,6 +336,10 @@ class MultiheadTaylorAttention(nn.Module):
         attn_output = attn_output.transpose(0, 1)
         # L, N, E
         attn_output = self.v_proj(attn_output)
+
+        # add
+        if self.has_out:
+            attn_output = self.out_proj(attn_output)
 
 
         if need_weights:
