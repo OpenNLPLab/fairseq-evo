@@ -41,6 +41,7 @@ class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
             has_out=getattr(args, "has_out", False),
             do_scale=getattr(args, "do_scale", True),
             norm_taylor=getattr(args, "norm_taylor", True),
+            use_relu=getattr(args, "use_relu", False)
         )
 
 class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
@@ -75,6 +76,7 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             do_scale=getattr(args, "do_scale", True),
             norm_taylor=getattr(args, "norm_taylor", True),
+            use_relu=getattr(args, "use_relu", False)
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -101,4 +103,5 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             do_scale=getattr(args, "do_scale", True),
             norm_taylor=getattr(args, "norm_taylor", True),
+            use_relu=getattr(args, "use_relu", False)
         )

@@ -2678,6 +2678,8 @@ class MultiheadMergeAttention(nn.Module):
         # N, L, S
         attn_output_weights = torch.bmm(q, k.transpose(1, 2))
 
+
+
         if self.dropout_before:
             # print("dpbf")
             attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
@@ -2692,6 +2694,14 @@ class MultiheadMergeAttention(nn.Module):
             attn_output_weights = F.softmax(attn_output_weights, dim=-1)
             # dropout
             attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+                # add
+        # 1 , S
+        # tmp = attn_output_weights[0][0]
+        # grad = -tmp * tmp[0]
+        # grad[0] += tmp[0]
+        # print(grad)
+        # print(attn_output_weights[0][0])
+        
         # N, L, E
         attn_output = torch.bmm(attn_output_weights, value)
         # L, N, E

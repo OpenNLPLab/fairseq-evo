@@ -50,6 +50,7 @@ class MultiheadTaylorAttention(nn.Module):
         has_out=False,
         do_scale=True,
         norm_taylor=True,
+        use_relu=False
     ):
         # add
         self.index = index
@@ -112,6 +113,7 @@ class MultiheadTaylorAttention(nn.Module):
         self.use_q = use_q
         self.use_k = use_k
         self.norm_taylor = norm_taylor
+        self.use_relu = use_relu
         # 1 * E
         if self.is_ada_q:
             self.qsigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
@@ -141,6 +143,7 @@ class MultiheadTaylorAttention(nn.Module):
         print(dim, embed_dim)
         print(self.do_scale)
         print(self.norm_taylor)
+        print(f"use relu {self.use_relu}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -253,6 +256,10 @@ class MultiheadTaylorAttention(nn.Module):
             # print("k1")
             k /= torch.sqrt(self.ksigma2)
 
+        if self.use_relu:
+            q = F.relu(q)
+            k = F.relu(k)
+
         if self.norm_taylor:
             # N, L, E
             q = q.transpose(0, 1)
@@ -296,15 +303,15 @@ class MultiheadTaylorAttention(nn.Module):
 
             # grad
             # 1 , S
-            tmp = attn_output_weights[0][0]
-            l1 = torch.norm(tmp, p=1)
-            print(l1)
-            print(l1 < 1e-12)
-            print(l1.shape)
-            grad = -torch.abs(tmp) / (l1 ** 2)
-            print(grad)
-            grad[0] += l1
-            print(grad)
+            # tmp = attn_output_weights[0][0]
+            # l1 = torch.norm(tmp, p=1)
+            # print(l1)
+            # print(l1 < 1e-12)
+            # print(l1.shape)
+            # grad = -torch.abs(tmp) / (l1 ** 2)
+            # print(grad)
+            # grad[0] += 1 / l1
+            # print(grad)
             
             if attn_mask is not None:
                 attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
@@ -326,6 +333,8 @@ class MultiheadTaylorAttention(nn.Module):
             # print(t2)
             # print(tmp)
             # dropout
+        # print(attn_output_weights[0][0])
+        
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         # N, S, E
         value = value.transpose(0, 1)

@@ -908,4 +908,10 @@ def roberta_taylor_architecture(args):
 def roberta_taylor_architecture(args):
     args.norm_taylor = getattr(args, "norm_taylor", False)
     base_architecture(args)
-    
+
+# linear relu
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
