@@ -2491,6 +2491,8 @@ class MultiheadMergeAttention(nn.Module):
         has_out=False,
         use_q=False,
         use_k=False,
+        # scale
+        dim_scale=-1,
     ):
         # add
         self.index = index
@@ -2519,14 +2521,25 @@ class MultiheadMergeAttention(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
 
+        # add
+        self.has_out = has_out
+        self.dim_scale = dim_scale
+
+        if self.dim_scale != -1:
+            dim = self.dim_scale * embed_dim
+        else:
+            dim = embed_dim
+        self.dim = dim
+        self.scaling = dim ** -0.5
+
         self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(self.kdim, self.dim, bias=bias), q_noise, qn_block_size
         )
         self.v_proj = quant_noise(
             nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
         )
         self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(embed_dim, self.dim, bias=bias), q_noise, qn_block_size
         )
 
         # add begin
@@ -2542,9 +2555,9 @@ class MultiheadMergeAttention(nn.Module):
         self.use_k = use_k
         # 1 * E
         if self.is_ada_q:
-            self.qsigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
+            self.qsigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
         if self.is_ada_k:
-            self.ksigma2 = Parameter(torch.ones(1, self.embed_dim), requires_grad=False)
+            self.ksigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -2555,8 +2568,8 @@ class MultiheadMergeAttention(nn.Module):
         # print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
 
         if add_bias_kv:
-            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
-            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
+            self.bias_k = Parameter(torch.Tensor(1, 1, self.dim))
+            self.bias_v = Parameter(torch.Tensor(1, 1, self.dim))
         else:
             self.bias_k = self.bias_v = None
 

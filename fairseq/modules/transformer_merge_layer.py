@@ -37,6 +37,7 @@ class TransformerMergeEncoderLayer(TransformerEncoderLayer):
             has_out=getattr(args, "has_out", False),
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
+            dim_scale=getattr(args, "dim_scale", -1),
         )
 
 class TransformerMergeDecoderLayer(TransformerDecoderLayer):
@@ -67,6 +68,7 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
+            dim_scale=getattr(args, "dim_scale", -1),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -89,4 +91,5 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
+            dim_scale=getattr(args, "dim_scale", -1),
         )

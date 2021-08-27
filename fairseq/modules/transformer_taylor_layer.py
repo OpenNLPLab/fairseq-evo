@@ -41,7 +41,16 @@ class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
             has_out=getattr(args, "has_out", False),
             do_scale=getattr(args, "do_scale", True),
             norm_taylor=getattr(args, "norm_taylor", True),
-            use_relu=getattr(args, "use_relu", False)
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            use_square=getattr(args, "use_square", False),
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            use_l2=getattr(args, "use_l2", False),
+            dim_scale=getattr(args, "dim_scale", -1),
+            sparse=getattr(args, "sparse", False),
+            d1=getattr(args, "d1", 32),
+            d2=getattr(args, "d2", 8),
         )
 
 class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
@@ -76,7 +85,16 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             do_scale=getattr(args, "do_scale", True),
             norm_taylor=getattr(args, "norm_taylor", True),
-            use_relu=getattr(args, "use_relu", False)
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            use_square=getattr(args, "use_square", False),
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            use_l2=getattr(args, "use_l2", False),
+            dim_scale=getattr(args, "dim_scale", -1),
+            sparse=getattr(args, "sparse", False),
+            d1=getattr(args, "d1", 32),
+            d2=getattr(args, "d2", 8),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -103,5 +121,14 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             do_scale=getattr(args, "do_scale", True),
             norm_taylor=getattr(args, "norm_taylor", True),
-            use_relu=getattr(args, "use_relu", False)
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            use_square=getattr(args, "use_square", False),
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            use_l2=getattr(args, "use_l2", False),
+            dim_scale=getattr(args, "dim_scale", -1),
+            sparse=getattr(args, "sparse", False),
+            d1=getattr(args, "d1", 32),
+            d2=getattr(args, "d2", 8),
         )

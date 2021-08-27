@@ -84,6 +84,29 @@ class TransformerEncoderLayer_(nn.Module):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            is_base=getattr(args, "is_base", True),
+            is_ada_q=getattr(args, "is_ada_q", False),
+            is_ada_k=getattr(args, "is_ada_k", False),
+            lambda_=getattr(args, "lambda_", 0.99),
+            up_fq=getattr(args, "up_fq", 16),
+            dropout_before=getattr(args, "dropout_before", False),
+            use_q=getattr(args, "use_q", False),
+            use_k=getattr(args, "use_k", False),
+            # add
+            low_d=getattr(args, "low_d", False),
+            has_out=getattr(args, "has_out", False),
+            do_scale=getattr(args, "do_scale", True),
+            norm_taylor=getattr(args, "norm_taylor", True),
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            use_square=getattr(args, "use_square", False),
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            use_linear=getattr(args, "use_linear", False),
+            use_softplus=getattr(args, "use_softplus", False),
+            use_basic=getattr(args, "use_basic", True),
+            use_abs=getattr(args, "use_abs", False),
         )
 
     def residual_connection(self, x, residual):
@@ -257,7 +280,28 @@ class TransformerDecoderLayer_(nn.Module):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # add
-            index=args.index
+            is_base=getattr(args, "is_base", True),
+            is_ada_q=getattr(args, "is_ada_q", False),
+            is_ada_k=getattr(args, "is_ada_k", False),
+            lambda_=getattr(args, "lambda_", 0.99),
+            up_fq=getattr(args, "up_fq", 16),
+            dropout_before=getattr(args, "dropout_before", False),
+            use_q=getattr(args, "use_q", False),
+            use_k=getattr(args, "use_k", False),
+            # add
+            low_d=getattr(args, "low_d", False),
+            has_out=getattr(args, "has_out", False),
+            do_scale=getattr(args, "do_scale", True),
+            norm_taylor=getattr(args, "norm_taylor", True),
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            use_square=getattr(args, "use_square", False),
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            use_linear=getattr(args, "use_linear", False),
+            use_softplus=getattr(args, "use_softplus", False),
+            use_basic=getattr(args, "use_basic", True),
+            use_abs=getattr(args, "use_abs", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -270,6 +314,29 @@ class TransformerDecoderLayer_(nn.Module):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            is_base=getattr(args, "is_base", True),
+            is_ada_q=getattr(args, "is_ada_q", False),
+            is_ada_k=getattr(args, "is_ada_k", False),
+            lambda_=getattr(args, "lambda_", 0.99),
+            up_fq=getattr(args, "up_fq", 16),
+            dropout_before=getattr(args, "dropout_before", False),
+            use_q=getattr(args, "use_q", False),
+            use_k=getattr(args, "use_k", False),
+            # add
+            low_d=getattr(args, "low_d", False),
+            has_out=getattr(args, "has_out", False),
+            do_scale=getattr(args, "do_scale", True),
+            norm_taylor=getattr(args, "norm_taylor", True),
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            use_square=getattr(args, "use_square", False),
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            use_linear=getattr(args, "use_linear", False),
+            use_softplus=getattr(args, "use_softplus", False),
+            use_basic=getattr(args, "use_basic", True),
+            use_abs=getattr(args, "use_abs", False),
         )
 
     def prepare_for_onnx_export_(self):

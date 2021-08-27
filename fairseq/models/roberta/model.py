@@ -729,6 +729,25 @@ class RobertaTaylorModel(RobertaModel):
         encoder = RobertaTaylorEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+    # # for fine tune
+    # def forward(
+    #     self,
+    #     src_tokens,
+    #     features_only=False,
+    #     return_all_hiddens=False,
+    #     classification_head_name=None,
+    #     **kwargs,
+    # ):
+    #     if classification_head_name is not None:
+    #         features_only = True
+
+    #     with torch.no_grad():
+    #         x, extra = self.encoder(src_tokens, features_only, return_all_hiddens, **kwargs)
+
+    #     if classification_head_name is not None:
+    #         x = self.classification_heads[classification_head_name](x)
+    #     return x, extra
+
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
@@ -816,6 +835,12 @@ def roberta_lsh_base_architecture(args):
 # merge
 @register_model_architecture("roberta_merge", "roberta_merge_base")
 def roberta_merge_architecture(args):
+    args.dim_scale = getattr(args, "dim_scale", -1)
+    base_architecture(args)
+
+@register_model_architecture("roberta_merge", "roberta_merge_4d_base")
+def roberta_merge_architecture(args):
+    args.dim_scale = getattr(args, "dim_scale", 4)
     base_architecture(args)
 
 # simple
@@ -853,7 +878,7 @@ def roberta_mix_architecture(args):
 @register_model_architecture("roberta_merge", "roberta_ada_q")
 def roberta_mix_architecture(args):
     args.is_ada_q = getattr(args, "is_ada_q", True)
-    args.is_ada_k = getattr(args, "is_ada_k", True)
+    args.is_ada_k = getattr(args, "is_ada_k", False)
     args.lambda_ = getattr(args, "lambda_", 0.99)
     args.use_q = getattr(args, "use_q", True),
     args.use_k = getattr(args, "use_k", False),
@@ -870,13 +895,13 @@ def roberta_mix_architecture(args):
 def roberta_taylor_architecture(args):
     base_architecture(args)
 
-# taylor
+# taylor low
 @register_model_architecture("roberta_taylor", "roberta_taylor_low_base")
 def roberta_taylor_architecture(args):
     args.low_d = getattr(args, "low_d", True)
     base_architecture(args)
 
-# taylor
+# taylor out
 @register_model_architecture("roberta_taylor", "roberta_taylor_out_base")
 def roberta_taylor_architecture(args):
     args.has_out = getattr(args, "has_out", True)
@@ -914,4 +939,82 @@ def roberta_taylor_architecture(args):
 def roberta_taylor_architecture(args):
     args.use_relu = getattr(args, "use_relu", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_sparse_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.sparse = getattr(args, "sparse", True),
+    args.d1 = getattr(args, "d1", 32)
+    # args.d1 = getattr(args, "d1", 1)
+    args.d2 = getattr(args, "d2", 8)
+    # args.d2 = getattr(args, "d2", 1)
+    base_architecture(args)
+    # args.encoder_layers = getattr(args, "encoder_layers", 1)
+
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_large")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
+# linear elu
+@register_model_architecture("roberta_taylor", "roberta_linear_elu_base")
+def roberta_taylor_architecture(args):
+    args.use_elu = getattr(args, "use_elu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
+# linear leak
+@register_model_architecture("roberta_taylor", "roberta_linear_leak_base")
+def roberta_taylor_architecture(args):
+    args.use_leak = getattr(args, "use_leak", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
+# linear square
+@register_model_architecture("roberta_taylor", "roberta_linear_square_base")
+def roberta_taylor_architecture(args):
+    args.use_square = getattr(args, "use_square", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
+# linear square
+@register_model_architecture("roberta_taylor", "roberta_sigmoid_base")
+def roberta_taylor_architecture(args):
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.use_sigmoid = getattr(args, "use_sigmoid", True)
+    args.do_scale = getattr(args, "do_scale", False)
+    base_architecture(args)
+
+# linear leak
+@register_model_architecture("roberta_taylor", "roberta_leak_l2_base")
+def roberta_taylor_architecture(args):
+    args.use_leak = getattr(args, "use_leak", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.use_l2 = getattr(args, "use_l2", True)
+    base_architecture(args)
+
+# relu high
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_high_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.dim_scale = getattr(args, "dim_scale", 4)
+    base_architecture(args)
+
+
+
+#### multi
+# leaky
+@register_model_architecture("roberta_head", "roberta_multi_leaky_base")
+def roberta_taylor_architecture(args):
+    args.dropout = getattr(args, "dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.2)
+    args.encoder_layers = getattr(args, "encoder_layers", 16)
+    args.use_leak = getattr(args, "use_leak", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.do_scale = getattr(args, "do_scale", False)
+    args.use_linear = getattr(args, "use_linear", True)
     base_architecture(args)
