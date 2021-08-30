@@ -27,25 +27,25 @@ from fairseq.modules import (
     SinusoidalPositionalEmbedding,
     TransformerDecoderLayer,
     TransformerEncoderLayer,
-    # rfa
-    TransformerRfaDecoderLayer,
-    TransformerRfaEncoderLayer,
-    # debug
-    TransformerRfaDecoderDebugLayer,
-    # performer
-    # PerformerEncoderLayer,
-    PerformerDecoderLayer,
+    # # rfa
+    # TransformerRfaDecoderLayer,
+    # TransformerRfaEncoderLayer,
+    # # debug
+    # TransformerRfaDecoderDebugLayer,
+    # # performer
+    # # PerformerEncoderLayer,
+    # PerformerDecoderLayer,
     # sparse transformer
     SparseTransformerEncoderLayer,
     SparseTransformerDecoderLayer,
-    # linear transformer
-    LinearTransformerEncoderLayer,
-    LinearTransformerDecoderLayer,
-    # reformer
-    ReformerEncoderLayer,
-    ReformerDecoderLayer,
-    # longformer
-    TransformerLongformerDecoderLayer,
+    # # linear transformer
+    # LinearTransformerEncoderLayer,
+    # LinearTransformerDecoderLayer,
+    # # reformer
+    # ReformerEncoderLayer,
+    # ReformerDecoderLayer,
+    # # longformer
+    # TransformerLongformerDecoderLayer,
     # merge transformer
     TransformerMergeDecoderLayer,
     TransformerMergeEncoderLayer,

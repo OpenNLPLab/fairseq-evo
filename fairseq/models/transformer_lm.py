@@ -16,20 +16,20 @@ from fairseq.models import (
 )
 from fairseq.models.transformer import (
     DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder, TransformerLongformerDecoder, 
-    # rfa
-    TransformerRfaDecoder, 
-    # performer
-    PerformerDecoder, 
-    # debug
-    TransformerRfaDebugDecoder,
-    # sparse transformer
-    SparseTransformerDecoder,
-    # linear transformer
-    LinearTransformerDecoder,
-    # reformer
-    ReformerDecoder,
-    # longformer
-    TransformerLongformerDecoder,
+    # # rfa
+    # TransformerRfaDecoder, 
+    # # performer
+    # PerformerDecoder, 
+    # # debug
+    # TransformerRfaDebugDecoder,
+    # # sparse transformer
+    # SparseTransformerDecoder,
+    # # linear transformer
+    # LinearTransformerDecoder,
+    # # reformer
+    # ReformerDecoder,
+    # # longformer
+    # TransformerLongformerDecoder,
     # transformer merge
     TransformerMergeDecoder,
     # transformer simple

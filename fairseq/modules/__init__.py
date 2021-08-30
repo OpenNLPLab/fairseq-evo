@@ -39,37 +39,37 @@ from .vggblock import VGGBlock
 
 
 # rfa
-from .multihead_rfa_attention import MultiheadRfaAttention
-from .multihead_rfa_causal_attention import (
-    # rfa
-    MultiheadRfaCausalAttention,
-    # rfa debug
-    MultiheadRfaCausalAttentionDebug,
-)
-from .transformer_rfa_layer import (
-    # rfa
-    TransformerRfaEncoderLayer,
-    TransformerRfaDecoderLayer,
-    # rfa debug
-    TransformerRfaDecoderDebugLayer,
-)
+# from .multihead_rfa_attention import MultiheadRfaAttention
+# from .multihead_rfa_causal_attention import (
+#     # rfa
+#     MultiheadRfaCausalAttention,
+#     # rfa debug
+#     MultiheadRfaCausalAttentionDebug,
+# )
+# from .transformer_rfa_layer import (
+#     # rfa
+#     TransformerRfaEncoderLayer,
+#     TransformerRfaDecoderLayer,
+#     # rfa debug
+#     TransformerRfaDecoderDebugLayer,
+# )
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
-# linear
-from .linear_transformer_attention import MultiheadLinearAttention
-from .linear_transformer_layer import LinearTransformerEncoderLayer, LinearTransformerDecoderLayer
-# reformer
-from .reformer_attention import ReformerAttention_
-# lsh
-from .lsh_attention import LSHAttention
-from .reformer_layer import ReformerEncoderLayer, ReformerDecoderLayer
-# Longformer
-from .multihead_longformer_attention import LongformerSelfAttention
-from .transformer_longformer_layer import (
-    TransformerLongformerEncoderLayer, 
-    TransformerLongformerDecoderLayer,
-)
+# # linear
+# from .linear_transformer_attention import MultiheadLinearAttention
+# from .linear_transformer_layer import LinearTransformerEncoderLayer, LinearTransformerDecoderLayer
+# # reformer
+# from .reformer_attention import ReformerAttention_
+# # lsh
+# from .lsh_attention import LSHAttention
+# from .reformer_layer import ReformerEncoderLayer, ReformerDecoderLayer
+# # Longformer
+# from .multihead_longformer_attention import LongformerSelfAttention
+# from .transformer_longformer_layer import (
+#     TransformerLongformerEncoderLayer, 
+#     TransformerLongformerDecoderLayer,
+# )
 # taylor
 from .multihead_taylor_attention import MultiheadTaylorAttention
 from .transformer_taylor_layer import (
@@ -90,8 +90,8 @@ from .transformer_sparse_relu_layer import (
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
 #from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
 # performer
-from .multihead_performer_attention import MultiheadPerformerAttention
-from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
+# from .multihead_performer_attention import MultiheadPerformerAttention
+# from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
 # transformer merge
 from .multihead_merge_attention import MultiheadMergeAttention
 from .transformer_merge_layer import TransformerMergeDecoderLayer, TransformerMergeEncoderLayer
