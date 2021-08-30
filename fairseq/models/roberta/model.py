@@ -18,7 +18,7 @@ from fairseq.models import (
     register_model,
     register_model_architecture,
 )
-from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder
+from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder, TransformerSparseReluEncoder
 from fairseq.modules import LayerNorm
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
@@ -37,6 +37,8 @@ from fairseq.models.simformer import SimformerEncoder
 from fairseq.models.simformer import TransformerMixEncoder
 # taylor
 from fairseq.models.transformer import TransformerTaylorEncoder
+# sparse relu
+from fairseq.models.transformer import TransformerSparseReluEncoderLayer
 
 logger = logging.getLogger(__name__)
 
@@ -748,6 +750,35 @@ class RobertaTaylorModel(RobertaModel):
     #         x = self.classification_heads[classification_head_name](x)
     #     return x, extra
 
+# sparse relu
+class RobertaSparseReluEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerSparseReluEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_sparse_relu")
+class RobertaSparseReluModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaSparseReluEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
@@ -1004,6 +1035,12 @@ def roberta_taylor_architecture(args):
     args.dim_scale = getattr(args, "dim_scale", 4)
     base_architecture(args)
 
+# sparse relu
+@register_model_architecture("roberta_sparse_relu", "roberta_splu_base")
+def roberta_taylor_architecture(args):
+    args.n_groups = getattr(args, "n_groups", 4)
+    args.step = getattr(args, "step", 4)
+    base_architecture(args)
 
 
 #### multi

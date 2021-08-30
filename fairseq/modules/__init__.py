@@ -76,6 +76,12 @@ from .transformer_taylor_layer import (
     TransformerTaylorDecoderLayer,
     TransformerTaylorEncoderLayer,
 )
+# sparse relu
+from .multihead_sparse_relu_attention import MultiheadSparseReluAttention
+from .transformer_sparse_relu_layer import (
+    TransformerSparseReluEncoderLayer,
+    TransformerSparseReluDecoderLayer,
+)
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm

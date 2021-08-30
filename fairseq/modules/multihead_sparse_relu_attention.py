@@ -12,9 +12,9 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 
 
-# taylor
+# Sparse Relu
 @with_incremental_state
-class MultiheadTaylorAttention(nn.Module):
+class MultiheadSparseReluAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -62,6 +62,11 @@ class MultiheadTaylorAttention(nn.Module):
         sparse=False,
         d1=32,
         d2=8,
+        # for sparse relu
+        n_groups=4,
+        step=4,
+        max_n=3072,
+        batch_size=16,
     ):
         # add
         self.index = index
@@ -103,55 +108,42 @@ class MultiheadTaylorAttention(nn.Module):
         else:
             dim = embed_dim
         self.dim = dim
-        self.scaling = dim ** -0.5
         
 
+        # for test
+        scale_dim = embed_dim // 2
+        
+        # sparse relu
+        self.n_groups = n_groups
+        self.step = step
+        self.max_n = max_n
+        self.batch_size = batch_size
+        self.mask = self.get_mask(self.max_n, scale_dim, self.n_groups, self.step)
+        print(self.mask.shape)
+        self.new_dim = scale_dim * self.n_groups
+
+        self.scaling = self.new_dim ** -0.5
+        
         self.k_proj = quant_noise(
-            nn.Linear(self.kdim, self.dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(self.kdim, self.new_dim, bias=bias), q_noise, qn_block_size
         )
         self.v_proj = quant_noise(
             nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
         )
         self.q_proj = quant_noise(
-            nn.Linear(embed_dim, self.dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(embed_dim, self.new_dim, bias=bias), q_noise, qn_block_size
         )
 
-        # add begin
-        self.is_ada_q = is_ada_q
-        self.is_ada_k = is_ada_k
-        self.lambda_ = lambda_
-        self.scaling = dim ** -0.5
-        self.up_fq = up_fq
-        self.cnt = 0
-        self.dropout_before = dropout_before
-        self.has_out = has_out
-        self.use_q = use_q
-        self.use_k = use_k
-        self.norm_taylor = norm_taylor
-        self.use_relu = use_relu
-        self.use_elu = use_elu
-        self.use_leak = use_leak
-        self.use_square = use_square
-        self.use_sigmoid = use_sigmoid
-        self.use_l2 = use_l2
-        self.sparse = sparse
-        self.d1 = d1
-        self.d2 = d2
-        if self.sparse:
-            self.diag_mask = self.build_mask(5120, 5120)
-        # 1 * E
-        if self.is_ada_q:
-            self.qsigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
-        if self.is_ada_k:
-            self.ksigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
-
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-        # add end
-
-        # print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
+        # for sparse v1
+        # self.n_groups = n_groups
+        # self.step = step
+        # self.max_n = max_n
+        # self.batch_size = batch_size
+        # self.row_index, self.col_index = self.get_index(max_n, embed_dim, self.n_groups, self.step)
+        # self.q1 = Parameter(torch.zeros(self.batch_size, self.max_n, embed_dim * self.n_groups))
+        # self.k1 = Parameter(torch.zeros(self.batch_size, self.max_n, embed_dim * self.n_groups))
+        # print(n_groups, step)
+        # print(self.n_groups, self.step)
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
@@ -165,18 +157,121 @@ class MultiheadTaylorAttention(nn.Module):
 
         self.onnx_trace = False
 
-        print(dim, embed_dim)
-        print(f"do scale {self.do_scale}")
-        print(f"taylor {self.norm_taylor}")
-        print(f"use relu {self.use_relu}")
-        print(f"use elu {self.use_elu}")
-        print(f"use leak {self.use_leak}")
-        print(f"use square {self.use_square}")
-        print(f"use sigmoid {self.use_sigmoid}")
-        print(f"use l2 {self.use_l2}")
-        print(f"sparse {self.sparse}")
-        print(f"d1 {self.d1}")
-        print(f"d2 {self.d2}")
+
+
+        # print(dim, embed_dim)
+        # print(f"do scale {self.do_scale}")
+        # print(f"taylor {self.norm_taylor}")
+        # print(f"use relu {self.use_relu}")
+        # print(f"use elu {self.use_elu}")
+        # print(f"use leak {self.use_leak}")
+        # print(f"use square {self.use_square}")
+        # print(f"use sigmoid {self.use_sigmoid}")
+        # print(f"use l2 {self.use_l2}")
+        # print(f"sparse {self.sparse}")
+        # print(f"d1 {self.d1}")
+        # print(f"d2 {self.d2}")
+
+    def get_mask(self, n, e, n_groups, step):
+        row_index = np.arange(n).reshape(-1, 1)
+        col_index = []
+        e1 = e * n_groups
+        mask = torch.ones(n, e1, dtype=torch.bool)
+
+        row_num = (e1 - e) // step + 1
+        group1 = [range(i * step, i * step + e) for i in range(row_num)]
+        group2 = [range(i * step, i * step + e) for i in range(row_num - 1, -1, -1)]
+        group_index = [group1, group2]
+        l = n // row_num
+        k = 0
+        for i in range(l):
+            start = i * row_num
+            end = (i + 1) * row_num
+            for j in range(start, end):
+                col_index.append(group_index[k][j % row_num])
+            k = 1 - k
+        if n % row_num != 0:
+            start = l * row_num
+            end = n
+            for j in range(start, end):
+                col_index.append(group_index[k][j % row_num])
+            k = 1 - k
+
+        mask[row_index, col_index] = 0
+        
+        return Parameter(mask, requires_grad=False)
+
+    def get_index(self, n, e, n_groups, step):
+        row_index = np.arange(n).reshape(-1, 1)
+        col_index = []
+        e1 = e * n_groups
+        row_num = (e1 - e) // step + 1
+        group1 = [range(i * step, i * step + e) for i in range(row_num)]
+        group2 = [range(i * step, i * step + e) for i in range(row_num - 1, -1, -1)]
+        group_index = [group1, group2]
+        l = n // row_num
+        k = 0
+        for i in range(l):
+            start = i * row_num
+            end = (i + 1) * row_num
+            for j in range(start, end):
+                col_index.append(group_index[k][j % row_num])
+            k = 1 - k
+        if n % row_num != 0:
+            start = l * row_num
+            end = n
+            for j in range(start, end):
+                col_index.append(group_index[k][j % row_num])
+            k = 1 - k
+        
+        return row_index, col_index
+
+    def transformation(self, x, n_groups, step):
+        '''
+        ....
+        ....
+        ....
+        ....
+            ....
+            ....
+        ....
+        ....
+        ....
+        ....
+        '''
+        # print(x.shape)
+        b, n, e = x.shape
+        # print(b, n, e)
+        e1 = e * n_groups
+        # print(n_groups)
+        # print(b, n, e1)
+        x_transform = torch.zeros(b, n, e1).to(x)
+        # row_index = np.arange(n).reshape(-1, 1)
+        # col_index = []
+
+        # # 每组的数量
+        # # 希望row_num > n, 这样就不会出现周期
+        # row_num = (e1 - e) // step + 1
+        # group1 = [range(i * step, i * step + e) for i in range(row_num)]
+        # group2 = [range(i * step, i * step + e) for i in range(row_num - 1, -1, -1)]
+        # group_index = [group1, group2]
+        # l = n // row_num
+        # k = 0
+        # for i in range(l):
+        #     start = i * row_num
+        #     end = (i + 1) * row_num
+        #     for j in range(start, end):
+        #         col_index.append(group_index[k][j % row_num])
+        #     k = 1 - k
+        # if n % row_num != 0:
+        #     start = l * row_num
+        #     end = n
+        #     for j in range(start, end):
+        #         col_index.append(group_index[k][j % row_num])
+        #     k = 1 - k
+        x_transform[:, self.row_index[:n], self.col_index[:n]] = x
+        
+        return x_transform
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -271,172 +366,36 @@ class MultiheadTaylorAttention(nn.Module):
         # S, N, E
         k = self.k_proj(key)
 
-        if self.training:
-            # L * N, E -> (1, E)
-            # sigma2 = torch.nn.Parameter(torch.var(q.view(-1, self.embed_dim), dim=0, keepdim=True), requires_grad=False)
-            self.cnt += 1
-            if self.cnt % self.up_fq == 0:
-                # print(self.cnt, self.up_fq)
-                with torch.no_grad():
-                    if self.is_ada_q:
-                        # print("q")
-                        qsigma2 = torch.var(q.view(-1, self.embed_dim), dim=0, keepdim=True)
-                        self.qsigma2 *= self.lambda_
-                        self.qsigma2 += (1 - self.lambda_) * qsigma2
+        
 
-                    if self.is_ada_k:
-                        # print("k")
-                        ksigma2 = torch.var(k.view(-1, self.embed_dim), dim=0, keepdim=True)
-                        self.ksigma2 *= self.lambda_
-                        self.ksigma2 += (1 - self.lambda_) * ksigma2
+        q = F.relu(q)
+        k = F.relu(k)
 
-    
-        # scaling = float(embed_dim) ** -0.5
-        # q *= self.scaling
-        if self.do_scale:
-            q = q * self.scaling
+        q = q * self.scaling
 
-        if self.use_q:
-            # print("q1")
-            q /= torch.sqrt(self.qsigma2)
-        if self.use_k:
-            # print("k1")
-            k /= torch.sqrt(self.ksigma2)
+        # N, L, E
+        q = q.transpose(0, 1)
+        # N, S, E
+        k = k.transpose(0, 1)
 
-        if self.use_relu:
-            q = F.relu(q)
-            k = F.relu(k)
-        elif self.use_elu:
-            q = F.elu(q)
-            k = F.elu(k)
-        elif self.use_leak:
-            q = F.leaky_relu(q)
-            k = F.leaky_relu(k)
-        elif self.use_square:
-            q = torch.square(q)
-            k = torch.square(k)
-        elif self.use_sigmoid:
-            q = F.sigmoid(q)
-            k = F.sigmoid(k)
-            
+        # v1
+        # q1 = self.transformation(q, self.n_groups, self.step)
+        # k1 = self.transformation(k, self.n_groups, self.step)
+        # attn_output_weights = torch.bmm(q1, k1.transpose(1, 2))
+        # self.q1[:, self.row_index[:tgt_len], self.col_index[:tgt_len]] = q
+        # self.k1[:, self.row_index[:src_len], self.col_index[:src_len]] = k
+        # N, L, S
+        # attn_output_weights = torch.bmm(self.q1[:, :tgt_len, :], self.q1[:, :src_len, :].transpose(1, 2))
 
-        if self.norm_taylor:
-            # N, L, E
-            q = q.transpose(0, 1)
-            # |q| ^ (-1) q
-            q = F.normalize(q, p=2, dim=-1)
-            # q *= scaling
-            # N, S, E
-            k = k.transpose(0, 1)
-            # |k| ^ (-1) k
-            k = F.normalize(k, p=2, dim=-1)
-            # N, L, S
-            # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
-            attn_output_weights = 1 + torch.bmm(q, k.transpose(1, 2))
-            if attn_mask is not None:
-                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-            # print(attn_mask)
-            # print(attn_output_weights)
-            # N, L, S
-            # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-            # tmp = F.softmax(attn_output_weights, dim=-1)
-            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
-            # print(torch.mean(torch.norm(tmp - attn_output_weights)))
-            # print(tmp, attn_output_weights)
-            # tmp = torch.sum(attn_output_weights, axis=-1)
-            # print(tmp)
-            # dropout
-            # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
-        elif self.use_sigmoid:
-            # print(1)
-            # N, L, E
-            q = q.transpose(0, 1)
-            # |q| ^ (-1) q
-            # q = F.normalize(q, p=2, dim=-1)
-            # q *= scaling
-            # N, S, E
-            k = k.transpose(0, 1)
-            # |k| ^ (-1) k
-            # k = F.normalize(k, p=2, dim=-1)
-            # N, L, S
-            # sum_{i=1}^{embed_dim}, 每行src_len个
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2)) / src_len / embed_dim
-            if attn_mask is not None:
-                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-        elif self.use_l2:
-            # print(1)
-            ## 需要修改causal形式
-            # N, L, E
-            q = q.transpose(0, 1)
-            # N, S, E
-            k = k.transpose(0, 1)
+        # v2
+        q = q.masked_fill(self.mask[:tgt_len], 0)
+        k = k.masked_fill(self.mask[:src_len], 0)
+        attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+        
+        if attn_mask is not None:
+            attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
 
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
-
-            # N, L, 1
-            q_norm = torch.sum(torch.pow(q, 2), dim=-1, keepdim=True)
-            # N, S, 1
-            k_norm = torch.sum(torch.pow(k, 2), dim=-1, keepdim=True)
-            # N, 1, 1
-            k_norm_sum = torch.sum(k_norm, dim=-2, keepdim=True)
-            # norm
-            # N, L, 1
-            qk_norm = src_len * q_norm + k_norm_sum
-            eps = 1e-8
-            
-            tmp = 2 * attn_output_weights / qk_norm
-            # print(torch.mean(torch.abs(tmp) <= 1))
-
-            qk_norm[qk_norm < eps] = eps
-            
-            attn_output_weights = 2 * attn_output_weights / qk_norm
-
-        else:
-            # N, L, E
-            q = q.transpose(0, 1)
-            # N, S, E
-            k = k.transpose(0, 1)
-            # N, L, S
-            # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
-
-            if self.sparse:
-                # d_diag = min(self.d1, tgt_len, src_len)
-                # d_col = min(self.d2, tgt_len)
-                # d_row = min(self.d2, src_len)
-                # mask = torch.ones((src_len, tgt_len), dtype=torch.bool)
-                # mask1 = torch.tril(mask, diagonal=d_diag)
-                # mask2 = torch.triu(mask, diagonal=-d_diag)
-                # diag_mask = (mask1 & mask2)
-                # # colmask = torch.ones((src_len, tgt_len), dtype=torch.bool)
-                # # colmask[:, d_col:] = False
-                # # rowmask = torch.ones((src_len, tgt_len), dtype=torch.bool)
-                # # rowmask[d_row:, :] = False
-                # diag_mask[:d_col, :] = True
-                # diag_mask[:, :d_row] = True
-                # # allmask = torch.unsqueeze(diag_mask, 0)
-                # # allmask = torch.unsqueeze(diag_mask | colmask | rowmask, 0)
-
-                # # attn_output_weights[~allmask] = 0
-                # attn_output_weights[:, ~diag_mask] = 0
-
-                # print(attn_output_weights)
-                # with torch.autograd.profiler.record_function("sparse"):
-                #     # attn_output_weights[:, self.diag_mask[:tgt_len, :src_len]] = 0
-                #     attn_output_weights.masked_fill(self.diag_mask[:tgt_len, :src_len], 0)
-                # attn_output_weights[:, self.diag_mask[:tgt_len, :src_len]] = 0
-                attn_output_weights = attn_output_weights.masked_fill(self.diag_mask[:tgt_len, :src_len], 0)
-            
-            if attn_mask is not None:
-                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-            # print(attn_mask)
-            # print(attn_output_weights)
-            # N, L, S
-            # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-            # tmp = F.softmax(attn_output_weights, dim=-1)
-            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
-
-        # print(attn_output_weights[0][0])
+        attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
         
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         # N, S, E
