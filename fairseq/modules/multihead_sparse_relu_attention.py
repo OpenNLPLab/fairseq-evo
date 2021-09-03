@@ -67,6 +67,10 @@ class MultiheadSparseReluAttention(nn.Module):
         step=4,
         max_n=3072,
         batch_size=16,
+        num=1,
+        # 全局感受野
+        d_global=16,
+        with_global=False,
     ):
         # add
         self.index = index
@@ -111,16 +115,32 @@ class MultiheadSparseReluAttention(nn.Module):
         
 
         # for test
-        scale_dim = embed_dim // 2
+        self.num = num
+        scale_dim = embed_dim // self.num
         
         # sparse relu
         self.n_groups = n_groups
         self.step = step
         self.max_n = max_n
         self.batch_size = batch_size
-        self.mask = self.get_mask(self.max_n, scale_dim, self.n_groups, self.step)
-        print(self.mask.shape)
+        self.d_global = d_global
+        self.with_global = with_global
+
+
+        
         self.new_dim = scale_dim * self.n_groups
+
+        self.mask = self.get_mask(self.max_n, scale_dim, self.n_groups, self.step)
+
+        if self.with_global:
+            self.front_mask, self.back_mask = self.global_mask(self.max_n, self.new_dim, self.d_global)
+
+        print(f"self.num {self.num}")
+        print(self.mask.shape)
+        print(f"self.d_global {self.d_global}")
+        print(f"self.with_global {self.with_global}")
+        if self.with_global:
+            print(self.front_mask.shape, self.back_mask.shape)
 
         self.scaling = self.new_dim ** -0.5
         
@@ -200,6 +220,20 @@ class MultiheadSparseReluAttention(nn.Module):
         mask[row_index, col_index] = 0
         
         return Parameter(mask, requires_grad=False)
+
+    def global_mask(self, n, e, d_global):
+        front_mask = torch.ones(n, e, dtype=torch.bool)
+        back_mask = torch.ones(n, e, dtype=torch.bool)
+        start = max(0, d_global)
+        end = min(n - 1, n - d_global)
+        front_mask[:start, :] = 0
+        back_mask[end:, :] = 0
+
+        return Parameter(front_mask, requires_grad=False), Parameter(back_mask, requires_grad=False)
+
+    def get_global_mask(self, n):
+        return self.front_mask[:n, :] & self.back_mask[-n:, :]
+
 
     def get_index(self, n, e, n_groups, step):
         row_index = np.arange(n).reshape(-1, 1)
@@ -388,9 +422,9 @@ class MultiheadSparseReluAttention(nn.Module):
         # attn_output_weights = torch.bmm(self.q1[:, :tgt_len, :], self.q1[:, :src_len, :].transpose(1, 2))
 
         # v2
-        q = q.masked_fill(self.mask[:tgt_len], 0)
-        k = k.masked_fill(self.mask[:src_len], 0)
-        attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+        q1 = q.masked_fill(self.mask[:tgt_len], 0)
+        k1 = k.masked_fill(self.mask[:src_len], 0)
+        attn_output_weights = torch.bmm(q1, k1.transpose(1, 2))
         
         if attn_mask is not None:
             attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
@@ -407,6 +441,27 @@ class MultiheadSparseReluAttention(nn.Module):
         attn_output = attn_output.transpose(0, 1)
         # L, N, E
         attn_output = self.v_proj(attn_output)
+
+        if self.with_global:
+            # print(k.shape)
+            # print(self.get_global_mask(src_len).shape)
+            k = k.masked_fill(self.get_global_mask(src_len), 0)
+            attn_output_weights_global = torch.bmm(q, k.transpose(1, 2))
+            if attn_mask is not None:
+                attn_output_weights_global = attn_output_weights_global.masked_fill(attn_mask==float("-inf"), 0)
+
+            attn_output_weights_global = F.normalize(attn_output_weights, p=1, dim=-1)
+            
+            attn_output_weights_global = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+
+            # N, L, E
+            attn_output_global = torch.bmm(attn_output_weights_global, value)
+            # L, N, E
+            attn_output_global = attn_output_global.transpose(0, 1)
+            # L, N, E
+            attn_output_global = self.v_proj(attn_output_global)
+
+            attn_output = attn_output + attn_output_global
 
         # add
         if self.has_out:

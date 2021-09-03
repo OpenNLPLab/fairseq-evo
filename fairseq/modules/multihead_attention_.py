@@ -1008,6 +1008,7 @@ class MultiheadAttention_(nn.Module):
         low_d=False,
         has_out=False,
         do_scale=True,
+        # change
         norm_taylor=True,
         use_relu=False,
         use_elu=False,
@@ -1113,6 +1114,15 @@ class MultiheadAttention_(nn.Module):
         print(f"use softplus {self.use_softplus}")
         print(f"use basic {self.use_basic}")
         print(f"use abs {self.use_abs}")
+
+        print(f"args.is_ada_q {self.is_ada_q}")
+        print(f"args.is_ada_k {self.is_ada_k}")
+        print(f"args.do_scale {self.do_scale}")
+        print(f"args.norm_taylor {self.norm_taylor}")
+        print(f"args.lambda_ {self.lambda_}")
+        print(f"args.use_q {self.use_q}")
+        print(f"args.use_k {self.use_k}")
+        print(f"args.has_out {self.has_out}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

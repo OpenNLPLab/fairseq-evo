@@ -62,6 +62,8 @@ class MultiheadTaylorAttention(nn.Module):
         sparse=False,
         d1=32,
         d2=8,
+        # res
+        has_res=False,
     ):
         # add
         self.index = index
@@ -137,6 +139,7 @@ class MultiheadTaylorAttention(nn.Module):
         self.sparse = sparse
         self.d1 = d1
         self.d2 = d2
+        self.has_res = has_res
         if self.sparse:
             self.diag_mask = self.build_mask(5120, 5120)
         # 1 * E
@@ -177,6 +180,7 @@ class MultiheadTaylorAttention(nn.Module):
         print(f"sparse {self.sparse}")
         print(f"d1 {self.d1}")
         print(f"d2 {self.d2}")
+        print(f"self.has res {self.has_res}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -434,16 +438,23 @@ class MultiheadTaylorAttention(nn.Module):
             # N, L, S
             # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
             # tmp = F.softmax(attn_output_weights, dim=-1)
-            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
+
+            eps = 1e-12
+            all_weights = torch.sum(attn_output_weights, dim=-1, keepdim=True).clamp_min(eps).expand_as(attn_output_weights)
+            attn_output_weights = attn_output_weights / all_weights
+            # attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
 
         # print(attn_output_weights[0][0])
         
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+        # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, True)
         # N, S, E
         value = value.transpose(0, 1)
 
         # N, L, E
         attn_output = torch.bmm(attn_output_weights, value)
+        if self.has_res:
+            attn_output = attn_output + value
         # L, N, E
         attn_output = attn_output.transpose(0, 1)
         # L, N, E

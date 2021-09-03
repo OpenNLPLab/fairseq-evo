@@ -83,6 +83,13 @@ from .transformer_sparse_relu_layer import (
     TransformerSparseReluDecoderLayer,
 )
 
+# multi splu
+from .multihead_splu_attention import MultiheadSpluAttention
+from .transformer_splu_layer import (
+    TransformerSpluEncoderLayer,
+    TransformerSpluDecoderLayer,
+)
+
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
 #from .transformer_rfa_layer import TransformerRfaNormDecoderLayer

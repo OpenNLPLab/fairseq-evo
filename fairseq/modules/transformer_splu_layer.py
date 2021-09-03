@@ -13,14 +13,14 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 # merge attention
-from fairseq.modules import MultiheadSparseReluAttention
+from fairseq.modules import MultiheadSpluAttention
 
-class TransformerSparseReluEncoderLayer(TransformerEncoderLayer):
+class TransformerSpluEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):
         super().__init__(args)
 
     def build_self_attention(self, embed_dim, args):
-        return MultiheadSparseReluAttention(
+        return MultiheadSpluAttention(
             embed_dim,
             args.encoder_attention_heads,
             dropout=args.attention_dropout,
@@ -31,11 +31,11 @@ class TransformerSparseReluEncoderLayer(TransformerEncoderLayer):
             n_groups=getattr(args, "n_groups", 4),
             step=getattr(args, "step", 4),
             d_global=getattr(args, "d_global", 16),
-            with_global=getattr(args, "with_global", False),
             num=getattr(args, "num", 1),
+            max_n=getattr(args, "max_n", 3072),
         )
 
-class TransformerSparseReluDecoderLayer(TransformerDecoderLayer):
+class TransformerSpluDecoderLayer(TransformerDecoderLayer):
     def __init__(
         elf, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
@@ -44,7 +44,7 @@ class TransformerSparseReluDecoderLayer(TransformerDecoderLayer):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
-        return MultiheadSparseReluAttention(
+        return MultiheadSpluAttention(
             embed_dim,
             args.decoder_attention_heads,
             dropout=args.attention_dropout,
@@ -57,12 +57,12 @@ class TransformerSparseReluDecoderLayer(TransformerDecoderLayer):
             n_groups=getattr(args, "n_groups", 4),
             step=getattr(args, "step", 4),
             d_global=getattr(args, "d_global", 16),
-            with_global=getattr(args, "with_global", False),
             num=getattr(args, "num", 1),
+            max_n=getattr(args, "max_n", 3072),
         )
 
     def build_encoder_attention(self, embed_dim, args):
-        return MultiheadSparseReluAttention(
+        return MultiheadSpluAttention(
             embed_dim,
             args.decoder_attention_heads,
             kdim=getattr(args, "encoder_embed_dim", None),
@@ -75,6 +75,6 @@ class TransformerSparseReluDecoderLayer(TransformerDecoderLayer):
             n_groups=getattr(args, "n_groups", 4),
             step=getattr(args, "step", 4),
             d_global=getattr(args, "d_global", 16),
-            with_global=getattr(args, "with_global", False),
             num=getattr(args, "num", 1),
+            max_n=getattr(args, "max_n", 3072),
         )

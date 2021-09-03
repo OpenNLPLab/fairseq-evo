@@ -51,6 +51,7 @@ class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
             sparse=getattr(args, "sparse", False),
             d1=getattr(args, "d1", 32),
             d2=getattr(args, "d2", 8),
+            has_res=getattr(args, "has_res", False),
         )
 
 class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
@@ -95,6 +96,7 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             sparse=getattr(args, "sparse", False),
             d1=getattr(args, "d1", 32),
             d2=getattr(args, "d2", 8),
+            has_res=getattr(args, "has_res", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -131,4 +133,5 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             sparse=getattr(args, "sparse", False),
             d1=getattr(args, "d1", 32),
             d2=getattr(args, "d2", 8),
+            has_res=getattr(args, "has_res", False),
         )

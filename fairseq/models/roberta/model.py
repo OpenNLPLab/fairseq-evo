@@ -39,6 +39,8 @@ from fairseq.models.simformer import TransformerMixEncoder
 from fairseq.models.transformer import TransformerTaylorEncoder
 # sparse relu
 from fairseq.models.transformer import TransformerSparseReluEncoderLayer
+# splu
+from fairseq.models.transformer import TransformerSpluEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -780,6 +782,36 @@ class RobertaSparseReluModel(RobertaModel):
         encoder = RobertaSparseReluEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# multi splu
+class RobertaSpluEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerSpluEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_multi_sparse_relu")
+class RobertaSpluModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaSpluEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -884,6 +916,32 @@ def roberta_simple_architecture(args):
 def roberta_head_architecture(args):
     base_architecture(args)
 
+# ada qk
+@register_model_architecture("roberta_head", "roberta_ada_base")
+def roberta_head_architecture(args):
+    base_architecture(args)
+    args.is_ada_q = getattr(args, "is_ada_q", True)
+    args.is_ada_k = getattr(args, "is_ada_k", True)
+    args.do_scale = getattr(args, "do_scale", True),
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.lambda_ = getattr(args, "lambda_", 0.99)
+    args.use_q = getattr(args, "use_q", True)
+    args.use_k = getattr(args, "use_k", True)
+    args.has_out = getattr(args, "has_out", True)
+
+# ada q
+@register_model_architecture("roberta_head", "roberta_ada_q_base")
+def roberta_head_architecture(args):
+    base_architecture(args)
+    args.is_ada_q = getattr(args, "is_ada_q", True)
+    args.is_ada_k = getattr(args, "is_ada_k", False)
+    args.do_scale = getattr(args, "do_scale", True),
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.lambda_ = getattr(args, "lambda_", 0.99)
+    args.use_q = getattr(args, "use_q", True)
+    args.use_k = getattr(args, "use_k", False)
+    args.has_out = getattr(args, "has_out", True)
+
 # simformer
 @register_model_architecture("roberta_simformer", "roberta_simformer_base")
 def roberta_simformer_architecture(args):
@@ -972,6 +1030,15 @@ def roberta_taylor_architecture(args):
     args.norm_taylor = getattr(args, "norm_taylor", False)
     base_architecture(args)
 
+# linear relu
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_res_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.has_res = getattr(args, "has_res", True)
+    base_architecture(args)
+
+
 @register_model_architecture("roberta_taylor", "roberta_linear_relu_sparse_base")
 def roberta_taylor_architecture(args):
     args.use_relu = getattr(args, "use_relu", True)
@@ -1040,7 +1107,30 @@ def roberta_taylor_architecture(args):
 def roberta_taylor_architecture(args):
     args.n_groups = getattr(args, "n_groups", 4)
     args.step = getattr(args, "step", 4)
+    args.num = getattr(args, "num", 2)
     base_architecture(args)
+
+# sparse relu global
+@register_model_architecture("roberta_sparse_relu", "roberta_splu_global_base")
+def roberta_taylor_architecture(args):
+    args.n_groups = getattr(args, "n_groups", 4)
+    args.step = getattr(args, "step", 4)
+    args.d_global = getattr(args, "d_global", 32)
+    args.with_global = getattr(args, "with_global", True)
+    args.num = getattr(args, "num", 2)
+    base_architecture(args)
+
+# multi splu
+@register_model_architecture("roberta_multi_sparse_relu", "roberta_multi_splu_base")
+def roberta_taylor_architecture(args):
+    args.n_groups = getattr(args, "n_groups", 4)
+    args.step = getattr(args, "step", 4)
+    args.d_global = getattr(args, "d_global", 32)
+    args.num = getattr(args, "num", 2)
+    args.max_n = getattr(args, "max_n", 512)
+    base_architecture(args)
+
+
 
 
 #### multi
