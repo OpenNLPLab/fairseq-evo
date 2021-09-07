@@ -38,6 +38,8 @@ class TransformerMergeEncoderLayer(TransformerEncoderLayer):
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
             dim_scale=getattr(args, "dim_scale", -1),
+            has_right_weight=getattr(args, "has_right_weight", False),
+            do_softmax=getattr(args, "do_softmax", False),
         )
 
 class TransformerMergeDecoderLayer(TransformerDecoderLayer):
@@ -69,6 +71,8 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
             dim_scale=getattr(args, "dim_scale", -1),
+            has_right_weight=getattr(args, "has_right_weight", False),
+            do_softmax=getattr(args, "do_softmax", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -92,4 +96,6 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             use_q=getattr(args, "use_q", False),
             use_k=getattr(args, "use_k", False),
             dim_scale=getattr(args, "dim_scale", -1),
+            has_right_weight=getattr(args, "has_right_weight", False),
+            do_softmax=getattr(args, "do_softmax", False),
         )

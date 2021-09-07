@@ -901,6 +901,22 @@ def roberta_merge_architecture(args):
     args.dim_scale = getattr(args, "dim_scale", -1)
     base_architecture(args)
 
+# merge right
+@register_model_architecture("roberta_merge", "roberta_merge_right_base")
+def roberta_merge_architecture(args):
+    args.dim_scale = getattr(args, "dim_scale", -1)
+    args.has_right_weight = getattr(args, "has_right_weight", True)
+    args.do_softmax = getattr(args, "do_softmax", False)
+    base_architecture(args)
+
+# merge right softmax
+@register_model_architecture("roberta_merge", "roberta_merge_right_soft_base")
+def roberta_merge_architecture(args):
+    args.dim_scale = getattr(args, "dim_scale", -1)
+    args.has_right_weight = getattr(args, "has_right_weight", True)
+    args.do_softmax = getattr(args, "do_softmax", True)
+    base_architecture(args)
+
 @register_model_architecture("roberta_merge", "roberta_merge_4d_base")
 def roberta_merge_architecture(args):
     args.dim_scale = getattr(args, "dim_scale", 4)
@@ -1030,7 +1046,36 @@ def roberta_taylor_architecture(args):
     args.norm_taylor = getattr(args, "norm_taylor", False)
     base_architecture(args)
 
-# linear relu
+# linear relu right
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_right_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.has_right_weight = getattr(args, "has_right_weight", True)
+    args.do_softmax = getattr(args, "do_softmax", False)
+    base_architecture(args)
+
+# linear relu right
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_right_sf_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.has_right_weight = getattr(args, "has_right_weight", True)
+    args.do_softmax = getattr(args, "do_softmax", True)
+    base_architecture(args)
+
+# linear relu right not share sf
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_right_not_share_sf_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.has_right_weight = getattr(args, "has_right_weight", False)
+    args.do_softmax = getattr(args, "do_softmax", True)
+    args.has_right_weight_not_share = getattr(args, "has_right_weight_not_share", True)
+    base_architecture(args)
+
+
+# linear relu res
 @register_model_architecture("roberta_taylor", "roberta_linear_relu_res_base")
 def roberta_taylor_architecture(args):
     args.use_relu = getattr(args, "use_relu", True)

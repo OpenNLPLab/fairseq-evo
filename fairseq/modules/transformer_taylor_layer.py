@@ -52,6 +52,9 @@ class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
             d1=getattr(args, "d1", 32),
             d2=getattr(args, "d2", 8),
             has_res=getattr(args, "has_res", False),
+            has_right_weight=getattr(args, "has_right_weight", False),
+            do_softmax=getattr(args, "do_softmax", False),
+            has_right_weight_not_share=getattr(args, "has_right_weight_not_share", False),
         )
 
 class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
@@ -97,6 +100,9 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             d1=getattr(args, "d1", 32),
             d2=getattr(args, "d2", 8),
             has_res=getattr(args, "has_res", False),
+            has_right_weight=getattr(args, "has_right_weight", False),
+            do_softmax=getattr(args, "do_softmax", False),
+            has_right_weight_not_share=getattr(args, "has_right_weight_not_share", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -134,4 +140,7 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
             d1=getattr(args, "d1", 32),
             d2=getattr(args, "d2", 8),
             has_res=getattr(args, "has_res", False),
+            has_right_weight=getattr(args, "has_right_weight", False),
+            do_softmax=getattr(args, "do_softmax", False),
+            has_right_weight_not_share=getattr(args, "has_right_weight_not_share", False),
         )

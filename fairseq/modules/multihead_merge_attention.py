@@ -2493,6 +2493,9 @@ class MultiheadMergeAttention(nn.Module):
         use_k=False,
         # scale
         dim_scale=-1,
+        # right_weight
+        has_right_weight=False,
+        do_softmax=False,
     ):
         # add
         self.index = index
@@ -2553,6 +2556,9 @@ class MultiheadMergeAttention(nn.Module):
         self.has_out = has_out
         self.use_q = use_q
         self.use_k = use_k
+        self.has_right_weight = has_right_weight
+        self.do_softmax = do_softmax
+        print(self.has_right_weight, self.do_softmax)
         # 1 * E
         if self.is_ada_q:
             self.qsigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
@@ -2717,6 +2723,16 @@ class MultiheadMergeAttention(nn.Module):
         
         # N, L, E
         attn_output = torch.bmm(attn_output_weights, value)
+        if self.has_right_weight:
+            # N, 1, E
+            q_mean = torch.mean(q, dim=1, keepdim=True)
+            # N, 1, E
+            k_mean = torch.mean(k, dim=1, keepdim=True)
+            qk = torch.bmm(q_mean.transpose(1, 2), k_mean)
+            if self.do_softmax:
+                qk = F.softmax(qk, dim=1)
+            attn_output = torch.bmm(attn_output, qk)
+
         # L, N, E
         attn_output = attn_output.transpose(0, 1)
         # L, N, E

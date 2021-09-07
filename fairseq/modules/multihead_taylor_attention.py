@@ -64,6 +64,11 @@ class MultiheadTaylorAttention(nn.Module):
         d2=8,
         # res
         has_res=False,
+        # right_weight
+        has_right_weight=False,
+        do_softmax=False,
+        with_right_weight=False,
+        has_right_weight_not_share=False,
     ):
         # add
         self.index = index
@@ -97,6 +102,7 @@ class MultiheadTaylorAttention(nn.Module):
         self.low_d = low_d
         self.do_scale = do_scale
         self.dim_scale = dim_scale
+        # self.with_right_weight = with_right_weight
 
         if self.low_d:
             dim = embed_dim // 2
@@ -140,6 +146,18 @@ class MultiheadTaylorAttention(nn.Module):
         self.d1 = d1
         self.d2 = d2
         self.has_res = has_res
+        self.has_right_weight = has_right_weight
+        self.do_softmax = do_softmax
+        self.has_right_weight_not_share = has_right_weight_not_share
+
+        if self.has_right_weight_not_share:
+            self.k_proj1 = quant_noise(
+                nn.Linear(self.kdim, self.dim, bias=bias), q_noise, qn_block_size
+            )
+            self.q_proj1 = quant_noise(
+                nn.Linear(embed_dim, self.dim, bias=bias), q_noise, qn_block_size
+            )
+        
         if self.sparse:
             self.diag_mask = self.build_mask(5120, 5120)
         # 1 * E
@@ -181,6 +199,9 @@ class MultiheadTaylorAttention(nn.Module):
         print(f"d1 {self.d1}")
         print(f"d2 {self.d2}")
         print(f"self.has res {self.has_res}")
+        print(f"self.has_right_weight {self.has_right_weight}")
+        print(f"self.has_right_weight_not_share {self.has_right_weight_not_share}")
+        print(f"self.do_softmax {self.do_softmax}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -201,6 +222,10 @@ class MultiheadTaylorAttention(nn.Module):
             nn.init.xavier_uniform_(self.out_proj.weight)
             if self.out_proj.bias is not None:
                 nn.init.constant_(self.out_proj.bias, 0.0)
+
+        if self.has_right_weight_not_share:
+            nn.init.xavier_uniform_(self.k_proj1.weight)
+            nn.init.xavier_uniform_(self.q_proj1.weight)
         
         if self.bias_k is not None:
             nn.init.xavier_normal_(self.bias_k)
@@ -439,13 +464,12 @@ class MultiheadTaylorAttention(nn.Module):
             # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
             # tmp = F.softmax(attn_output_weights, dim=-1)
 
-            eps = 1e-12
-            all_weights = torch.sum(attn_output_weights, dim=-1, keepdim=True).clamp_min(eps).expand_as(attn_output_weights)
-            attn_output_weights = attn_output_weights / all_weights
-            # attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
+            # eps = 1e-8
+            # all_weights = torch.sum(attn_output_weights, dim=-1, keepdim=True).clamp_min(eps).expand_as(attn_output_weights)
+            # attn_output_weights = attn_output_weights / all_weights
+            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1, eps=1e-8)
 
         # print(attn_output_weights[0][0])
-        
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, True)
         # N, S, E
@@ -453,6 +477,37 @@ class MultiheadTaylorAttention(nn.Module):
 
         # N, L, E
         attn_output = torch.bmm(attn_output_weights, value)
+        # right
+        if self.has_right_weight:
+            # N, 1, E
+            q_mean = torch.mean(q, dim=1, keepdim=True)
+            # N, 1, E
+            k_mean = torch.mean(k, dim=1, keepdim=True)
+            qk = torch.bmm(q_mean.transpose(1, 2), k_mean)
+            if self.do_softmax:
+                qk = F.softmax(qk, dim=1)
+            attn_output = torch.bmm(attn_output, qk)
+        elif self.has_right_weight_not_share:
+            # not share
+            # - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+            # the embedding dimension.
+            # - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+            # the embedding dimension.
+            # - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+            # the embedding dimension.
+            # N, 1, E
+            query_mean = torch.mean(query, dim=0, keepdim=True).transpose(0, 1)
+            key_mean = torch.mean(key, dim=0, keepdim=True).transpose(0, 1)
+            q_mean = self.q_proj1(query_mean)
+            k_mean = self.k_proj1(key_mean)
+            # N, E, E
+            qk = torch.bmm(q_mean.transpose(1, 2), k_mean)
+            if self.do_softmax:
+                # qk = F.softmax(qk, dim=1)
+                qk = F.normalize(qk, p=1, dim=1, eps=1e-8)
+            # N, L, E
+            attn_output = torch.bmm(attn_output, qk)
+
         if self.has_res:
             attn_output = attn_output + value
         # L, N, E
