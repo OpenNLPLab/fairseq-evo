@@ -12,9 +12,9 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 
 
-# taylor
+# cos
 @with_incremental_state
-class MultiheadTaylorAttention(nn.Module):
+class MultiheadCosAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -116,15 +116,8 @@ class MultiheadTaylorAttention(nn.Module):
         self.dim = dim
         self.scaling = dim ** -0.5
         
-
-        self.k_proj = quant_noise(
-            nn.Linear(self.kdim, self.dim, bias=bias), q_noise, qn_block_size
-        )
         self.v_proj = quant_noise(
             nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        self.q_proj = quant_noise(
-            nn.Linear(embed_dim, self.dim, bias=bias), q_noise, qn_block_size
         )
 
         # add begin
@@ -155,29 +148,7 @@ class MultiheadTaylorAttention(nn.Module):
         self.alpha_beta = alpha_beta
         self.max_l = max_l
 
-        if self.has_right_weight_not_share:
-            self.k_proj1 = quant_noise(
-                nn.Linear(self.kdim, self.dim, bias=bias), q_noise, qn_block_size
-            )
-            self.q_proj1 = quant_noise(
-                nn.Linear(embed_dim, self.dim, bias=bias), q_noise, qn_block_size
-            )
-        
-        if self.sparse:
-            self.diag_mask = self.build_mask(5120, 5120)
-        # 1 * E
-        if self.is_ada_q:
-            self.qsigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
-        if self.is_ada_k:
-            self.ksigma2 = Parameter(torch.ones(1, self.dim), requires_grad=False)
-
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-
-        if self.alpha_beta:
-            self.row1, self.col1, self.row2, self.col2 = self.get_alpha_beta(self.max_l, self.max_l)
+        self.weight_index = self.get_alpha_beta(self.max_l)
         # add end
 
         # print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
@@ -221,13 +192,9 @@ class MultiheadTaylorAttention(nn.Module):
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
-            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
             nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
         else:
-            nn.init.xavier_uniform_(self.k_proj.weight)
             nn.init.xavier_uniform_(self.v_proj.weight)
-            nn.init.xavier_uniform_(self.q_proj.weight)
 
         if self.has_out:
             nn.init.xavier_uniform_(self.out_proj.weight)
@@ -243,19 +210,11 @@ class MultiheadTaylorAttention(nn.Module):
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
 
-    def get_alpha_beta(self, src_len, tgt_len):
+    def get_alpha_beta(self, max_l):
         a = np.pi / 2
-        row_index = torch.arange(1, src_len + 1)
-        col_index = torch.arange(1, tgt_len + 1)
-        row1 = torch.cos(a * row_index / src_len).reshape(1, -1, 1)
-        col1 = torch.cos(a * col_index / tgt_len).reshape(1, -1, 1)
+        index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1) / max_l
 
-        row2 = torch.sin(a * row_index / src_len).reshape(1, -1, 1)
-        col2 = torch.sin(a * col_index / tgt_len).reshape(1, -1, 1)
-
-        # mask = row1 * col1 + row2 * col2
-
-        return nn.Parameter(row1, requires_grad=False), nn.Parameter(col1, requires_grad=False), nn.Parameter(row2, requires_grad=False), nn.Parameter(col2, requires_grad=False)
+        return nn.Parameter(index, requires_grad=False)
 
     def build_mask(self, src_len, tgt_len):
         d_diag = min(self.d1, tgt_len, src_len)
@@ -320,226 +279,31 @@ class MultiheadTaylorAttention(nn.Module):
         head_dim = embed_dim // num_heads
 
         tgt_len, bsz, embed_dim = query.size()
-        # L, N, E
-        q = self.q_proj(query)
-        # S, N, E
-        k = self.k_proj(key)
 
-        if self.training:
-            # L * N, E -> (1, E)
-            # sigma2 = torch.nn.Parameter(torch.var(q.view(-1, self.embed_dim), dim=0, keepdim=True), requires_grad=False)
-            self.cnt += 1
-            if self.cnt % self.up_fq == 0:
-                # print(self.cnt, self.up_fq)
-                with torch.no_grad():
-                    if self.is_ada_q:
-                        # print("q")
-                        qsigma2 = torch.var(q.view(-1, self.embed_dim), dim=0, keepdim=True)
-                        self.qsigma2 *= self.lambda_
-                        self.qsigma2 += (1 - self.lambda_) * qsigma2
-
-                    if self.is_ada_k:
-                        # print("k")
-                        ksigma2 = torch.var(k.view(-1, self.embed_dim), dim=0, keepdim=True)
-                        self.ksigma2 *= self.lambda_
-                        self.ksigma2 += (1 - self.lambda_) * ksigma2
-
-    
         # scaling = float(embed_dim) ** -0.5
         # q *= self.scaling
-        if self.do_scale:
-            q = q * self.scaling
 
-        if self.use_q:
-            # print("q1")
-            q /= torch.sqrt(self.qsigma2)
-        if self.use_k:
-            # print("k1")
-            k /= torch.sqrt(self.ksigma2)
+        # 1, L, 1
+        qsin = torch.sin(self.weight_index[:, :tgt_len, :])
+        ksin = torch.sin(self.weight_index[:, :src_len, :])
+        qcos = torch.cos(self.weight_index[:, :tgt_len, :])
+        kcos = torch.cos(self.weight_index[:, :src_len, :])
 
-        if self.use_relu:
-            q = F.relu(q)
-            k = F.relu(k)
-        elif self.use_elu:
-            q = F.elu(q)
-            k = F.elu(k)
-        elif self.use_leak:
-            q = F.leaky_relu(q)
-            k = F.leaky_relu(k)
-        elif self.use_square:
-            q = torch.square(q)
-            k = torch.square(k)
-        elif self.use_sigmoid:
-            q = F.sigmoid(q)
-            k = F.sigmoid(k)
-            
+        attn_output_weights = torch.bmm(qsin, ksin.transpose(1, 2)) + torch.bmm(qcos, kcos.transpose(1, 2))
 
-        if self.norm_taylor:
-            # N, L, E
-            q = q.transpose(0, 1)
-            # |q| ^ (-1) q
-            q = F.normalize(q, p=2, dim=-1)
-            # q *= scaling
-            # N, S, E
-            k = k.transpose(0, 1)
-            # |k| ^ (-1) k
-            k = F.normalize(k, p=2, dim=-1)
-            # N, L, S
-            # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
-            attn_output_weights = 1 + torch.bmm(q, k.transpose(1, 2))
-            if attn_mask is not None:
-                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-            # print(attn_mask)
-            # print(attn_output_weights)
-            # N, L, S
-            # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-            # tmp = F.softmax(attn_output_weights, dim=-1)
-            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
-            # print(torch.mean(torch.norm(tmp - attn_output_weights)))
-            # print(tmp, attn_output_weights)
-            # tmp = torch.sum(attn_output_weights, axis=-1)
-            # print(tmp)
-            # dropout
-            # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
-        elif self.use_sigmoid:
-            # print(1)
-            # N, L, E
-            q = q.transpose(0, 1)
-            # |q| ^ (-1) q
-            # q = F.normalize(q, p=2, dim=-1)
-            # q *= scaling
-            # N, S, E
-            k = k.transpose(0, 1)
-            # |k| ^ (-1) k
-            # k = F.normalize(k, p=2, dim=-1)
-            # N, L, S
-            # sum_{i=1}^{embed_dim}, 每行src_len个
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2)) / src_len / embed_dim
-            if attn_mask is not None:
-                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-        elif self.use_l2:
-            # print(1)
-            ## 需要修改causal形式
-            # N, L, E
-            q = q.transpose(0, 1)
-            # N, S, E
-            k = k.transpose(0, 1)
+        if attn_mask is not None:
+            attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
 
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
-
-            # N, L, 1
-            q_norm = torch.sum(torch.pow(q, 2), dim=-1, keepdim=True)
-            # N, S, 1
-            k_norm = torch.sum(torch.pow(k, 2), dim=-1, keepdim=True)
-            # N, 1, 1
-            k_norm_sum = torch.sum(k_norm, dim=-2, keepdim=True)
-            # norm
-            # N, L, 1
-            qk_norm = src_len * q_norm + k_norm_sum
-            eps = 1e-8
-            
-            tmp = 2 * attn_output_weights / qk_norm
-            # print(torch.mean(torch.abs(tmp) <= 1))
-
-            qk_norm[qk_norm < eps] = eps
-            
-            attn_output_weights = 2 * attn_output_weights / qk_norm
-
-        else:
-            # N, L, E
-            q = q.transpose(0, 1)
-            # N, S, E
-            k = k.transpose(0, 1)
-            # N, L, S
-            if self.alpha_beta:
-                q1 = q * self.row1[:, :tgt_len, :]
-                k1 = k * self.col1[:, :src_len, :]
-                q2 = q * self.row2[:, :tgt_len, :]
-                k2 = k * self.col2[:, :src_len, :]
-                attn_output_weights = torch.bmm(q1, k1.transpose(1, 2)) + torch.bmm(q2, k2.transpose(1, 2))
-            else:
-                # 1 + |q| ^ (-1) * q * k ^ T * |k| ^ (-1) 
-                attn_output_weights = torch.bmm(q, k.transpose(1, 2))
-
-            if self.sparse:
-                # d_diag = min(self.d1, tgt_len, src_len)
-                # d_col = min(self.d2, tgt_len)
-                # d_row = min(self.d2, src_len)
-                # mask = torch.ones((src_len, tgt_len), dtype=torch.bool)
-                # mask1 = torch.tril(mask, diagonal=d_diag)
-                # mask2 = torch.triu(mask, diagonal=-d_diag)
-                # diag_mask = (mask1 & mask2)
-                # # colmask = torch.ones((src_len, tgt_len), dtype=torch.bool)
-                # # colmask[:, d_col:] = False
-                # # rowmask = torch.ones((src_len, tgt_len), dtype=torch.bool)
-                # # rowmask[d_row:, :] = False
-                # diag_mask[:d_col, :] = True
-                # diag_mask[:, :d_row] = True
-                # # allmask = torch.unsqueeze(diag_mask, 0)
-                # # allmask = torch.unsqueeze(diag_mask | colmask | rowmask, 0)
-
-                # # attn_output_weights[~allmask] = 0
-                # attn_output_weights[:, ~diag_mask] = 0
-
-                # print(attn_output_weights)
-                # with torch.autograd.profiler.record_function("sparse"):
-                #     # attn_output_weights[:, self.diag_mask[:tgt_len, :src_len]] = 0
-                #     attn_output_weights.masked_fill(self.diag_mask[:tgt_len, :src_len], 0)
-                # attn_output_weights[:, self.diag_mask[:tgt_len, :src_len]] = 0
-                attn_output_weights = attn_output_weights.masked_fill(self.diag_mask[:tgt_len, :src_len], 0)
-            
-            if attn_mask is not None:
-                attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
-
-            # eps = 1e-8
-            # all_weights = torch.sum(attn_output_weights, dim=-1, keepdim=True).clamp_min(eps).expand_as(attn_output_weights)
-            # attn_output_weights = attn_output_weights / all_weights
-            attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1, eps=1e-8)
-
-            # with open(f"{self.index}.npy", "ab+") as f:
-            #     np.save(f, attn_output_weights.cpu().detach().numpy())
+        # 1, L, S
+        attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1, eps=1e-8)
 
         # print(attn_output_weights[0][0])
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
-        # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, True)
         # N, S, E
         value = value.transpose(0, 1)
-
         # N, L, E
-        attn_output = torch.bmm(attn_output_weights, value)
-        # right
-        if self.has_right_weight:
-            # N, 1, E
-            q_mean = torch.mean(q, dim=1, keepdim=True)
-            # N, 1, E
-            k_mean = torch.mean(k, dim=1, keepdim=True)
-            qk = torch.bmm(q_mean.transpose(1, 2), k_mean)
-            if self.do_softmax:
-                qk = F.softmax(qk, dim=1)
-            attn_output = torch.bmm(attn_output, qk)
-        elif self.has_right_weight_not_share:
-            # not share
-            # - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
-            # the embedding dimension.
-            # - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
-            # the embedding dimension.
-            # - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
-            # the embedding dimension.
-            # N, 1, E
-            query_mean = torch.mean(query, dim=0, keepdim=True).transpose(0, 1)
-            key_mean = torch.mean(key, dim=0, keepdim=True).transpose(0, 1)
-            q_mean = self.q_proj1(query_mean)
-            k_mean = self.k_proj1(key_mean)
-            # N, E, E
-            qk = torch.bmm(q_mean.transpose(1, 2), k_mean)
-            if self.do_softmax:
-                # qk = F.softmax(qk, dim=1)
-                qk = F.normalize(qk, p=1, dim=1, eps=1e-8)
-            # N, L, E
-            attn_output = torch.bmm(attn_output, qk)
-
-        if self.has_res:
-            attn_output = attn_output + value
+        # attn_output = torch.bmm(attn_output_weights, value)
+        attn_output = torch.matmul(attn_output_weights, value)
         # L, N, E
         attn_output = attn_output.transpose(0, 1)
         # L, N, E

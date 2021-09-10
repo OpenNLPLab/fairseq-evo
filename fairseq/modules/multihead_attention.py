@@ -173,8 +173,8 @@ class MultiheadAttention(nn.Module):
             # treats bias in linear module as method.
             and not torch.jit.is_scripting()
         ):
-            assert key is not None and value is not None
-            ## query, key begin
+            # assert key is not None and value is not None
+            # # query, key begin
             # num_heads = self.num_heads
             # tgt_len, bsz, embed_dim = query.size()
             # src_len = key.size(0)
@@ -188,11 +188,11 @@ class MultiheadAttention(nn.Module):
             # # S, N, E
             # v = self.v_proj(value)
 
-            # with open(f"q_{self.index}.npy", "ab+") as f:
-            #     np.save(f, q.transpose(0, 1).cpu().detach().numpy())
+            # # with open(f"q_{self.index}.npy", "ab+") as f:
+            # #     np.save(f, q.transpose(0, 1).cpu().detach().numpy())
 
-            # with open(f"k_{self.index}.npy", "ab+") as f:
-            #     np.save(f, k.transpose(0, 1).cpu().detach().numpy())
+            # # with open(f"k_{self.index}.npy", "ab+") as f:
+            # #     np.save(f, k.transpose(0, 1).cpu().detach().numpy())
 
             # # N * h, L, d
             # q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
@@ -226,6 +226,11 @@ class MultiheadAttention(nn.Module):
         
             # # N * h, L, S
             # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+
+            # print(attn_output_weights.cpu().detach().numpy()[0])
+            # with open(f"{self.index}.npy", "ab+") as f:
+            #     np.save(f, attn_output_weights.cpu().detach().numpy())
+
             # # dropout
             # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
             # # N * h, L, d
@@ -243,7 +248,7 @@ class MultiheadAttention(nn.Module):
 
             ## query, key end
 
-            ## add begin
+            # add begin
             # need_weights = True
             # attn, attn_weights = F.multi_head_attention_forward(
             #     query,
@@ -273,7 +278,7 @@ class MultiheadAttention(nn.Module):
             #     np.save(f, attn_weights.cpu().detach().numpy())
 
             # return attn, attn_weights
-            ## add end
+            # add end
 
             return F.multi_head_attention_forward(
                 query,

@@ -1772,6 +1772,33 @@ def transformer_head_lm_small_wiki103(args):
     args.do_scale = getattr(args, "do_scale", False)
     args.use_linear = getattr(args, "use_linear", True)
 
+# relu + multi + weight
+@register_model_architecture("transformer_head_lm", "transformer_linear_relu_multi_weight_wiki103")
+def transformer_head_lm_small_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.do_scale = getattr(args, "do_scale", False)
+    args.use_linear = getattr(args, "use_linear", True)
+    args.alpha_beta = getattr(args, "alpha_beta", True)
+    args.max_l = getattr(args, "max_l", 3072)
+    args.has_out = getattr(args, "has_out", True)
+
 # simformer
 @register_model_architecture("simformer_lm", "simformer_lm_small_wiki103")
 def simformer_lm_small_wiki103(args):
@@ -1866,7 +1893,7 @@ def simformer_lm_wiki103(args):
     args.norm_taylor = getattr(args, "norm_taylor", False)
     transformer_lm_big(args)
 
-
+# linear relu
 @register_model_architecture("transformer_taylor_lm", "transformer_linear_relu_lm_wiki103")
 def simformer_lm_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
@@ -1886,6 +1913,30 @@ def simformer_lm_wiki103(args):
     # add
     args.use_relu = getattr(args, "use_relu", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
+    transformer_lm_big(args)
+
+# linear relu weight
+@register_model_architecture("transformer_taylor_lm", "transformer_linear_relu_weight_lm_wiki103")
+def simformer_lm_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    # add
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.alpha_beta = getattr(args, "alpha_beta", True)
+    args.max_l = getattr(args, "max_l", 3072)
     transformer_lm_big(args)
 
 # splu

@@ -1019,6 +1019,9 @@ class MultiheadAttention_(nn.Module):
         use_softplus=False,
         use_basic=True,
         use_abs=False,
+        # 因子
+        alpha_beta=False,
+        max_l=1024,
     ):
         # add
         self.index = index
@@ -1098,6 +1101,15 @@ class MultiheadAttention_(nn.Module):
 
         self.add_zero_attn = add_zero_attn
 
+
+        self.alpha_beta = alpha_beta
+        self.max_l = max_l
+        # if self.alpha_beta:
+        #     self.row1, self.col1, self.row2, self.col2 = self.get_alpha_beta(self.max_l)
+        if self.alpha_beta:
+            self.weight_index = self.get_alpha_beta(self.max_l)
+
+
         self.reset_parameters()
 
         self.onnx_trace = False
@@ -1123,6 +1135,8 @@ class MultiheadAttention_(nn.Module):
         print(f"args.use_q {self.use_q}")
         print(f"args.use_k {self.use_k}")
         print(f"args.has_out {self.has_out}")
+        print(f"self.alpha_beta {self.alpha_beta}")
+        print(f"self.max_l {self.max_l}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -1149,6 +1163,29 @@ class MultiheadAttention_(nn.Module):
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
+
+    def get_alpha_beta(self, src_len, tgt_len):
+        a = np.pi / 2
+        row_index = torch.arange(1, src_len + 1)
+        col_index = torch.arange(1, tgt_len + 1)
+        row1 = torch.cos(a * row_index / src_len).reshape(1, -1, 1)
+        col1 = torch.cos(a * col_index / tgt_len).reshape(1, -1, 1)
+
+        row2 = torch.sin(a * row_index / src_len).reshape(1, -1, 1)
+        col2 = torch.sin(a * col_index / tgt_len).reshape(1, -1, 1)
+
+        # mask = row1 * col1 + row2 * col2
+
+        return nn.Parameter(row1, requires_grad=False), nn.Parameter(col1, requires_grad=False), nn.Parameter(row2, requires_grad=False), nn.Parameter(col2, requires_grad=False)
+
+    def get_alpha_beta(self, l):
+        a = np.pi / 2
+        index = a * torch.arange(1, l + 1).reshape(1, -1, 1) / l
+
+        # mask = row1 * col1 + row2 * col2
+
+        return nn.Parameter(index, requires_grad=False)
+
 
     def forward(
         self,
@@ -1276,16 +1313,50 @@ class MultiheadAttention_(nn.Module):
             if attn_mask is not None:
                 attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
         elif self.use_linear:
-            # N * h, L, S
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+            if self.alpha_beta:
+                # with torch.no_grad():
+                #     a = np.pi / 2
+                #     m = max(src_len, tgt_len)
+                #     index = (a * torch.arange(1, m + 1) / self.max_l).to(q)
+                #     row_index = torch.arange(1, src_len + 1)
+                #     col_index = torch.arange(1, tgt_len + 1)
+                #     row1 = torch.cos(index[:tgt_len]).reshape(1, -1, 1)
+                #     col1 = torch.cos(index[:src_len]).reshape(1, -1, 1)
+
+                #     row2 = torch.sin(index[:tgt_len]).reshape(1, -1, 1)
+                #     col2 = torch.sin(index[:tgt_len]).reshape(1, -1, 1)
+                # q1 = q * row1[:, :tgt_len, :]
+                # k1 = k * col1[:, :src_len, :]
+                # q2 = q * row2[:, :tgt_len, :]
+                # k2 = k * col2[:, :src_len, :]
+                # attn_output_weights = torch.bmm(q1, k1.transpose(1, 2)) + torch.bmm(q2, k2.transpose(1, 2))
+                
+                # q1 = q * self.row1[:, :tgt_len, :]
+                # k1 = k * self.col1[:, :src_len, :]
+                # q2 = q * self.row2[:, :tgt_len, :]
+                # k2 = k * self.col2[:, :src_len, :]
+                # attn_output_weights = torch.bmm(q1, k1.transpose(1, 2)) + torch.bmm(q2, k2.transpose(1, 2))
+
+                row1 = torch.cos(self.weight_index[:, :tgt_len, :])
+                col1 = torch.cos(self.weight_index[:, :src_len, :])
+                row2 = torch.sin(self.weight_index[:, :tgt_len, :])
+                col2 = torch.sin(self.weight_index[:, :src_len, :])
+
+                q1 = q * row1
+                k1 = k * col1
+                q2 = q * row2
+                k2 = k * col2
+                attn_output_weights = torch.bmm(q1, k1.transpose(1, 2)) + torch.bmm(q2, k2.transpose(1, 2))
+            
+            else:
+                # N * h, L, S
+                attn_output_weights = torch.bmm(q, k.transpose(1, 2))
 
             if attn_mask is not None:
                 attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
 
             attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1)
         elif self.use_basic:
-            # N * h, L, S
-            attn_output_weights = torch.bmm(q, k.transpose(1, 2))
 
             # attn_mask
             if attn_mask is not None:

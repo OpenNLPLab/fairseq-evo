@@ -84,6 +84,7 @@ class TransformerEncoderLayer(nn.Module):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=args.index,
         )
 
     def residual_connection(self, x, residual):
@@ -270,6 +271,7 @@ class TransformerDecoderLayer(nn.Module):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=args.index,
         )
 
     def prepare_for_onnx_export_(self):

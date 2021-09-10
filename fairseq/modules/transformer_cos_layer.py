@@ -13,14 +13,14 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 # merge attention
-from fairseq.modules import MultiheadTaylorAttention
+from fairseq.modules import MultiheadCosAttention
 
-class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
+class TransformerCosEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):
         super().__init__(args)
 
     def build_self_attention(self, embed_dim, args):
-        return MultiheadTaylorAttention(
+        return MultiheadCosAttention(
             embed_dim,
             args.encoder_attention_heads,
             dropout=args.attention_dropout,
@@ -60,7 +60,7 @@ class TransformerTaylorEncoderLayer(TransformerEncoderLayer):
             max_l=getattr(args, "max_l", 1024),
         )
 
-class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
+class TransformerCosDecoderLayer(TransformerDecoderLayer):
     def __init__(
         elf, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
@@ -69,7 +69,7 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
-        return MultiheadTaylorAttention(
+        return MultiheadCosAttention(
             embed_dim,
             args.decoder_attention_heads,
             dropout=args.attention_dropout,
@@ -112,7 +112,7 @@ class TransformerTaylorDecoderLayer(TransformerDecoderLayer):
         )
 
     def build_encoder_attention(self, embed_dim, args):
-        return MultiheadTaylorAttention(
+        return MultiheadCosAttention(
             embed_dim,
             args.decoder_attention_heads,
             kdim=getattr(args, "encoder_embed_dim", None),

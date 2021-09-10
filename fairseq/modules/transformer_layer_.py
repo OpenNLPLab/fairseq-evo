@@ -107,6 +107,8 @@ class TransformerEncoderLayer_(nn.Module):
             use_softplus=getattr(args, "use_softplus", False),
             use_basic=getattr(args, "use_basic", True),
             use_abs=getattr(args, "use_abs", False),
+            alpha_beta=getattr(args, "alpha_beta", False),
+            max_l=getattr(args, "max_l", 1024),
         )
 
     def residual_connection(self, x, residual):
@@ -302,6 +304,8 @@ class TransformerDecoderLayer_(nn.Module):
             use_softplus=getattr(args, "use_softplus", False),
             use_basic=getattr(args, "use_basic", True),
             use_abs=getattr(args, "use_abs", False),
+            alpha_beta=getattr(args, "alpha_beta", False),
+            max_l=getattr(args, "max_l", 1024),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -337,6 +341,8 @@ class TransformerDecoderLayer_(nn.Module):
             use_softplus=getattr(args, "use_softplus", False),
             use_basic=getattr(args, "use_basic", True),
             use_abs=getattr(args, "use_abs", False),
+            alpha_beta=getattr(args, "alpha_beta", False),
+            max_l=getattr(args, "max_l", 1024),
         )
 
     def prepare_for_onnx_export_(self):

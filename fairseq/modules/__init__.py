@@ -89,6 +89,11 @@ from .transformer_splu_layer import (
     TransformerSpluEncoderLayer,
     TransformerSpluDecoderLayer,
 )
+from .multihead_cos_attention import MultiheadCosAttention
+from .transformer_cos_layer import (
+    TransformerCosEncoderLayer,
+    TransformerCosDecoderLayer,
+)
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
@@ -193,5 +198,9 @@ __all__ = [
     # simformer
     "SimformerDecoderLayer", 
     "SimformerEncoderLayer",
-    "FFN"
+    "FFN",
+    # cos
+    "MultiheadCosAttention",
+    "TransformerCosEncoderLayer",
+    "TransformerCosDecoderLayer",
 ]

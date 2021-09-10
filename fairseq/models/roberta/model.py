@@ -41,6 +41,8 @@ from fairseq.models.transformer import TransformerTaylorEncoder
 from fairseq.models.transformer import TransformerSparseReluEncoderLayer
 # splu
 from fairseq.models.transformer import TransformerSpluEncoder
+# cos
+from fairseq.models.transformer import TransformerCosEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -812,6 +814,36 @@ class RobertaSpluModel(RobertaModel):
         encoder = RobertaSpluEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# sparse relu
+class RobertaCosEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerCosEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_cos")
+class RobertaCosModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaCosEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -958,6 +990,18 @@ def roberta_head_architecture(args):
     args.use_k = getattr(args, "use_k", False)
     args.has_out = getattr(args, "has_out", True)
 
+# multi relu weight 
+@register_model_architecture("roberta_head", "roberta_multi_relu_weight_base")
+def roberta_head_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.do_scale = getattr(args, "do_scale", False)
+    args.use_linear = getattr(args, "use_linear", True)
+    args.alpha_beta = getattr(args, "alpha_beta", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = getattr(args, "has_out", True)
+
 # simformer
 @register_model_architecture("roberta_simformer", "roberta_simformer_base")
 def roberta_simformer_architecture(args):
@@ -1045,6 +1089,23 @@ def roberta_taylor_architecture(args):
     args.use_relu = getattr(args, "use_relu", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
     base_architecture(args)
+
+# linear relu alpha beta
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_weight_base")
+def roberta_taylor_architecture(args):
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.alpha_beta = getattr(args, "alpha_beta", True)
+    base_architecture(args)
+
+
+# linear relu pos lear
+@register_model_architecture("roberta_taylor", "roberta_linear_relu_no_lear_pos_base")
+def roberta_taylor_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    args.encoder_learned_pos = False
 
 # linear relu right
 @register_model_architecture("roberta_taylor", "roberta_linear_relu_right_base")
@@ -1175,6 +1236,10 @@ def roberta_taylor_architecture(args):
     args.max_n = getattr(args, "max_n", 512)
     base_architecture(args)
 
+# cos
+@register_model_architecture("roberta_cos", "roberta_cos_base")
+def roberta_taylor_architecture(args):
+    base_architecture(args)
 
 
 
