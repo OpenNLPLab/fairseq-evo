@@ -72,6 +72,8 @@ class MultiheadTaylorAttention(nn.Module):
         # 因子
         alpha_beta=False,
         max_l=1024,
+        # linear
+        use_linear=False
     ):
         # add
         self.index = index
@@ -154,6 +156,7 @@ class MultiheadTaylorAttention(nn.Module):
         self.has_right_weight_not_share = has_right_weight_not_share
         self.alpha_beta = alpha_beta
         self.max_l = max_l
+        self.use_linear = use_linear
 
         if self.has_right_weight_not_share:
             self.k_proj1 = quant_noise(
@@ -213,6 +216,7 @@ class MultiheadTaylorAttention(nn.Module):
         print(f"self.do_softmax {self.do_softmax}")
         print(f"self.alpha_beta {self.alpha_beta}")
         print(f"self.max_l {self.max_l}")
+        print(f"self.use_linear {self.use_linear}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -372,7 +376,10 @@ class MultiheadTaylorAttention(nn.Module):
         elif self.use_sigmoid:
             q = F.sigmoid(q)
             k = F.sigmoid(k)
-            
+        elif self.use_linear:
+            # print("self.use_linear")
+            q = 1 + F.elu(q)
+            k = 1 + F.elu(k)
 
         if self.norm_taylor:
             # N, L, E
@@ -498,6 +505,13 @@ class MultiheadTaylorAttention(nn.Module):
 
             # with open(f"{self.index}.npy", "ab+") as f:
             #     np.save(f, attn_output_weights.cpu().detach().numpy())
+
+            # with open(f"q_{self.index}.npy", "ab+") as f:
+            #     np.save(f, q.cpu().detach().numpy())
+
+            # with open(f"k_{self.index}.npy", "ab+") as f:
+            #     np.save(f, k.cpu().detach().numpy())
+
 
         # print(attn_output_weights[0][0])
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)

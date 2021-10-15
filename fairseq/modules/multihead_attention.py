@@ -274,6 +274,7 @@ class MultiheadAttention(nn.Module):
             #     v_proj_weight=self.v_proj.weight,
             # )
 
+            # print(attn_weights.shape)
             # with open(f"{self.index}.npy", "ab+") as f:
             #     np.save(f, attn_weights.cpu().detach().numpy())
 

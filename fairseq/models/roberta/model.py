@@ -1170,6 +1170,21 @@ def roberta_taylor_architecture(args):
     args.norm_taylor = getattr(args, "norm_taylor", False)
     base_architecture(args)
 
+# linear
+@register_model_architecture("roberta_taylor", "roberta_linear_elu_p1_base")
+def roberta_taylor_architecture(args):
+    args.use_linear = getattr(args, "use_linear", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
+# linear no scale
+@register_model_architecture("roberta_taylor", "roberta_linear_elu_p1_no_scale_base")
+def roberta_taylor_architecture(args):
+    args.do_scale = getattr(args, "do_scale", False)
+    args.use_linear = getattr(args, "use_linear", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+    base_architecture(args)
+
 # linear leak
 @register_model_architecture("roberta_taylor", "roberta_linear_leak_base")
 def roberta_taylor_architecture(args):
