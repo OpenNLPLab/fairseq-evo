@@ -65,8 +65,11 @@ from fairseq.modules import (
     TransformerSpluEncoderLayer,
     TransformerSpluDecoderLayer,
     # cos
-    TransformerCosEncoderLayer,
-    TransformerCosDecoderLayer,
+    # TransformerCosEncoderLayer,
+    # TransformerCosDecoderLayer,
+    # cosformer
+    CosformerEncoderLayer,
+    CosformerDecoderLayer,
 )
 
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
@@ -1925,8 +1928,8 @@ class TransformerSpluDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
-# add cos
-class TransformerCosDecoder(TransformerDecoder):
+# add cosformer
+class CosformerDecoder(TransformerDecoder):
     def __init__(
         self,
         args,
@@ -1938,7 +1941,7 @@ class TransformerCosDecoder(TransformerDecoder):
         super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = TransformerCosDecoderLayer(args, no_encoder_attn)
+        layer = CosformerDecoderLayer(args, no_encoder_attn)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -1952,7 +1955,7 @@ class TransformerCosDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
-class TransformerCosEncoder(TransformerEncoder):
+class CosformerEncoder(TransformerEncoder):
     """
     Transformer encoder consisting of *args.encoder_layers* layers. Each layer
     is a :class:`TransformerEncoderLayer`.
@@ -1967,7 +1970,7 @@ class TransformerCosEncoder(TransformerEncoder):
         super().__init__(args, dictionary, embed_tokens)
 
     def build_encoder_layer(self, args):
-        layer = TransformerCosEncoderLayer(args)
+        layer = CosformerEncoderLayer(args)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -1981,6 +1984,62 @@ class TransformerCosEncoder(TransformerEncoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+
+# add cos
+# class TransformerCosDecoder(TransformerDecoder):
+#     def __init__(
+#         self,
+#         args,
+#         dictionary,
+#         embed_tokens,
+#         no_encoder_attn=False,
+#         output_projection=None,
+#     ):
+#         super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+#     def build_decoder_layer(self, args, no_encoder_attn=False):
+#         layer = TransformerCosDecoderLayer(args, no_encoder_attn)
+#         checkpoint = getattr(args, "checkpoint_activations", False)
+#         if checkpoint:
+#             offload_to_cpu = getattr(args, "offload_activations", False)
+#             layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+#         # if we are checkpointing, enforce that FSDP always wraps the
+#         # checkpointed layer, regardless of layer size
+#         min_params_to_wrap = (
+#             getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+#             if not checkpoint else 0
+#         )
+#         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+#         return layer
+
+# class TransformerCosEncoder(TransformerEncoder):
+#     """
+#     Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+#     is a :class:`TransformerEncoderLayer`.
+
+#     Args:
+#         args (argparse.Namespace): parsed command-line arguments
+#         dictionary (~fairseq.data.Dictionary): encoding dictionary
+#         embed_tokens (torch.nn.Embedding): input embedding
+#     """
+
+#     def __init__(self, args, dictionary, embed_tokens):
+#         super().__init__(args, dictionary, embed_tokens)
+
+#     def build_encoder_layer(self, args):
+#         layer = TransformerCosEncoderLayer(args)
+#         checkpoint = getattr(args, "checkpoint_activations", False)
+#         if checkpoint:
+#             offload_to_cpu = getattr(args, "offload_activations", False)
+#             layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+#         # if we are checkpointing, enforce that FSDP always wraps the
+#         # checkpointed layer, regardless of layer size
+#         min_params_to_wrap = (
+#             getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+#             if not checkpoint else 0
+#         )
+#         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+#         return layer
 
 class TransformerSpluEncoder(TransformerEncoder):
     """
@@ -2039,6 +2098,40 @@ class TransformerTaylorModel(TransformerModel):
     @classmethod
     def build_decoder(cls, args, tgt_dict, embed_tokens):
         return TransformerTaylorDecoder(
+            args,
+            tgt_dict,
+            embed_tokens,
+            no_encoder_attn=getattr(args, "no_cross_attention", False),
+        )
+
+@register_model("cosformer")
+class CosformerModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return CosformerEncoder(args, src_dict, embed_tokens)
+
+    @classmethod
+    def build_decoder(cls, args, tgt_dict, embed_tokens):
+        return CosformerDecoder(
             args,
             tgt_dict,
             embed_tokens,
@@ -2205,7 +2298,7 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.use_relu = getattr(args, "use_relu", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
     args.alpha_beta = getattr(args, "alpha_beta", True)
-    args.max_l = getattr(args, "alpha_beta", 4400)
+    args.max_l = getattr(args, "max_l", 4400)
 
 # linear elu+1
 @register_model_architecture("transformertaylor", "linear_vaswani_wmt_en_de_big")
@@ -2236,3 +2329,22 @@ def cosformer_vaswani_wmt_en_de_big(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
+
+# cosformer
+# parameters used in the "Attention Is All You Need" paper (Vaswani et al., 2017)
+@register_model_architecture("cosformer", "cosformer_wmt_en_de_big")
+def cosformer_vaswani_wmt_en_de_big(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4096)
+    # args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 16)
+    args.encoder_normalize_before = getattr(args, "encoder_normalize_before", False)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    # args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    args.dropout = getattr(args, "dropout", 0.3)
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 4400)
+    args.causal = False
+    args.encoder_attention_heads = 1
+    args.decoder_attention_heads = 1

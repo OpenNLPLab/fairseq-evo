@@ -89,10 +89,16 @@ from .transformer_splu_layer import (
     TransformerSpluEncoderLayer,
     TransformerSpluDecoderLayer,
 )
-from .multihead_cos_attention import MultiheadCosAttention
-from .transformer_cos_layer import (
-    TransformerCosEncoderLayer,
-    TransformerCosDecoderLayer,
+# from .multihead_cos_attention import MultiheadCosAttention
+# from .transformer_cos_layer import (
+#     TransformerCosEncoderLayer,
+#     TransformerCosDecoderLayer,
+# )
+# cosformer
+from .multihead_cosformer_attention import MultiheadCosformerAttention
+from .transformer_cosformer_layer import (
+    CosformerEncoderLayer,
+    CosformerDecoderLayer,
 )
 
 # norm rfa
@@ -115,6 +121,7 @@ from .multihead_attention_ import MultiheadAttention_
 from .transformer_layer_ import TransformerDecoderLayer_, TransformerEncoderLayer_
 # simformer
 from .simformer_layer import SimformerDecoderLayer, SimformerEncoderLayer, FFN
+# cosformer
 
 __all__ = [
     "AdaptiveInput",

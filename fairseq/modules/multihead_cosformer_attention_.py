@@ -12,9 +12,9 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 
 
-# cos
+# cosformer
 @with_incremental_state
-class MultiheadCosAttention(nn.Module):
+class MultiheadCosformerAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -36,42 +36,12 @@ class MultiheadCosAttention(nn.Module):
         qn_block_size=8,
         # add
         index=0,
-        # base
-        is_base=True,
-        is_ada_q=False,
-        is_ada_k=False,
-        lambda_=0.99,
-        up_fq=16,
-        dropout_before=False,
-        use_q=False,
-        use_k=False,
-        # add
-        low_d=False,
-        has_out=False,
-        do_scale=True,
-        norm_taylor=True,
-        use_relu=False,
+        use_relu=True,
         use_elu=False,
         use_leak=False,
-        use_square=False,
-        use_sigmoid=False,
-        use_l2=False,
-        # scale
-        dim_scale=-1,
-        # sparse
-        sparse=False,
-        d1=32,
-        d2=8,
-        # res
-        has_res=False,
-        # right_weight
-        has_right_weight=False,
-        do_softmax=False,
-        with_right_weight=False,
-        has_right_weight_not_share=False,
-        # 因子
-        alpha_beta=False,
         max_l=1024,
+        has_out=False,
+        causal=False
     ):
         # add
         self.index = index
@@ -99,91 +69,37 @@ class MultiheadCosAttention(nn.Module):
         assert not self.self_attention or self.qkv_same_dim, (
             "Self-attention requires query, key and " "value to be of the same size"
         )
-
-        # add
-        self.has_out = has_out
-        self.low_d = low_d
-        self.do_scale = do_scale
-        self.dim_scale = dim_scale
-        # self.with_right_weight = with_right_weight
-
-        if self.low_d:
-            dim = embed_dim // 2
-        elif self.dim_scale != -1:
-            dim = self.dim_scale * embed_dim
-        else:
-            dim = embed_dim
-        self.dim = dim
-        self.scaling = dim ** -0.5
         
+        self.k_proj = quant_noise(
+            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
         self.v_proj = quant_noise(
             nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
         )
+        self.q_proj = quant_noise(
+            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
 
         # add begin
-        self.is_ada_q = is_ada_q
-        self.is_ada_k = is_ada_k
-        self.lambda_ = lambda_
-        self.scaling = dim ** -0.5
-        self.up_fq = up_fq
-        self.cnt = 0
-        self.dropout_before = dropout_before
-        self.has_out = has_out
-        self.use_q = use_q
-        self.use_k = use_k
-        self.norm_taylor = norm_taylor
         self.use_relu = use_relu
         self.use_elu = use_elu
         self.use_leak = use_leak
-        self.use_square = use_square
-        self.use_sigmoid = use_sigmoid
-        self.use_l2 = use_l2
-        self.sparse = sparse
-        self.d1 = d1
-        self.d2 = d2
-        self.has_res = has_res
-        self.has_right_weight = has_right_weight
-        self.do_softmax = do_softmax
-        self.has_right_weight_not_share = has_right_weight_not_share
-        self.alpha_beta = alpha_beta
         self.max_l = max_l
+        self.has_out = has_out
+        self.causal = causal
 
         self.weight_index = self.get_alpha_beta(self.max_l)
-        # add end
-
-        # print(self.is_ada_q, self.is_ada_k, self.dropout_before, self.has_out)
-
-        if add_bias_kv:
-            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
-            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
-        else:
-            self.bias_k = self.bias_v = None
 
         self.add_zero_attn = add_zero_attn
+
+        if self.has_out:
+            self.out_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
 
         self.reset_parameters()
 
         self.onnx_trace = False
-
-        print(dim, embed_dim)
-        print(f"self.index {self.index}")
-        print(f"do scale {self.do_scale}")
-        print(f"taylor {self.norm_taylor}")
-        print(f"use relu {self.use_relu}")
-        print(f"use elu {self.use_elu}")
-        print(f"use leak {self.use_leak}")
-        print(f"use square {self.use_square}")
-        print(f"use sigmoid {self.use_sigmoid}")
-        print(f"use l2 {self.use_l2}")
-        print(f"sparse {self.sparse}")
-        print(f"d1 {self.d1}")
-        print(f"d2 {self.d2}")
-        print(f"self.has res {self.has_res}")
-        print(f"self.has_right_weight {self.has_right_weight}")
-        print(f"self.has_right_weight_not_share {self.has_right_weight_not_share}")
-        print(f"self.do_softmax {self.do_softmax}")
-        print(f"self.alpha_beta {self.alpha_beta}")
-        print(f"self.max_l {self.max_l}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -201,18 +117,9 @@ class MultiheadCosAttention(nn.Module):
             if self.out_proj.bias is not None:
                 nn.init.constant_(self.out_proj.bias, 0.0)
 
-        if self.has_right_weight_not_share:
-            nn.init.xavier_uniform_(self.k_proj1.weight)
-            nn.init.xavier_uniform_(self.q_proj1.weight)
-        
-        if self.bias_k is not None:
-            nn.init.xavier_normal_(self.bias_k)
-        if self.bias_v is not None:
-            nn.init.xavier_normal_(self.bias_v)
-
     def get_alpha_beta(self, max_l):
         a = np.pi / 2
-        index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1) / max_l
+        index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
         return nn.Parameter(index, requires_grad=False)
 
@@ -280,34 +187,124 @@ class MultiheadCosAttention(nn.Module):
 
         tgt_len, bsz, embed_dim = query.size()
 
-        # scaling = float(embed_dim) ** -0.5
+        scaling = float(embed_dim) ** -0.5
         # q *= self.scaling
+        # L, N, E1
+        q = self.q_proj(query)
+        # S, N, E1
+        k = self.k_proj(key)
+        # S, N, E2
+        v = self.k_proj(value)
+
+        # N * b, L, e1
+        q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, S, e2
+        if k is not None:
+            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, S, e2
+        if v is not None:
+            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
+        if self.use_relu:
+            q = F.relu(q)
+            k = F.relu(k)
+        elif self.use_elu:
+            q = F.elu(q)
+            k = F.elu(k)
+        elif self.use_leak:
+            q = F.leaky_relu(q)
+            k = F.leaky_relu(k)
 
         # 1, L, 1
-        qsin = torch.sin(self.weight_index[:, :tgt_len, :])
-        ksin = torch.sin(self.weight_index[:, :src_len, :])
-        qcos = torch.cos(self.weight_index[:, :tgt_len, :])
-        kcos = torch.cos(self.weight_index[:, :src_len, :])
+        qsin = torch.sin(self.weight_index[:, :tgt_len, :] / tgt_len)
+        ksin = torch.sin(self.weight_index[:, :src_len, :] / src_len)
+        qcos = torch.cos(self.weight_index[:, :tgt_len, :] / tgt_len)
+        kcos = torch.cos(self.weight_index[:, :src_len, :] / src_len)
+        print(qsin.requires_grad)
+        print(ksin.requires_grad)
+        print(qcos.requires_grad)
+        print(kcos.requires_grad)
 
-        attn_output_weights = torch.bmm(qsin, ksin.transpose(1, 2)) + torch.bmm(qcos, kcos.transpose(1, 2))
+        # N * b, L, e1
+        q_sin = q * qsin
+        q_cos = q * qcos
+        # N * b, S, e2
+        k_sin = k * ksin
+        k_cos = k * kcos
 
-        if attn_mask is not None:
-            attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
+        eps = 1e-6
 
-        # 1, L, S
-        attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1, eps=1e-8)
+        # # N * b, L, S
+        # attn_output_weights = torch.bmm(q_sin, k_sin.transpose(1, 2)) + torch.bmm(q_cos, k_cos.transpose(1, 2))
+        # if attn_mask is not None:
+        #     attn_output_weights = attn_output_weights.masked_fill(attn_mask==float("-inf"), 0)
 
-        # print(attn_output_weights[0][0])
-        attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
-        # N, S, E
-        value = value.transpose(0, 1)
-        # N, L, E
-        # attn_output = torch.bmm(attn_output_weights, value)
-        attn_output = torch.matmul(attn_output_weights, value)
-        # L, N, E
-        attn_output = attn_output.transpose(0, 1)
-        # L, N, E
-        attn_output = self.v_proj(attn_output)
+        # # N * b, L, S
+        # attn_output_weights = F.normalize(attn_output_weights, p=1, dim=-1, eps=1e-8)
+
+        # # print(attn_output_weights[0][0])
+        # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
+
+        # # N, L, E
+        # # attn_output = torch.bmm(attn_output_weights, value)
+        # # N * b, L, e2
+        # attn_output = torch.matmul(attn_output_weights, v)
+        # # L, N, E2
+        # attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        # print(attn_output.shape)
+
+        if self.causal:
+            ## cos
+            # vi * ki^T, (N, E2, E1)
+            kv_cos = torch.einsum('nsd,nsm->nmd', k_cos, v)
+            # sum(i < j) vi * ki^T, (N, E2, E1)
+            kv_cos_cum = torch.cumsum(kv_cos, dim=0)
+            # q * sum(i < j) vi * ki^T, (N, L, E2)
+            qkv_cos = torch.einsum("nld,nmd->nlm", q_cos, kv_cos_cum)
+            ## sin
+            kv_sin = torch.einsum('nsd,nsm->nmd', k_sin, v)
+            kv_sin_cum = torch.cumsum(kv_sin, dim=0)
+            qkv_sin = torch.einsum("nld,nmd->nlm", q_sin, kv_sin_cum)
+            ## sum, (N, L, E2)
+            qkv_cos_sin = qkv_cos + qkv_sin
+
+            # 分母
+            # N, L, E1
+            z_cos = torch.cumsum(k_cos, dim=0)
+            # N, L, E1
+            z_sin = torch.cumsum(k_sin, dim=0)
+            # N, L
+            z_cos_sin = 1 / (
+                torch.einsum('nld,nld->nl', q_cos, z_cos) + \
+                torch.einsum('nld,nld->nl', q_sin, z_sin) + \
+                eps)
+
+            # (N, L, E2)
+            qz = qkv_cos_sin / z_cos_sin.unsqueeze(-1)
+        else:
+            print(1)
+            # eps = 1e-6
+            kv_cos = torch.einsum('nsd,nsm->nmd', k_cos, v)
+            kv_sin = torch.einsum('nsd,nsm->nmd', k_sin, v)
+            print(kv_cos.shape)
+            z_cos_sin = 1 / (
+                torch.einsum('nld,nd->nl', q_cos, torch.sum(k_cos, axis=1)) + \
+                torch.einsum('nld,nd->nl', q_sin, torch.sum(k_sin, axis=1)) + \
+                eps)
+            print(z_cos_sin.shape)
+            # N, L, E
+            attn_output = torch.einsum('nld,nmd,nl->nlm', q_cos, kv_cos, z_cos_sin) + \
+                        torch.einsum('nld,nmd,nl->nlm', q_sin, kv_sin, z_cos_sin)
+            # L, N, E
+            attn_output = attn_output.transpose(0, 1)
+
+        print(q.shape)
+        print(k.shape)
+        print(value.shape)
+        print(attn_output.shape)
+
+
+        attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
 
         # add
         if self.has_out:
