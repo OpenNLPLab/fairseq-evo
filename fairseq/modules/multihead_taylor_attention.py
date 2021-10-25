@@ -564,7 +564,7 @@ class MultiheadTaylorAttention(nn.Module):
             attn_output = self.out_proj(attn_output)
 
         if need_weights:
-            return attn_output, attn_output_weights
+            return attn_output, attn_output_weights.view(bsz, 1, tgt_len, src_len)
         else:
             return attn_output, None
 

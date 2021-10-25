@@ -2316,6 +2316,14 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.use_linear = getattr(args, "use_linear", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
 
+@register_model_architecture("transformertaylor", "linear_vaswani_wmt_en_de_small")
+def cosformer_vaswani_wmt_en_de_big(args):
+    base_architecture(args)
+    args.do_scale = getattr(args, "do_scale", False)
+    args.use_linear = getattr(args, "use_linear", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+
+# relu
 @register_model_architecture("transformertaylor", "relu_vaswani_wmt_en_de_big")
 def cosformer_vaswani_wmt_en_de_big(args):
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
@@ -2326,6 +2334,12 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
     args.dropout = getattr(args, "dropout", 0.3)
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.norm_taylor = getattr(args, "norm_taylor", False)
+
+@register_model_architecture("transformertaylor", "relu_vaswani_wmt_en_de_small")
+def cosformer_vaswani_wmt_en_de_big(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
@@ -2348,3 +2362,34 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.causal = False
     args.encoder_attention_heads = 1
     args.decoder_attention_heads = 1
+
+@register_model_architecture("cosformer", "cosformer_multi_wmt_en_de_big")
+def cosformer_vaswani_wmt_en_de_big(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4096)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 16)
+    args.encoder_normalize_before = getattr(args, "encoder_normalize_before", False)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    args.dropout = getattr(args, "dropout", 0.3)
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 4400)
+    args.causal = False
+
+@register_model_architecture("cosformer", "cosformer_wmt_en_de_small")
+def cosformer_wmt_en_de_small(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 4400)
+    args.causal = False
+    args.encoder_attention_heads = 1
+    args.decoder_attention_heads = 1
+
+@register_model_architecture("cosformer", "cosformer_multi_wmt_en_de_small")
+def cosformer_multi_wmt_en_de_small(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 4400)
+    args.causal = False
