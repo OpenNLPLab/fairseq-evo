@@ -70,6 +70,9 @@ from fairseq.modules import (
     # cosformer
     CosformerEncoderLayer,
     CosformerDecoderLayer,
+    # cosformer_
+    CosformerEncoderLayer_,
+    CosformerDecoderLayer_,
 )
 
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
@@ -1984,6 +1987,62 @@ class CosformerEncoder(TransformerEncoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+# add cosformer
+class CosformerDecoder_(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = CosformerDecoderLayer_(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+class CosformerEncoder_(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = CosformerEncoderLayer_(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
 # Cosformer + Softmaxdecoder
 class CosformerSoftmaxDecoder(FairseqIncrementalDecoder):
     def __init__(
@@ -3002,6 +3061,15 @@ def cosformer_wmt_en_de_small(args):
     args.max_l = getattr(args, "max_l", 4400)
     args.causal = False
 
+# encoder cosformer + outproj + decoder softmax
+@register_model_architecture("encoder_cosformer", "encoder_cosformer_wmt_en_de_small_without")
+def cosformer_wmt_en_de_small(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.causal = False
+    args.encoder_attention_heads = 1
 
 # encoder relu + decoder softmax
 @register_model_architecture("encoder_transformertaylor", "encoder_relu_vaswani_wmt_en_de_small")

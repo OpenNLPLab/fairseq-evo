@@ -692,6 +692,7 @@ class MultiheadCosformerAttention(nn.Module):
 
         # if embed_dim > max(tgt_len, src_len):
         if (embed_dim > max(tgt_len, src_len) * num_heads) or (not self.training):
+        # if True:
             # print(2)
             # N * b, L, S
             attn_output_weights = torch.bmm(q_sin, k_sin.transpose(1, 2)) + torch.bmm(q_cos, k_cos.transpose(1, 2))

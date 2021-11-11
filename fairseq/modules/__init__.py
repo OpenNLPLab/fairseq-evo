@@ -100,6 +100,12 @@ from .transformer_cosformer_layer import (
     CosformerEncoderLayer,
     CosformerDecoderLayer,
 )
+# debug
+from .multihead_cosformer_attention_ import MultiheadCosformerAttention_
+from .transformer_cosformer_layer_ import (
+    CosformerEncoderLayer_,
+    CosformerDecoderLayer_,
+)
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
