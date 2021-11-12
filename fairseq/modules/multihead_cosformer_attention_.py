@@ -533,6 +533,9 @@ class MultiheadCosformerAttention_(nn.Module):
 
         self.reset_parameters()
 
+        # for test
+        self.cnt = 0
+
         self.onnx_trace = False
 
     def prepare_for_onnx_export_(self):
@@ -614,6 +617,9 @@ class MultiheadCosformerAttention_(nn.Module):
         - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
           the embedding dimension.
         '''
+        # self.cnt += 1
+        # if self.cnt == 10:
+        #     sys.exit(0)
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
@@ -651,16 +657,16 @@ class MultiheadCosformerAttention_(nn.Module):
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
 
-        # N * b, L, e1
-        q_sin = q * torch.sin(self.weight_index[:, :tgt_len, :] / m)
-        q_cos = q * torch.cos(self.weight_index[:, :tgt_len, :] / m)
-        # N * b, S, e2
-        k_sin = k * torch.sin(self.weight_index[:, :src_len, :] / m)
-        k_cos = k * torch.cos(self.weight_index[:, :src_len, :] / m)
-        eps = 1e-6
-        
-        # with torch.profiler.profile() as p:
         with torch.autograd.profiler.record_function("multihead-cosformer-attention"):
+            # N * b, L, e1
+            q_sin = q * torch.sin(self.weight_index[:, :tgt_len, :] / m)
+            q_cos = q * torch.cos(self.weight_index[:, :tgt_len, :] / m)
+            # N * b, S, e2
+            k_sin = k * torch.sin(self.weight_index[:, :src_len, :] / m)
+            k_cos = k * torch.cos(self.weight_index[:, :src_len, :] / m)
+            eps = 1e-6
+        
+            # with torch.profiler.profile() as p:
             if self.causal:
                 # q_cos: [N * b, L, e1]
                 # k_cos: [N * b, S, e1]
@@ -709,7 +715,7 @@ class MultiheadCosformerAttention_(nn.Module):
             if self.has_out:
                 attn_output = self.out_proj(attn_output)
 
-        sys.exit(0)
+        # sys.exit(0)
 
         return attn_output, None
 
