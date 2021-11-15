@@ -2322,9 +2322,21 @@ def cosformer_lm_big(args):
     # args.decoder_layers = getattr(args, "decoder_layers", 12)
     args.decoder_layers = getattr(args, "decoder_layers", 1)
     args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_embed_dim = 128
     args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_ffn_embed_dim = 128
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
     base_lm_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 1100)
     args.causal = True
+
+@register_model_architecture("transformer_lm", "transformer_lm_big_")
+def transformer_lm_big(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 1)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_embed_dim = 128
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_ffn_embed_dim = 128
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    base_lm_architecture(args)
