@@ -1109,6 +1109,7 @@ class MultiheadCosformerAttention_(nn.Module):
                 # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
                 attn_output = torch.einsum('nlhd,nhmd,nlh->nlhm', q_, kv_, z_)
 
+                # N, L, H, D -> L, N, H, D -> L, N, E
                 attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
                 
 
