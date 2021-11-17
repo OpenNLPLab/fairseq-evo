@@ -43,6 +43,10 @@ from fairseq.models.transformer import TransformerSparseReluEncoderLayer
 from fairseq.models.transformer import TransformerSpluEncoder
 # cosformer
 from fairseq.models.transformer import CosformerEncoder
+# head
+from fairseq.models.transformer import TransformerHeadEncoder
+# cosformer
+from fairseq.models.transformer import CosformerEncoder_
 # cos
 # from fairseq.models.transformer import TransformerCosEncoder
 
@@ -876,6 +880,67 @@ class RobertaCosformerModel(RobertaModel):
         encoder = RobertaCosformerEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# cosformer
+class RobertaCosformerEncoder_(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = CosformerEncoder_(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_cosformer_")
+class RobertaCosformerModel_(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaCosformerEncoder_(args, task.source_dictionary)
+        return cls(args, encoder)
+
+# normalize, head
+class RobertaNormalizeEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = TransformerHeadEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_normalize")
+class RobertaNormalizeModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaNormalizeEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -1296,6 +1361,21 @@ def roberta_cosformer_architecture(args):
     args.max_l = getattr(args, "max_l", 4400)
     args.causal = False
 
+# cosformer
+@register_model_architecture("roberta_cosformer_", "roberta_cosformer_base_")
+def roberta_cosformer_architecture(args):
+    args.encoder_layers = getattr(args, "encoder_layers", 1)
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 8)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 8)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 8)
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 600)
+    args.causal = False
+
+
+
+
 #### multi
 # leaky
 @register_model_architecture("roberta_head", "roberta_multi_leaky_base")
@@ -1307,4 +1387,9 @@ def roberta_taylor_architecture(args):
     args.norm_taylor = getattr(args, "norm_taylor", False)
     args.do_scale = getattr(args, "do_scale", False)
     args.use_linear = getattr(args, "use_linear", True)
+    base_architecture(args)
+
+# normalize
+@register_model_architecture("roberta_normalize", "roberta_normalize_base")
+def roberta_cosformer_architecture(args):
     base_architecture(args)

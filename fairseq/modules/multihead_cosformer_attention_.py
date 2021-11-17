@@ -870,6 +870,8 @@ class MultiheadCosformerAttention_(nn.Module):
         has_out=False,
         causal=False,
         resi=False,
+        drop_out=False,
+        p=1.0
     ):
         # add
         self.index = index
@@ -919,9 +921,16 @@ class MultiheadCosformerAttention_(nn.Module):
         self.resi = resi
         self.weight_index = self.get_alpha_beta(self.max_l)
         self.add_zero_attn = add_zero_attn
+        self.drop_out = drop_out
+        self.p = p
+
+        self.drop_out = True
+        self.p = 0.5
 
         print(num_heads)
         print(self.resi)
+        print(self.drop_out)
+        print(self.p)
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -1069,25 +1078,26 @@ class MultiheadCosformerAttention_(nn.Module):
             k = F.leaky_relu(k)
 
         with torch.autograd.profiler.record_function("multihead-cosformer-attention"):
-            # N * b, L, e1
-            # N, L, H, D
-            q_sin = q * torch.sin(self.weight_index[:, :tgt_len, :, :] / m)
-            q_cos = q * torch.cos(self.weight_index[:, :tgt_len, :, :] / m)
-            # N * b, S, e2
-            # N, S, H, D
-            k_sin = k * torch.sin(self.weight_index[:, :src_len, :, :] / m)
-            k_cos = k * torch.cos(self.weight_index[:, :src_len, :, :] / m)
+            print(q.shape)
+            q_ = torch.cat([q * torch.sin(self.weight_index[:, :tgt_len, :, :] / m), q * torch.cos(self.weight_index[:, :tgt_len, :, :] / m)], dim=-1)
+            print(q.shape, tgt_len)
+            k_ = torch.cat([k * torch.sin(self.weight_index[:, :tgt_len, :, :] / m), k * torch.cos(self.weight_index[:, :tgt_len, :, :] / m)], dim=-1)
+            # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6
-        
+            
+            if self.drop_out and self.training:
+                m = int(self.p * tgt_len)
+                index = np.sort(np.random.choice(np.arange(tgt_len), m, replace=False))
+                k_[:, index, :, :] = 0
+
             # with torch.profiler.profile() as p:
             if self.causal:
                 # N, L, H, D
-                qkv_cos_sin = causal_dot_product(q_cos, k_cos, v) + causal_dot_product(q_sin, k_sin, v)
+                qkv_cos_sin = causal_dot_product(q_, k_, v)
 
                 # 分母
                 # N, L, H
-                z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q_cos, torch.cumsum(k_cos, dim=1)) + \
-                                                torch.einsum('nlhi,nlhi->nlh', q_sin, torch.cumsum(k_sin, dim=1)), eps)
+                z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q_, torch.cumsum(k_, dim=1)), eps)
 
                 # (N * b, S, e1)
                 # N, L, H, D
@@ -1095,15 +1105,63 @@ class MultiheadCosformerAttention_(nn.Module):
                 attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
             else:
                 # (N * b, e1, e2)
-                kv_cos = torch.einsum('btk,btd->bkd', k_cos, v)
-                kv_sin = torch.einsum('btk,btd->bkd', k_sin, v)
+                kv_ = torch.einsum('nshd,nshm->nhmd', k_, v)
                 # (N * b, S, e1) (N * b, e1) -> (N * b, S)
-                z_cos_sin = 1 / torch.clamp_min(torch.einsum('btk,bd->bt', q_cos, torch.sum(k_cos, axis=1)) + torch.einsum('btk,bd->bt', q_sin, torch.sum(k_sin, axis=1)), eps)
+                z_ = 1 / torch.clamp_min(torch.einsum('nlhd,nhd->nlh', q_, torch.sum(k_, axis=1)), eps)
                 # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
-                attn_output = torch.einsum('btk,bkd,bt->btd', q_cos, kv_cos, z_cos_sin) + \
-                            torch.einsum('btk,bkd,bt->btd', q_sin, kv_sin, z_cos_sin)
+                attn_output = torch.einsum('nlhd,nhmd,nlh->nlhm', q_, kv_, z_)
 
                 attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+                
+
+
+            # # N * b, L, e1
+            # # N, L, H, D
+            # q_sin = q * torch.sin(self.weight_index[:, :tgt_len, :, :] / m)
+            # q_cos = q * torch.cos(self.weight_index[:, :tgt_len, :, :] / m)
+            # # N * b, S, e2
+            # # N, S, H, D
+            # k_sin = k * torch.sin(self.weight_index[:, :src_len, :, :] / m)
+            # k_cos = k * torch.cos(self.weight_index[:, :src_len, :, :] / m)
+
+            # eps = 1e-6
+
+            # # with torch.profiler.profile() as p:
+            # if self.causal:
+            #     # N, L, H, D
+            #     qkv_cos_sin = causal_dot_product(q_cos, k_cos, v) + causal_dot_product(q_sin, k_sin, v)
+
+            #     # 分母
+            #     # N, L, H
+            #     z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q_cos, torch.cumsum(k_cos, dim=1)) + \
+            #                                     torch.einsum('nlhi,nlhi->nlh', q_sin, torch.cumsum(k_sin, dim=1)), eps)
+
+            #     # (N * b, S, e1)
+            #     # N, L, H, D
+            #     # N, L, H, D -> L, N, H, D -> L, N, E
+            #     attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+            # else:
+            #     # (N * b, e1, e2)
+            #     kv_cos = torch.einsum('nshd,nshm->nhmd', k_cos, v)
+            #     kv_sin = torch.einsum('nshd,nshm->nhmd', k_sin, v)
+            #     # (N * b, S, e1) (N * b, e1) -> (N * b, S)
+            #     z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhd,nhd->nlh', q_cos, torch.sum(k_cos, axis=1)) + torch.einsum('nlhd,nhd->nlh', q_sin, torch.sum(k_sin, axis=1)), eps)
+            #     # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
+            #     attn_output = torch.einsum('nlhd,nhmd,nlh->nlhm', q_cos, kv_cos, z_cos_sin) + \
+            #                 torch.einsum('nlhd,nhmd,nlh->nlhm', q_sin, kv_sin, z_cos_sin)
+
+            #     attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+                
+            #     # # (N * b, e1, e2)
+            #     # kv_cos = torch.einsum('btk,btd->bkd', k_cos, v)
+            #     # kv_sin = torch.einsum('btk,btd->bkd', k_sin, v)
+            #     # # (N * b, S, e1) (N * b, e1) -> (N * b, S)
+            #     # z_cos_sin = 1 / torch.clamp_min(torch.einsum('btk,bd->bt', q_cos, torch.sum(k_cos, axis=1)) + torch.einsum('btk,bd->bt', q_sin, torch.sum(k_sin, axis=1)), eps)
+            #     # # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
+            #     # attn_output = torch.einsum('btk,bkd,bt->btd', q_cos, kv_cos, z_cos_sin) + \
+            #     #             torch.einsum('btk,bkd,bt->btd', q_sin, kv_sin, z_cos_sin)
+
+            #     # attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
 
             # print(attn_output.shape)
             # add

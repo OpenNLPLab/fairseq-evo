@@ -2346,3 +2346,197 @@ def cosformer_lm_big(args):
     args.max_l = getattr(args, "max_l", 2048)
     args.causal = True
     args.has_out = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_big_32")
+def cosformer_lm_big(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 12)
+    # args.decoder_layers = getattr(args, "decoder_layers", 1)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 32)
+    # args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 64)
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+    args.has_out = True
+
+# speed test
+@register_model_architecture("cosformer_lm", "cosformer_lm_wiki")
+def cosformer_lm_big(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki8_")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki16_")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki32_")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 32)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki1_")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 1)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki2_")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 2)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki4_")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 4)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+
+
+## speed test
+@register_model_architecture("transformer_lm", "transformer_lm_big_test")
+def transformer_lm_big(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 1)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_embed_dim = 128
+    args.decoder_embed_dim = 64
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_ffn_embed_dim = 512
+    args.decoder_ffn_embed_dim = 256
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    base_lm_architecture(args)
+
+@register_model_architecture("cosformer_lm_", "cosformer_lm_big_16_test")
+def cosformer_lm_big(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 1)
+    # args.decoder_layers = getattr(args, "decoder_layers", 1)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
+    args.decoder_embed_dim = 128
+    args.decoder_embed_dim = 64
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
+    args.decoder_ffn_embed_dim = 512
+    args.decoder_ffn_embed_dim = 256
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    # args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 64)
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 2048)
+    args.causal = True
+    args.has_out = True
