@@ -1364,15 +1364,12 @@ def roberta_cosformer_architecture(args):
 # cosformer
 @register_model_architecture("roberta_cosformer_", "roberta_cosformer_base_")
 def roberta_cosformer_architecture(args):
-    args.encoder_layers = getattr(args, "encoder_layers", 1)
-    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 8)
-    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 8)
-    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 8)
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 600)
+    args.max_l = getattr(args, "max_l", 512)
     args.causal = False
-
+    drop_out = getattr(args, "drop_out", True)
+    p = getattr(args, "p", 0.3)
 
 
 

@@ -1078,9 +1078,7 @@ class MultiheadCosformerAttention_(nn.Module):
             k = F.leaky_relu(k)
 
         with torch.autograd.profiler.record_function("multihead-cosformer-attention"):
-            print(q.shape)
             q_ = torch.cat([q * torch.sin(self.weight_index[:, :tgt_len, :, :] / m), q * torch.cos(self.weight_index[:, :tgt_len, :, :] / m)], dim=-1)
-            print(q.shape, tgt_len)
             k_ = torch.cat([k * torch.sin(self.weight_index[:, :tgt_len, :, :] / m), k * torch.cos(self.weight_index[:, :tgt_len, :, :] / m)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6

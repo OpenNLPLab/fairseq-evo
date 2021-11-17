@@ -36,6 +36,8 @@ class CosformerEncoderLayer_(TransformerEncoderLayer):
             max_l=getattr(args, "max_l", 1024),
             causal=getattr(args, "causal", True),
             resi=getattr(args, "resi", False),
+            drop_out=getattr(args, "drop_out", False),
+            p=getattr(args, "p", 1.0)
         )
 
 class CosformerDecoderLayer_(TransformerDecoderLayer):
@@ -65,6 +67,8 @@ class CosformerDecoderLayer_(TransformerDecoderLayer):
             max_l=getattr(args, "max_l", 1024),
             causal=getattr(args, "causal", True),
             resi=getattr(args, "resi", False),
+            drop_out=getattr(args, "drop_out", False),
+            p=getattr(args, "p", 1.0)
         )
 
     def build_encoder_attention_(self, embed_dim, args):
@@ -86,4 +90,6 @@ class CosformerDecoderLayer_(TransformerDecoderLayer):
             max_l=getattr(args, "max_l", 1024),
             causal=getattr(args, "causal", False),
             resi=getattr(args, "resi", False),
+            drop_out=getattr(args, "drop_out", False),
+            p=getattr(args, "p", 1.0)
         )
