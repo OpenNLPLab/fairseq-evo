@@ -2404,6 +2404,28 @@ def transformer_lm_baevski_wiki103(args):
     args.max_l = getattr(args, "max_l", 2048)
     args.causal = True
 
+@register_model_architecture("cosformer_lm_", "cosformer_lm_wiki8_witho")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True
+
 @register_model_architecture("cosformer_lm_", "cosformer_lm_wiki16_")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
@@ -2512,7 +2534,7 @@ def transformer_lm_baevski_wiki103(args):
 
 ## speed test
 @register_model_architecture("transformer_lm", "transformer_lm_big_test")
-def transformer_lm_big(args):
+def transformer_lm_big_test(args):
     args.decoder_layers = getattr(args, "decoder_layers", 1)
     args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
     args.decoder_embed_dim = 128

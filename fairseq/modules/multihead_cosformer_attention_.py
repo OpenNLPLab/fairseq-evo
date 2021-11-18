@@ -441,6 +441,7 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 import sys
 from fast_transformers.causal_product import causal_dot_product
+from fast_transformers.attention.causal_linear_attention import causal_linear
 # N, L, H, E, batch, length, head, dim
 
 # cosformer
@@ -924,9 +925,6 @@ class MultiheadCosformerAttention_(nn.Module):
         self.drop_out = drop_out
         self.p = p
 
-        self.drop_out = True
-        self.p = 0.5
-
         print(num_heads)
         print(self.resi)
         print(self.drop_out)
@@ -1084,6 +1082,7 @@ class MultiheadCosformerAttention_(nn.Module):
             eps = 1e-6
             
             if self.drop_out and self.training:
+                # print(1)
                 m = int(self.p * tgt_len)
                 index = np.sort(np.random.choice(np.arange(tgt_len), m, replace=False))
                 k_[:, index, :, :] = 0
@@ -1091,7 +1090,15 @@ class MultiheadCosformerAttention_(nn.Module):
             # with torch.profiler.profile() as p:
             if self.causal:
                 # N, L, H, D
-                qkv_cos_sin = causal_dot_product(q_, k_, v)
+                # input should be N, H, L, D
+                # q_ = q_.transpose(1, 2).contiguous()
+                # k_ = k_.transpose(1, 2).contiguous()
+                # q_ = q_.permute(0,2,1,3).contiguous()
+                # k_ = k_.permute(0,2,1,3).contiguous()
+                # v = v.permute(0,2,1,3).contiguous()
+                # # N, H, L, D -> N, L, H, D
+                # qkv_cos_sin = causal_dot_product(q_, k_, v).permute(0,2,1,3).contiguous()
+                qkv_cos_sin = causal_linear(q_, k_, v)
 
                 # 分母
                 # N, L, H

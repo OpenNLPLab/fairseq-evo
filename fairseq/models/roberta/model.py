@@ -1368,10 +1368,27 @@ def roberta_cosformer_architecture(args):
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 512)
     args.causal = False
-    drop_out = getattr(args, "drop_out", True)
-    p = getattr(args, "p", 0.3)
+    args.drop_out = getattr(args, "drop_out", True)
+    args.p = getattr(args, "p", 0.3)
 
+@register_model_architecture("roberta_cosformer_", "roberta_cosformer_base_wo")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.drop_out = getattr(args, "drop_out", True)
+    args.p = getattr(args, "p", 0.5)
+    args.has_out = True
 
+@register_model_architecture("roberta_cosformer_", "roberta_cosformer_base_high")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.drop_out = getattr(args, "drop_out", True)
+    args.p = getattr(args, "p", 0.7)
 
 #### multi
 # leaky
