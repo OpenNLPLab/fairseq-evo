@@ -474,6 +474,7 @@ class MultiheadCosformerAttention_(nn.Module):
         has_out=False,
         causal=False,
         resi=False,
+        prior=False,
     ):
         # add
         self.index = index
@@ -526,6 +527,9 @@ class MultiheadCosformerAttention_(nn.Module):
 
         print(num_heads)
         print(self.resi)
+
+        if self.prior:
+            self.dist = self.get_dist()
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -959,6 +963,12 @@ class MultiheadCosformerAttention_(nn.Module):
             nn.init.xavier_uniform_(self.out_proj.weight)
             if self.out_proj.bias is not None:
                 nn.init.constant_(self.out_proj.bias, 0.0)
+
+    def get_dist(self):
+        x = torch.arange(self.max_l)
+        dist = F.softmax(x.reshape(-1, 1) - x.reshape(1, -1), dim=-1)
+
+        return nn.Parameter(dist, requires_grad=False)
 
     def get_alpha_beta(self, max_l):
         a = np.pi / 2
