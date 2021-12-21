@@ -2563,7 +2563,7 @@ def cosformer_lm_big(args):
     args.causal = True
     args.has_out = True
 
-@register_model_architecture("cosformer_lm_", "cossformer_lm_gpt2_big")
+@register_model_architecture("cosformer_lm_", "cosformer_lm_gpt2_big")
 def cosformer_lm_gpt2_big(args):
     args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1600)
     args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 6400)
