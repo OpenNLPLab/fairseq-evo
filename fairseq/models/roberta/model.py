@@ -1378,7 +1378,7 @@ def roberta_cosformer_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.causal = False
     args.drop_out = getattr(args, "drop_out", True)
-    args.p = getattr(args, "p", 0.5)
+    args.p = getattr(args, "p", 0.3)
     args.has_out = True
 
 @register_model_architecture("roberta_cosformer_", "roberta_cosformer_base_high")

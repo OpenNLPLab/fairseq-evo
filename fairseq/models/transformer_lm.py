@@ -2562,3 +2562,18 @@ def cosformer_lm_big(args):
     args.max_l = getattr(args, "max_l", 2048)
     args.causal = True
     args.has_out = True
+
+@register_model_architecture("cosformer_lm_", "cossformer_lm_gpt2_big")
+def cosformer_lm_gpt2_big(args):
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1600)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 6400)
+    args.decoder_layers = getattr(args, "decoder_layers", 48)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 25)
+    args.dropout = getattr(args, "dropout", 0.1)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_fn = getattr(args, "activation_fn", "gelu")
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 1024)
+    args.causal = True
+    args.has_out = True
