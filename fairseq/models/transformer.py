@@ -73,6 +73,12 @@ from fairseq.modules import (
     # cosformer_
     CosformerEncoderLayer_,
     CosformerDecoderLayer_,
+    # pcc
+    PccDecoderLayer,
+    PccEncoderLayer,
+    # weight
+    WeightFormerEncoderLayer,
+    WeightFormerDecoderLayer,
 )
 
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
@@ -2791,6 +2797,118 @@ class Encoder_CosformerModel(TransformerModel):
     @classmethod
     def build_encoder(cls, args, src_dict, embed_tokens):
         return CosformerEncoder(args, src_dict, embed_tokens)
+
+# add pcc
+class PccDecoder(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = PccDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+class PccEncoder(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = PccEncoderLayer(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+# add weight former
+class WeightFormerDecoder(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = WeightFormerDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+class WeightFormerEncoder(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = WeightFormerEncoderLayer(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
 
 @register_model_architecture("transformer", "transformer_tiny")
 def tiny_architecture(args):

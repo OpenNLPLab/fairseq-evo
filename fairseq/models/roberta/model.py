@@ -47,8 +47,12 @@ from fairseq.models.transformer import CosformerEncoder
 from fairseq.models.transformer import TransformerHeadEncoder
 # cosformer
 from fairseq.models.transformer import CosformerEncoder_
+# pcc
+from fairseq.models.transformer import PccEncoder
 # cos
 # from fairseq.models.transformer import TransformerCosEncoder
+# weight
+from fairseq.models.transformer import WeightFormerEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -940,6 +944,65 @@ class RobertaNormalizeModel(RobertaModel):
         encoder = RobertaNormalizeEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# pcc
+class RobertaPccEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = PccEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_pcc")
+class RobertaPccModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaPccEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+# weight
+class RobertaWeightEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = WeightFormerEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_weight")
+class RobertaWeightModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaWeightEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
@@ -1390,6 +1453,12 @@ def roberta_cosformer_architecture(args):
     args.drop_out = getattr(args, "drop_out", True)
     args.p = getattr(args, "p", 0.7)
 
+# roberta_pcc
+@register_model_architecture("roberta_pcc", "roberta_pcc_model")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.causal = False
+
 #### multi
 # leaky
 @register_model_architecture("roberta_head", "roberta_multi_leaky_base")
@@ -1407,3 +1476,34 @@ def roberta_taylor_architecture(args):
 @register_model_architecture("roberta_normalize", "roberta_normalize_base")
 def roberta_cosformer_architecture(args):
     base_architecture(args)
+
+# weight former
+@register_model_architecture("roberta_weight", "roberta_weight1")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 1)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+
+@register_model_architecture("roberta_weight", "roberta_weight2")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 2)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+
+@register_model_architecture("roberta_weight", "roberta_weight3")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 3)
+    args.has_out = False
+    args.encoder_attention_heads = 1
