@@ -53,6 +53,8 @@ from fairseq.models.transformer import PccEncoder
 # from fairseq.models.transformer import TransformerCosEncoder
 # weight
 from fairseq.models.transformer import WeightFormerEncoder
+# weight diff head
+from fairseq.models.transformer import WeightFormerEncoder_diff
 
 logger = logging.getLogger(__name__)
 
@@ -1004,6 +1006,36 @@ class RobertaWeightModel(RobertaModel):
         encoder = RobertaWeightEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+# weight diff
+class RobertaWeightEncoder_diff(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = WeightFormerEncoder_diff(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_weight_diff")
+class RobertaWeightModel_diff(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaWeightEncoder_diff(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -1507,3 +1539,16 @@ def roberta_cosformer_architecture(args):
     args.weight_type = getattr(args, "weight_type", 3)
     args.has_out = False
     args.encoder_attention_heads = 1
+
+@register_model_architecture("roberta_weight_diff", "roberta_weight3_diff")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 3)
+    args.has_out = False
+    args.all_heads = [768, 384, 256, 192, 128, 96, 64, 48, 4, 3, 2, 1]
+    # args.encoder_attention_heads = 1
+    # args.encoder_layers = 2
+    # args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)

@@ -133,6 +133,9 @@ from .pcc_layer import PccEncoderLayer, PccDecoderLayer
 # weight
 from .multihead_weight_attention import MultiheadWeightAttention
 from .transformer_weight_layer import WeightFormerEncoderLayer, WeightFormerDecoderLayer
+# weight with diff head
+from .multihead_weight_attention_diff import MultiheadWeightAttention_diff
+from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, WeightFormerDecoderLayer_diff
 
 __all__ = [
     "AdaptiveInput",
