@@ -127,7 +127,12 @@ from .multihead_attention_ import MultiheadAttention_
 from .transformer_layer_ import TransformerDecoderLayer_, TransformerEncoderLayer_
 # simformer
 from .simformer_layer import SimformerDecoderLayer, SimformerEncoderLayer, FFN
-# cosformer
+# pcc
+from .pcc import PccModule
+from .pcc_layer import PccEncoderLayer, PccDecoderLayer
+# weight
+from .multihead_weight_attention import MultiheadWeightAttention
+from .transformer_weight_layer import WeightFormerEncoderLayer, WeightFormerDecoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -216,4 +221,12 @@ __all__ = [
     "MultiheadCosAttention",
     "TransformerCosEncoderLayer",
     "TransformerCosDecoderLayer",
+    # pcc
+    "PccModule",
+    "PccEncoderLayer", 
+    "PccDecoderLayer",
+    # weight
+    "MultiheadWeightAttention",
+    "WeightFormerEncoderLayer", 
+    "WeightFormerDecoderLayer",
 ]
