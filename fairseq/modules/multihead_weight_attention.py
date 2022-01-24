@@ -105,6 +105,12 @@ class MultiheadWeightAttention(nn.Module):
             self.b0 = 3 * a2 / 2
             self.b1 = a0 - a2 / 2
             print("e^-|x|")
+        elif (self.weight_type == 4):
+            c0 = 1 - np.exp(-1)
+            c1 = self.fft_coef(1)
+            c2 = self.fft_coef(2)
+            print("fourier")
+            print("e^-|x|")
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -147,6 +153,8 @@ class MultiheadWeightAttention(nn.Module):
     #         index = torch.arange(1, max_l + 1).reshape(1, -1, 1, 1)
 
     #         return nn.Parameter(index, requires_grad=False)
+    def fft_coef(self, k):
+        return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
 
     def get_weight(self, max_l):
         if (self.weight_type == 1):
@@ -154,7 +162,7 @@ class MultiheadWeightAttention(nn.Module):
             index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
             return nn.Parameter(index, requires_grad=False)
-        elif (self.weight_type == 2) or (self.weight_type == 3):
+        elif (self.weight_type == 2) or (self.weight_type == 3) or (self.weight_type == 4):
             index = torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
             return nn.Parameter(index, requires_grad=False)
@@ -278,6 +286,11 @@ class MultiheadWeightAttention(nn.Module):
             elif (self.weight_type == 3):
                 q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
                 k_ = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+            elif (self.weight_type == 4):
+                q_ = torch.cat([c0 * q, c1 * q * torch.sin(np.pi * q_index), c1 * q * torch.cos(np.pi * q_index), \
+                                c2 * q * torch.sin(2 * np.pi * q_index), c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
+                k_ = torch.cat([k, k * torch.sin(np.pi * q_index), k * torch.cos(np.pi * q_index), \
+                                k * torch.sin(2 * np.pi * q_index), k * torch.cos(2 * np.pi * q_index)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6
 

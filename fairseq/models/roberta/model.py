@@ -1548,7 +1548,7 @@ def roberta_cosformer_architecture(args):
     args.causal = False
     args.weight_type = getattr(args, "weight_type", 3)
     args.has_out = False
-    args.all_heads = [768, 384, 256, 192, 128, 96, 64, 48, 4, 3, 2, 1]
+    args.all_heads = [128, 96, 64, 48, 24, 16, 12, 8, 4, 3, 2, 1]
     # args.encoder_attention_heads = 1
     # args.encoder_layers = 2
     # args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
