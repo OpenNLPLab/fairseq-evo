@@ -45,6 +45,7 @@ class MultiheadWeightAttention(nn.Module):
         has_out=False,
         causal=False,
         weight_type=1,
+        c=1.0,
     ):
         # add
         self.index = index
@@ -98,12 +99,14 @@ class MultiheadWeightAttention(nn.Module):
         if (self.weight_type == 1):
             print("cos")
         elif (self.weight_type == 2):
-            print("1 - x^2")
+            self.c = c
+            print(f"1 - {self.c} * x^2")
         elif (self.weight_type == 3):
             a0 = 1 - np.exp(-1)
             a2 = 25 / 2 - 35 * np.exp(-1)
             self.b0 = 3 * a2 / 2
             self.b1 = a0 - a2 / 2
+            
             print("e^-|x|")
         elif (self.weight_type == 4):
             self.c0 = 1 - np.exp(-1)
@@ -281,7 +284,7 @@ class MultiheadWeightAttention(nn.Module):
                 q_ = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
                 k_ = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
             if (self.weight_type == 2):
-                q_ = torch.cat([(1 - torch.square(q_index)) * q, 2 * q_index * q, q], dim=-1)
+                q_ = torch.cat([(1 - self.c * torch.square(q_index)) * q, 2 * self.c * q_index * q, self.c * q], dim=-1)
                 k_ = torch.cat([k, k_index * k, -torch.square(k_index) * k], dim=-1)
             elif (self.weight_type == 3):
                 q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
@@ -293,6 +296,7 @@ class MultiheadWeightAttention(nn.Module):
                                 k * torch.sin(2 * np.pi * q_index), k * torch.cos(2 * np.pi * q_index)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6
+
 
             # with torch.profiler.profile() as p:
             if self.causal:

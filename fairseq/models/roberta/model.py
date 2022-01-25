@@ -1530,6 +1530,17 @@ def roberta_cosformer_architecture(args):
     args.has_out = False
     args.encoder_attention_heads = 1
 
+@register_model_architecture("roberta_weight", "roberta_weight2_0_5")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 2)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.c = 0.5
+
 @register_model_architecture("roberta_weight", "roberta_weight3")
 def roberta_cosformer_architecture(args):
     base_architecture(args)
