@@ -36,6 +36,7 @@ class WeightFormerEncoderLayer(TransformerEncoderLayer):
             has_out=getattr(args, "has_out", False),
             causal=getattr(args, "causal", False),
             weight_type=getattr(args, "weight_type", 1),
+            c=getattr(args, "c", 1.0),
         )
 
 class WeightFormerDecoderLayer(TransformerDecoderLayer):
@@ -65,6 +66,7 @@ class WeightFormerDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             causal=getattr(args, "causal", False),
             weight_type=getattr(args, "weight_type", 1),
+            c=getattr(args, "c", 1.0),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -86,4 +88,5 @@ class WeightFormerDecoderLayer(TransformerDecoderLayer):
             has_out=getattr(args, "has_out", False),
             causal=getattr(args, "causal", False),
             weight_type=getattr(args, "weight_type", 1),
+            c=getattr(args, "c", 1.0),
         )
