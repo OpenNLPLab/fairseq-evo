@@ -1549,7 +1549,6 @@ def roberta_cosformer_architecture(args):
     args.weight_type = getattr(args, "weight_type", 4)
     args.has_out = False
     args.encoder_attention_heads = 1
-    args.encoder_layers = 1
 
 @register_model_architecture("roberta_weight_diff", "roberta_weight3_diff")
 def roberta_cosformer_architecture(args):
