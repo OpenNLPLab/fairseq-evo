@@ -46,6 +46,7 @@ class MultiheadWeightAttention(nn.Module):
         causal=False,
         weight_type=1,
         c=1.0,
+        v_act=False,
     ):
         # add
         self.index = index
@@ -95,6 +96,7 @@ class MultiheadWeightAttention(nn.Module):
         self.weight_type = weight_type
         self.weight_index = self.get_weight(self.max_l)
         self.add_zero_attn = add_zero_attn
+        self.v_act = v_act
 
         if (self.weight_type == 1):
             print("cos")
@@ -129,6 +131,7 @@ class MultiheadWeightAttention(nn.Module):
 
         print(f"causal {self.causal}")
         print(f"use relu {self.use_relu}")
+        print(f"v use act {self.v_act}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -276,6 +279,14 @@ class MultiheadWeightAttention(nn.Module):
         elif self.use_leak:
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
+
+        if self.v_act:
+            if self.use_relu:
+                v = F.relu(v)
+            elif self.use_elu:
+                v = F.elu(v)
+            elif self.use_leak:
+                v = F.leaky_relu(v)
 
         with torch.autograd.profiler.record_function("multihead-weight-attention"):
             q_index = self.weight_index[:, :tgt_len, :] / m
