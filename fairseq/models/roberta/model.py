@@ -1080,6 +1080,7 @@ def base_architecture(args):
     )
 
 
+
 @register_model_architecture("roberta", "roberta_prenorm")
 def roberta_prenorm_architecture(args):
     args.layernorm_embedding = getattr(args, "layernorm_embedding", False)
@@ -1519,6 +1520,30 @@ def roberta_cosformer_architecture(args):
     args.weight_type = getattr(args, "weight_type", 1)
     args.has_out = False
     args.encoder_attention_heads = 1
+
+@register_model_architecture("roberta_weight", "roberta_weight1_prenorm")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 1)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    print(f"pre_norm {args.encoder_normalize_before}")
+
+@register_model_architecture("roberta_weight", "roberta_weight1_wol")
+def roberta_weight1_wol_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 1)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.use_layernorm = False
+    print(f"here {args.use_layernorm}")
 
 # v激活
 @register_model_architecture("roberta_weight", "roberta_weight1_actv_v1")
