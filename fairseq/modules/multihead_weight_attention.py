@@ -292,8 +292,8 @@ class MultiheadWeightAttention(nn.Module):
             elif (self.weight_type == 4):
                 q_ = torch.cat([self.c0 * q, self.c1 * q * torch.sin(np.pi * q_index), self.c1 * q * torch.cos(np.pi * q_index), \
                                 self.c2 * q * torch.sin(2 * np.pi * q_index), self.c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
-                k_ = torch.cat([k, k * torch.sin(np.pi * q_index), k * torch.cos(np.pi * q_index), \
-                                k * torch.sin(2 * np.pi * q_index), k * torch.cos(2 * np.pi * q_index)], dim=-1)
+                k_ = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
+                                k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6
 

@@ -175,9 +175,7 @@ class MultiheadAttention_(nn.Module):
         q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
         # N * h, S, d
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # normalize
-        q -= torch.mean(q, dim=-1, keepdim=True)
-        k -= torch.mean(k, dim=-1, keepdim=True)
+        # N * h, S, d
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
         scaling = float(embed_dim) ** -0.5
