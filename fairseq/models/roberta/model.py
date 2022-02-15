@@ -1545,6 +1545,31 @@ def roberta_weight1_wol_architecture(args):
     args.use_layernorm = False
     print(f"here {args.use_layernorm}")
 
+# bound
+@register_model_architecture("roberta_weight", "roberta_weight1_bound")
+def roberta_weight1_wol_architecture(args):
+    base_architecture(args)
+    args.use_relu = False
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 1)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.use_bound = True
+
+# dropout
+@register_model_architecture("roberta_weight", "roberta_weight1_dropout")
+def roberta_weight1_wol_architecture(args):
+    base_architecture(args)
+    args.use_relu = True
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 1)
+    args.has_out = False
+    args.use_dropout = True
+    args.p = 0.7
+    args.encoder_attention_heads = 1
+
 # v激活
 @register_model_architecture("roberta_weight", "roberta_weight1_actv_v1")
 def roberta_cosformer_architecture(args):

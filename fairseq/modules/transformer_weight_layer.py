@@ -107,12 +107,15 @@ class WeightFormerEncoderLayer(nn.Module):
             use_relu=getattr(args, "use_relu", False),
             use_elu=getattr(args, "use_elu", False),
             use_leak=getattr(args, "use_leak", False),
+            use_bound=getattr(args, "use_bound", False),
             max_l=getattr(args, "max_l", 1024),
             has_out=getattr(args, "has_out", False),
             causal=getattr(args, "causal", False),
             weight_type=getattr(args, "weight_type", 1),
             c=getattr(args, "c", 1.0),
             v_act=getattr(args, "v_act", False),
+            use_dropout=getattr(args, "use_dropout", False),
+            p=getattr(args, "p", 0.5),
         )
 
     def residual_connection(self, x, residual):
@@ -350,12 +353,15 @@ class WeightFormerDecoderLayer(nn.Module):
             use_relu=getattr(args, "use_relu", False),
             use_elu=getattr(args, "use_elu", False),
             use_leak=getattr(args, "use_leak", False),
+            use_bound=getattr(args, "use_bound", False),
             max_l=getattr(args, "max_l", 1024),
             has_out=getattr(args, "has_out", False),
             causal=getattr(args, "causal", False),
             weight_type=getattr(args, "weight_type", 1),
             c=getattr(args, "c", 1.0),
             v_act=getattr(args, "v_act", False),
+            use_dropout=getattr(args, "use_dropout", False),
+            p=getattr(args, "p", 0.5),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -373,12 +379,15 @@ class WeightFormerDecoderLayer(nn.Module):
             use_relu=getattr(args, "use_relu", False),
             use_elu=getattr(args, "use_elu", False),
             use_leak=getattr(args, "use_leak", False),
+            use_bound=getattr(args, "use_bound", False),
             max_l=getattr(args, "max_l", 1024),
             has_out=getattr(args, "has_out", False),
             causal=getattr(args, "causal", False),
             weight_type=getattr(args, "weight_type", 1),
             c=getattr(args, "c", 1.0),
             v_act=getattr(args, "v_act", False),
+            use_dropout=getattr(args, "use_dropout", False),
+            p=getattr(args, "p", 0.5),
         )
 
     def prepare_for_onnx_export_(self):

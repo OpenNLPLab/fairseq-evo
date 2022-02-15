@@ -10,6 +10,7 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
+from torch.nn import Dropout
 import sys
 from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
@@ -41,12 +42,15 @@ class MultiheadWeightAttention(nn.Module):
         use_relu=True,
         use_elu=False,
         use_leak=False,
+        use_bound=False,
         max_l=1024,
         has_out=False,
         causal=False,
         weight_type=1,
         c=1.0,
         v_act=False,
+        use_dropout=False,
+        p=0.5
     ):
         # add
         self.index = index
@@ -85,11 +89,11 @@ class MultiheadWeightAttention(nn.Module):
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
-
         # add begin
         self.use_relu = use_relu
         self.use_elu = use_elu
         self.use_leak = use_leak
+        self.use_bound = use_bound
         self.max_l = max_l
         self.has_out = has_out
         self.causal = causal
@@ -97,6 +101,7 @@ class MultiheadWeightAttention(nn.Module):
         self.weight_index = self.get_weight(self.max_l)
         self.add_zero_attn = add_zero_attn
         self.v_act = v_act
+        self.use_dropout = use_dropout
 
         if (self.weight_type == 1):
             print("cos")
@@ -122,6 +127,10 @@ class MultiheadWeightAttention(nn.Module):
                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
             )
 
+        if self.use_dropout:
+            print(f"use dropout, p={p}")
+            self.dropout = Dropout(p)
+
         self.reset_parameters()
 
         # for test
@@ -132,6 +141,7 @@ class MultiheadWeightAttention(nn.Module):
         print(f"causal {self.causal}")
         print(f"use relu {self.use_relu}")
         print(f"v use act {self.v_act}")
+        print(f"use bound {self.use_bound}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -279,6 +289,9 @@ class MultiheadWeightAttention(nn.Module):
         elif self.use_leak:
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
+        elif self.use_bound:
+            q = F.relu(q) + 1
+            k = F.relu(k) + 1
 
         if self.v_act:
             if self.use_relu:
@@ -287,6 +300,11 @@ class MultiheadWeightAttention(nn.Module):
                 v = F.elu(v)
             elif self.use_leak:
                 v = F.leaky_relu(v)
+            elif self.use_bound:
+                v = F.relu(v) + 1
+        
+        if self.use_dropout:
+            v = self.dropout(v)
 
         with torch.autograd.profiler.record_function("multihead-weight-attention"):
             q_index = self.weight_index[:, :tgt_len, :] / m
