@@ -50,7 +50,7 @@ class MultiheadWeightAttention(nn.Module):
         c=1.0,
         v_act=False,
         use_dropout=False,
-        p=0.5
+        p=0.5,
     ):
         # add
         self.index = index
@@ -290,8 +290,10 @@ class MultiheadWeightAttention(nn.Module):
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
         elif self.use_bound:
-            q = F.relu(q) + 1
-            k = F.relu(k) + 1
+            # q = F.relu(q) + 1
+            # k = F.relu(k) + 1
+            q = F.relu(q) + 1.0 / head_dim
+            k = F.relu(k) + 1.0 / head_dim
 
         if self.v_act:
             if self.use_relu:
@@ -301,7 +303,8 @@ class MultiheadWeightAttention(nn.Module):
             elif self.use_leak:
                 v = F.leaky_relu(v)
             elif self.use_bound:
-                v = F.relu(v) + 1
+                # v = F.relu(v) + 1
+                v = F.relu(v) + 1.0 / head_dim
         
         if self.use_dropout:
             v = self.dropout(v)
