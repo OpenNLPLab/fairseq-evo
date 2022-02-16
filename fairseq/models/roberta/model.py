@@ -1567,7 +1567,7 @@ def roberta_weight1_wol_architecture(args):
     args.weight_type = getattr(args, "weight_type", 1)
     args.has_out = False
     args.use_dropout = True
-    args.p = 0.7
+    args.p = 0.5
     args.encoder_attention_heads = 1
 
 # v激活
