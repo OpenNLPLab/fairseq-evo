@@ -10,14 +10,13 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
-from torch.nn import Dropout
 import sys
 from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
 # cosformer
 @with_incremental_state
-class MultiheadWeightAttention(nn.Module):
+class MultiheadWeightAttention_diff(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -42,15 +41,10 @@ class MultiheadWeightAttention(nn.Module):
         use_relu=True,
         use_elu=False,
         use_leak=False,
-        use_bound=False,
         max_l=1024,
         has_out=False,
         causal=False,
         weight_type=1,
-        c=1.0,
-        v_act=False,
-        use_dropout=False,
-        p=0.5,
     ):
         # add
         self.index = index
@@ -89,47 +83,32 @@ class MultiheadWeightAttention(nn.Module):
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
+
         # add begin
         self.use_relu = use_relu
         self.use_elu = use_elu
         self.use_leak = use_leak
-        self.use_bound = use_bound
         self.max_l = max_l
         self.has_out = has_out
         self.causal = causal
         self.weight_type = weight_type
-        self.weight_index = self.get_weight(self.max_l)
         self.add_zero_attn = add_zero_attn
-        self.v_act = v_act
-        self.use_dropout = use_dropout
 
         if (self.weight_type == 1):
             print("cos")
         elif (self.weight_type == 2):
-            self.c = c
-            print(f"1 - {self.c} * x^2")
+            print("1 - x^2")
         elif (self.weight_type == 3):
             a0 = 1 - np.exp(-1)
             a2 = 25 / 2 - 35 * np.exp(-1)
             self.b0 = 3 * a2 / 2
             self.b1 = a0 - a2 / 2
-            
-            print("e^-|x|")
-        elif (self.weight_type == 4):
-            self.c0 = 1 - np.exp(-1)
-            self.c1 = self.fft_coef(1)
-            self.c2 = self.fft_coef(2)
-            print("fourier")
             print("e^-|x|")
 
         if self.has_out:
             self.out_proj = quant_noise(
                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
             )
-
-        if self.use_dropout:
-            print(f"use dropout, p={p}")
-            self.dropout = Dropout(p)
 
         self.reset_parameters()
 
@@ -140,8 +119,7 @@ class MultiheadWeightAttention(nn.Module):
 
         print(f"causal {self.causal}")
         print(f"use relu {self.use_relu}")
-        print(f"v use act {self.v_act}")
-        print(f"use bound {self.use_bound}")
+        print(f"number of heads {num_heads}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -169,17 +147,15 @@ class MultiheadWeightAttention(nn.Module):
     #         index = torch.arange(1, max_l + 1).reshape(1, -1, 1, 1)
 
     #         return nn.Parameter(index, requires_grad=False)
-    def fft_coef(self, k):
-        return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
 
-    def get_weight(self, max_l):
+    def get_index(self, max_l):
         if (self.weight_type == 1):
             a = np.pi / 2
-            index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
+            index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1, 1)
 
             return nn.Parameter(index, requires_grad=False)
-        elif (self.weight_type == 2) or (self.weight_type == 3) or (self.weight_type == 4):
-            index = torch.arange(1, max_l + 1).reshape(1, -1, 1)
+        elif (self.weight_type == 2) or (self.weight_type == 3):
+            index = torch.arange(1, max_l + 1).reshape(1, -1, 1, 1)
 
             return nn.Parameter(index, requires_grad=False)
 
@@ -237,8 +213,6 @@ class MultiheadWeightAttention(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         m = max(src_len, tgt_len)
 
-        scaling = float(embed_dim) ** -0.5
-        # q *= self.scaling
         # L, N, E1
         q = self.q_proj(query)
         # S, N, E1
@@ -246,39 +220,13 @@ class MultiheadWeightAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
-
-        # N, L, H, E, batch, length, head, dim
-        # # N * b, L, e1
-        # q = q.contiguous().view(tgt_len,  bsz * num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # if k is not None:
-        #     k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # if v is not None:
-        #     v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-
-        # N, L, H, E, batch, length, head, dim
-        # N * b, L, e1
-        # # N, L, H, D
-        # q = q.view(tgt_len, bsz, num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # # N, S, H, D
-        # if k is not None:
-        #     k = k.view(-1, bsz, num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # # N, S, H, D
-        # if v is not None:
-        #     v = v.view(-1, bsz, num_heads, head_dim).transpose(0, 1)
-
-        # no head
-        # N, L, E
-        q = q.transpose(0, 1)
-        # N, S, E
-        if k is not None:
-            k = k.transpose(0, 1)
-        # N, S, E
-        if v is not None:
-            v = v.transpose(0, 1)
+        # multihead
+        # (N, L, h, d)
+        q = q.contiguous().view(tgt_len, bsz, num_heads, head_dim).transpose(0, 1)
+        # (N, S, h, d)
+        k = k.contiguous().view(-1, bsz, num_heads, head_dim).transpose(0, 1)
+        # (N, S, h, d)
+        v = v.contiguous().view(-1, bsz, num_heads, head_dim).transpose(0, 1)
 
         if self.use_relu:
             q = F.relu(q)
@@ -289,49 +237,26 @@ class MultiheadWeightAttention(nn.Module):
         elif self.use_leak:
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
-        elif self.use_bound:
-            # q = F.relu(q) + 1
-            # k = F.relu(k) + 1
-            # q = F.relu(q) + 1.0 / head_dim
-            # k = F.relu(k) + 1.0 / head_dim
-            q = F.relu(q) + scaling
-            k = F.relu(k) + scaling
-
-        if self.v_act:
-            if self.use_relu:
-                v = F.relu(v)
-            elif self.use_elu:
-                v = F.elu(v)
-            elif self.use_leak:
-                v = F.leaky_relu(v)
-            elif self.use_bound:
-                # v = F.relu(v) + 1
-                # v = F.relu(v) + 1.0 / head_dim
-                v = F.relu(v) + scaling
-        
-        if self.use_dropout:
-            v = self.dropout(v)
 
         with torch.autograd.profiler.record_function("multihead-weight-attention"):
-            q_index = self.weight_index[:, :tgt_len, :] / m
-            k_index = self.weight_index[:, :src_len, :] / m
+            # cos transform
+            m = max(src_len, tgt_len)
+            weight_index = self.get_index(m).to(q)
+            # (1, L, 1, 1)
+            q_index = weight_index[:, :tgt_len, :, :] / m
+            k_index = weight_index[:, :src_len, :, :] / m
+
             if (self.weight_type == 1):
                 q_ = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
                 k_ = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
             if (self.weight_type == 2):
-                q_ = torch.cat([(1 - self.c * torch.square(q_index)) * q, 2 * self.c * q_index * q, self.c * q], dim=-1)
+                q_ = torch.cat([(1 - torch.square(q_index)) * q, 2 * q_index * q, q], dim=-1)
                 k_ = torch.cat([k, k_index * k, -torch.square(k_index) * k], dim=-1)
             elif (self.weight_type == 3):
                 q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
                 k_ = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
-            elif (self.weight_type == 4):
-                q_ = torch.cat([self.c0 * q, self.c1 * q * torch.sin(np.pi * q_index), self.c1 * q * torch.cos(np.pi * q_index), \
-                                self.c2 * q * torch.sin(2 * np.pi * q_index), self.c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
-                k_ = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
-                                k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6
-
 
             # with torch.profiler.profile() as p:
             if self.causal:
@@ -348,64 +273,18 @@ class MultiheadWeightAttention(nn.Module):
                 # N, L, H, D -> L, N, H, D -> L, N, E
                 attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
             else:
-                # (N * b, e1, e2)
-                kv_ = torch.einsum('nsd,nsm->nmd', k_, v)
-                # (N * b, S, e1) (N * b, e1) -> (N * b, S)
-                z_ = 1 / torch.clamp_min(torch.einsum('nld,nd->nl', q_, torch.sum(k_, axis=1)), eps)
-                # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
-                attn_output = torch.einsum('nld,nmd,nl->nlm', q_, kv_, z_)
+                # (N, S, H, E1) (N, S, H, E2) -> (N, H, E1, E2)
+                kv_ = torch.einsum('nshd,nshm->nhmd', k_, v)
+                # (N, L, H, E1) (N, L, H, E1) -> (N, L, H)
+                z_ = 1 / torch.clamp_min(torch.einsum('nlhd,nhd->nlh', q_, torch.sum(k_, axis=1)), eps)
+                # (N, L, H, E1) (N, H, E1, E2) (N, L, H) -> (N, L, H, E2)
+                attn_output = torch.einsum('nlhd,nhmd,nlh->nlhm', q_, kv_, z_)
 
                 # N, L, H, D -> L, N, H, D -> L, N, E
                 attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-            # print(attn_output.shape)
             # add
             if self.has_out:
                 attn_output = self.out_proj(attn_output)
-
-        # with torch.autograd.profiler.record_function("multihead-weight-attention"):
-        #     q_index = self.weight_index[:, :tgt_len, :, :] / m
-        #     k_index = self.weight_index[:, :src_len, :, :] / m
-        #     if (self.weight_type == 1):
-        #         q_ = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
-        #         k_ = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
-        #     if (self.weight_type == 2):
-        #         q_ = torch.cat([(1 - torch.square(q_index)) * q, 2 * q_index * q, q], dim=-1)
-        #         k_ = torch.cat([k, k_index * k, -torch.square(k_index) * k], dim=-1)
-        #     elif (self.weight_type == 3):
-        #         q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
-        #         k_ = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
-        #     # v_ = torch.cat([v, v], dim=-1)
-        #     eps = 1e-6
-
-        #     # with torch.profiler.profile() as p:
-        #     if self.causal:
-        #         # N, L, H, D
-        #         qkv_cos_sin = causal_linear(q_, k_, v)
-
-        #         # 分母
-        #         # N, L, H
-        #         z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q_, torch.cumsum(k_, dim=1)), eps)
-
-        #         # (N * b, S, e1)
-        #         # N, L, H, D
-        #         # N, L, H, D -> L, N, H, D -> L, N, E
-        #         attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-        #     else:
-        #         # (N * b, e1, e2)
-        #         kv_ = torch.einsum('nshd,nshm->nhmd', k_, v)
-        #         # (N * b, S, e1) (N * b, e1) -> (N * b, S)
-        #         z_ = 1 / torch.clamp_min(torch.einsum('nlhd,nhd->nlh', q_, torch.sum(k_, axis=1)), eps)
-        #         # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
-        #         attn_output = torch.einsum('nlhd,nhmd,nlh->nlhm', q_, kv_, z_)
-
-        #         # N, L, H, D -> L, N, H, D -> L, N, E
-        #         attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-        #     # print(attn_output.shape)
-        #     # add
-        #     if self.has_out:
-        #         attn_output = self.out_proj(attn_output)
-
-        # sys.exit(0)
 
         return attn_output, None
 
