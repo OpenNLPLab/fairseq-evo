@@ -237,7 +237,7 @@ class MultiheadWeightAttention(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         m = max(src_len, tgt_len)
 
-        scaling = float(embed_dim) ** -0.5
+        scaling = float(head_dim) ** -0.5
         # q *= self.scaling
         # L, N, E1
         q = self.q_proj(query)
