@@ -1568,6 +1568,17 @@ def roberta_weight1_wol_architecture(args):
     args.encoder_attention_heads = 1
     args.use_bound = True
 
+@register_model_architecture("roberta_weight", "roberta_weight1_layer_norm")
+def roberta_weight1_wol_architecture(args):
+    base_architecture(args)
+    args.use_relu = True
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = getattr(args, "weight_type", 1)
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.use_layer_norm = True
+
 # dropout
 @register_model_architecture("roberta_weight", "roberta_weight1_dropout")
 def roberta_weight1_wol_architecture(args):
