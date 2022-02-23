@@ -108,8 +108,9 @@ class MultiheadWeightAttention(nn.Module):
         if self.use_layer_norm:
             self.layer_norm = nn.LayerNorm(embed_dim)
 
-
-        if (self.weight_type == 1):
+        if (self.weight_type == 0):
+            print("only relu")
+        elif (self.weight_type == 1):
             print("cos")
         elif (self.weight_type == 2):
             self.c = c
@@ -149,6 +150,7 @@ class MultiheadWeightAttention(nn.Module):
         print(f"v use act {self.v_act}")
         print(f"use bound {self.use_bound}")
         print(f"use use_layer_norm {self.use_layer_norm}")
+        print(f"head {self.num_heads}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -255,14 +257,14 @@ class MultiheadWeightAttention(nn.Module):
 
 
         # N, L, H, E, batch, length, head, dim
-        # # N * b, L, e1
-        # q = q.contiguous().view(tgt_len,  bsz * num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # if k is not None:
-        #     k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # if v is not None:
-        #     v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, L, e1
+        q = q.contiguous().view(tgt_len,  bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, S, e2
+        if k is not None:
+            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, S, e2
+        if v is not None:
+            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
         # N, L, H, E, batch, length, head, dim
         # N * b, L, e1
@@ -279,13 +281,13 @@ class MultiheadWeightAttention(nn.Module):
 
         # no head
         # N, L, E
-        q = q.transpose(0, 1)
-        # N, S, E
-        if k is not None:
-            k = k.transpose(0, 1)
-        # N, S, E
-        if v is not None:
-            v = v.transpose(0, 1)
+        # q = q.transpose(0, 1)
+        # # N, S, E
+        # if k is not None:
+        #     k = k.transpose(0, 1)
+        # # N, S, E
+        # if v is not None:
+        #     v = v.transpose(0, 1)
 
         if self.use_relu:
             q = F.relu(q)
@@ -320,22 +322,26 @@ class MultiheadWeightAttention(nn.Module):
             v = self.dropout(v)
 
         with torch.autograd.profiler.record_function("multihead-weight-attention"):
-            q_index = self.weight_index[:, :tgt_len, :] / m
-            k_index = self.weight_index[:, :src_len, :] / m
-            if (self.weight_type == 1):
-                q_ = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
-                k_ = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
-            if (self.weight_type == 2):
-                q_ = torch.cat([(1 - self.c * torch.square(q_index)) * q, 2 * self.c * q_index * q, self.c * q], dim=-1)
-                k_ = torch.cat([k, k_index * k, -torch.square(k_index) * k], dim=-1)
-            elif (self.weight_type == 3):
-                q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
-                k_ = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
-            elif (self.weight_type == 4):
-                q_ = torch.cat([self.c0 * q, self.c1 * q * torch.sin(np.pi * q_index), self.c1 * q * torch.cos(np.pi * q_index), \
-                                self.c2 * q * torch.sin(2 * np.pi * q_index), self.c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
-                k_ = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
-                                k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
+            if (self.weight_type == 0):
+                q_ = q
+                k_ = k
+            else:
+                q_index = self.weight_index[:, :tgt_len, :] / m
+                k_index = self.weight_index[:, :src_len, :] / m
+                if (self.weight_type == 1):
+                    q_ = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
+                    k_ = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
+                elif (self.weight_type == 2):
+                    q_ = torch.cat([(1 - self.c * torch.square(q_index)) * q, 2 * self.c * q_index * q, self.c * q], dim=-1)
+                    k_ = torch.cat([k, k_index * k, -torch.square(k_index) * k], dim=-1)
+                elif (self.weight_type == 3):
+                    q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
+                    k_ = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+                elif (self.weight_type == 4):
+                    q_ = torch.cat([self.c0 * q, self.c1 * q * torch.sin(np.pi * q_index), self.c1 * q * torch.cos(np.pi * q_index), \
+                                    self.c2 * q * torch.sin(2 * np.pi * q_index), self.c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
+                    k_ = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
+                                    k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
             eps = 1e-6
 
