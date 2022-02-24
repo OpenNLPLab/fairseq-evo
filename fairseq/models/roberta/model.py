@@ -1585,10 +1585,22 @@ def roberta_weight1_wol_architecture(args):
     args.use_relu = True
     args.max_l = getattr(args, "max_l", 512)
     args.causal = False
-    args.weight_type = getattr(args, "weight_type", 0)
+    args.weight_type = 0
     args.has_out = True
     args.encoder_attention_heads = 12
     args.use_layer_norm = True
+
+@register_model_architecture("roberta_weight", "roberta_weight0_qk_layer_norm_multi")
+def roberta_weight1_wol_architecture(args):
+    base_architecture(args)
+    args.use_relu = False
+    args.use_bound = True
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.weight_type = 0
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.qk_layer_norm = True
 
 # dropout
 @register_model_architecture("roberta_weight", "roberta_weight1_dropout")

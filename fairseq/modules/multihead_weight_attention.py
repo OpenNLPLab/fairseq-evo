@@ -52,6 +52,7 @@ class MultiheadWeightAttention(nn.Module):
         use_dropout=False,
         p=0.5,
         use_layer_norm=False,
+        qk_layer_norm=False,
     ):
         # add
         self.index = index
@@ -104,9 +105,14 @@ class MultiheadWeightAttention(nn.Module):
         self.v_act = v_act
         self.use_dropout = use_dropout
         self.use_layer_norm = use_layer_norm
+        self.qk_layer_norm = qk_layer_norm
 
         if self.use_layer_norm:
             self.layer_norm = nn.LayerNorm(embed_dim)
+
+        if self.qk_layer_norm:
+            self.k_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
+            self.q_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
 
         if (self.weight_type == 0):
             print("only relu")
@@ -151,6 +157,7 @@ class MultiheadWeightAttention(nn.Module):
         print(f"use bound {self.use_bound}")
         print(f"use use_layer_norm {self.use_layer_norm}")
         print(f"head {self.num_heads}")
+        print(f"qk layer_norm {self.qk_layer_norm}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -255,7 +262,6 @@ class MultiheadWeightAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
-
         # N, L, H, E, batch, length, head, dim
         # N * b, L, e1
         q = q.contiguous().view(tgt_len,  bsz * num_heads, head_dim).transpose(0, 1)
@@ -288,6 +294,10 @@ class MultiheadWeightAttention(nn.Module):
         # # N, S, E
         # if v is not None:
         #     v = v.transpose(0, 1)
+        if self.qk_layer_norm:
+            q = self.q_layer_norm(q)
+            k = self.k_layer_norm(k)
+
 
         if self.use_relu:
             q = F.relu(q)
