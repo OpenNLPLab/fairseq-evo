@@ -53,6 +53,8 @@ class MultiheadWeightAttention(nn.Module):
         p=0.5,
         use_layer_norm=False,
         qk_layer_norm=False,
+        seq_dropout=False,
+        seq_p=0.3,
     ):
         # add
         self.index = index
@@ -106,13 +108,17 @@ class MultiheadWeightAttention(nn.Module):
         self.use_dropout = use_dropout
         self.use_layer_norm = use_layer_norm
         self.qk_layer_norm = qk_layer_norm
+        self.seq_dropout = seq_dropout
+        self.seq_p = seq_p
 
         if self.use_layer_norm:
             self.layer_norm = nn.LayerNorm(embed_dim)
 
         if self.qk_layer_norm:
-            self.k_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
-            self.q_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
+            self.k_layer_norm = nn.LayerNorm(embed_dim)
+            self.q_layer_norm = nn.LayerNorm(embed_dim)
+            # self.k_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
+            # self.q_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
 
         if (self.weight_type == 0):
             print("only relu")
@@ -158,6 +164,8 @@ class MultiheadWeightAttention(nn.Module):
         print(f"use use_layer_norm {self.use_layer_norm}")
         print(f"head {self.num_heads}")
         print(f"qk layer_norm {self.qk_layer_norm}")
+        print(f"use seq_drop {self.seq_dropout}")
+        print(f"seq_drop_rate {self.seq_p}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -262,9 +270,13 @@ class MultiheadWeightAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
+        if self.qk_layer_norm:
+            q = self.q_layer_norm(q.transpose(0, 1)).transpose(0, 1)
+            k = self.k_layer_norm(k.transpose(0, 1)).transpose(0, 1)
+
         # N, L, H, E, batch, length, head, dim
         # N * b, L, e1
-        q = q.contiguous().view(tgt_len,  bsz * num_heads, head_dim).transpose(0, 1)
+        q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
         # N * b, S, e2
         if k is not None:
             k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
@@ -294,9 +306,10 @@ class MultiheadWeightAttention(nn.Module):
         # # N, S, E
         # if v is not None:
         #     v = v.transpose(0, 1)
-        if self.qk_layer_norm:
-            q = self.q_layer_norm(q)
-            k = self.k_layer_norm(k)
+
+        # if self.qk_layer_norm:
+        #     q = self.q_layer_norm(q)
+        #     k = self.k_layer_norm(k)
 
 
         if self.use_relu:
@@ -353,6 +366,12 @@ class MultiheadWeightAttention(nn.Module):
                     k_ = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
                                     k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
             # v_ = torch.cat([v, v], dim=-1)
+            
+            if self.seq_dropout:
+                N, L, E = k_.shape
+                index = (torch.rand(N, L) < self.seq_p)
+                k_[index] = 0
+
             eps = 1e-6
 
             if self.use_layer_norm:

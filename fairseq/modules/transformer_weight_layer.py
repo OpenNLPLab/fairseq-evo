@@ -118,6 +118,8 @@ class WeightFormerEncoderLayer(nn.Module):
             p=getattr(args, "p", 0.5),
             use_layer_norm=getattr(args, "use_layer_norm", False),
             qk_layer_norm=getattr(args, "qk_layer_norm", False),
+            seq_dropout=getattr(args, "seq_dropout", False),
+            seq_p=getattr(args, "seq_p", 0.3),
         )
 
     def residual_connection(self, x, residual):
@@ -366,6 +368,8 @@ class WeightFormerDecoderLayer(nn.Module):
             p=getattr(args, "p", 0.5),
             use_layer_norm=getattr(args, "use_layer_norm", False),
             qk_layer_norm=getattr(args, "qk_layer_norm", False),
+            seq_dropout=getattr(args, "seq_dropout", False),
+            seq_p=getattr(args, "seq_p", 0.3),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -394,6 +398,8 @@ class WeightFormerDecoderLayer(nn.Module):
             p=getattr(args, "p", 0.5),
             use_layer_norm=getattr(args, "use_layer_norm", False),
             qk_layer_norm=getattr(args, "qk_layer_norm", False),
+            seq_dropout=getattr(args, "seq_dropout", False),
+            seq_p=getattr(args, "seq_p", 0.3),
         )
 
     def prepare_for_onnx_export_(self):
