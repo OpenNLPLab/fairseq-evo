@@ -136,6 +136,9 @@ from .transformer_weight_layer import WeightFormerEncoderLayer, WeightFormerDeco
 # weight with diff head
 from .multihead_weight_attention_diff import MultiheadWeightAttention_diff
 from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, WeightFormerDecoderLayer_diff
+# GAU
+from .flash_attention import FlashAttention
+from .flash_layer import GAUEncoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -232,4 +235,6 @@ __all__ = [
     "MultiheadWeightAttention",
     "WeightFormerEncoderLayer", 
     "WeightFormerDecoderLayer",
+    "FlashAttention",
+    "GAUEncoderLayer",
 ]

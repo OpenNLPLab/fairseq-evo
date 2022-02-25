@@ -93,58 +93,23 @@ class FlashAttention(nn.Module):
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
+        self.out_proj = quant_noise(
+            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+
         # add begin
         self.k_layer_norm = nn.LayerNorm(embed_dim)
         self.q_layer_norm = nn.LayerNorm(embed_dim)
-            # self.k_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
-            # self.q_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
 
-        if (self.weight_type == 0):
-            print("only relu")
-        elif (self.weight_type == 1):
-            print("cos")
-        elif (self.weight_type == 2):
-            self.c = c
-            print(f"1 - {self.c} * x^2")
-        elif (self.weight_type == 3):
-            a0 = 1 - np.exp(-1)
-            a2 = 25 / 2 - 35 * np.exp(-1)
-            self.b0 = 3 * a2 / 2
-            self.b1 = a0 - a2 / 2
-            
-            print("e^-|x|")
-        elif (self.weight_type == 4):
-            self.c0 = 1 - np.exp(-1)
-            self.c1 = self.fft_coef(1)
-            self.c2 = self.fft_coef(2)
-            print("fourier")
-            print("e^-|x|")
+        self.use_relu = use_relu
+        self.use_elu = use_elu
+        self.use_leak = use_leak
+        self.use_bound = use_bound
+        self.bound = embed_dim ** -0.5
+        self.causal = causal
 
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-
-        if self.use_dropout:
-            print(f"use dropout, p={p}")
-            self.dropout = Dropout(p)
-
-        self.reset_parameters()
-
-        # for test
-        self.cnt = 0
-
-        self.onnx_trace = False
-
+        print("flash attention")
         print(f"causal {self.causal}")
-        print(f"use relu {self.use_relu}")
-        print(f"v use act {self.v_act}")
-        print(f"use bound {self.use_bound}")
-        print(f"use use_layer_norm {self.use_layer_norm}")
-        print(f"head {self.num_heads}")
-        print(f"qk layer_norm {self.qk_layer_norm}")
-        print(f"use seq_drop {self.seq_dropout}")
-        print(f"seq_drop_rate {self.seq_p}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -238,11 +203,11 @@ class FlashAttention(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         head_dim = embed_dim // num_heads
+        eps = 1e-4
 
         tgt_len, bsz, embed_dim = query.size()
         m = max(src_len, tgt_len)
 
-        scaling = float(head_dim) ** -0.5
         # q *= self.scaling
         # L, N, E1
         q = self.q_proj(query)
@@ -251,47 +216,14 @@ class FlashAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
-        if self.qk_layer_norm:
-            q = self.q_layer_norm(q.transpose(0, 1)).transpose(0, 1)
-            k = self.k_layer_norm(k.transpose(0, 1)).transpose(0, 1)
+        q = self.q_layer_norm(q.transpose(0, 1)).transpose(0, 1)
+        k = self.k_layer_norm(k.transpose(0, 1)).transpose(0, 1)
 
         # N, L, H, E, batch, length, head, dim
-        # N * b, L, e1
-        q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
-        # N * b, S, e2
-        if k is not None:
-            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # N * b, S, e2
-        if v is not None:
-            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-
-        # N, L, H, E, batch, length, head, dim
-        # N * b, L, e1
-        # # N, L, H, D
-        # q = q.view(tgt_len, bsz, num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # # N, S, H, D
-        # if k is not None:
-        #     k = k.view(-1, bsz, num_heads, head_dim).transpose(0, 1)
-        # # N * b, S, e2
-        # # N, S, H, D
-        # if v is not None:
-        #     v = v.view(-1, bsz, num_heads, head_dim).transpose(0, 1)
-
-        # no head
-        # N, L, E
-        # q = q.transpose(0, 1)
-        # # N, S, E
-        # if k is not None:
-        #     k = k.transpose(0, 1)
-        # # N, S, E
-        # if v is not None:
-        #     v = v.transpose(0, 1)
-
-        # if self.qk_layer_norm:
-        #     q = self.q_layer_norm(q)
-        #     k = self.k_layer_norm(k)
-
+        # N, L, e1
+        q = q.transpose(0, 1)
+        k = k.transpose(0, 1)
+        v = v.transpose(0, 1)
 
         if self.use_relu:
             q = F.relu(q)
@@ -303,111 +235,38 @@ class FlashAttention(nn.Module):
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
         elif self.use_bound:
-            # q = F.relu(q) + 1
-            # k = F.relu(k) + 1
-            # q = F.relu(q) + 1.0 / head_dim
-            # k = F.relu(k) + 1.0 / head_dim
-            q = F.relu(q) + scaling
-            k = F.relu(k) + scaling
+            q = F.relu(q) + self.bound
+            k = F.relu(k) + self.bound
 
-        if self.v_act:
-            if self.use_relu:
-                v = F.relu(v)
-            elif self.use_elu:
-                v = F.elu(v)
-            elif self.use_leak:
-                v = F.leaky_relu(v)
-            elif self.use_bound:
-                # v = F.relu(v) + 1
-                # v = F.relu(v) + 1.0 / head_dim
-                v = F.relu(v) + scaling
-        
-        if self.use_dropout:
-            v = self.dropout(v)
 
-        with torch.autograd.profiler.record_function("multihead-weight-attention"):
-            if (self.weight_type == 0):
-                q_ = q
-                k_ = k
-            else:
-                q_index = self.weight_index[:, :tgt_len, :] / m
-                k_index = self.weight_index[:, :src_len, :] / m
-                if (self.weight_type == 1):
-                    q_ = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
-                    k_ = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
-                elif (self.weight_type == 2):
-                    q_ = torch.cat([(1 - self.c * torch.square(q_index)) * q, 2 * self.c * q_index * q, self.c * q], dim=-1)
-                    k_ = torch.cat([k, k_index * k, -torch.square(k_index) * k], dim=-1)
-                elif (self.weight_type == 3):
-                    q_ = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
-                    k_ = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
-                elif (self.weight_type == 4):
-                    q_ = torch.cat([self.c0 * q, self.c1 * q * torch.sin(np.pi * q_index), self.c1 * q * torch.cos(np.pi * q_index), \
-                                    self.c2 * q * torch.sin(2 * np.pi * q_index), self.c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
-                    k_ = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
-                                    k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
-            # v_ = torch.cat([v, v], dim=-1)
-            
-            if self.seq_dropout:
-                N, L, E = k_.shape
-                index = (torch.rand(N, L) < self.seq_p)
-                k_[index] = 0
+        if self.causal:
+            # to do
+            # N, L, H, D
+            qkv_cos_sin = causal_linear(q, k, v)
 
-            eps = 1e-6
+            # 分母
+            # N, L, H
+            z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q, torch.cumsum(k, dim=1)), eps)
 
-            if self.use_layer_norm:
-                if self.causal:
-                    # tbd
-                    # N, L, H, D
-                    qkv_cos_sin = causal_linear(q_, k_, v)
+            # (N * b, S, e1)
+            # N, L, H, D
+            # N, L, H, D -> L, N, H, D -> L, N, E
+            attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        else:
+            # (N * b, e1, e2)
+            kv = torch.einsum('nsd,nsm->nmd', k, v)
+            # (N * b, S, e1) (N * b, e1) -> (N * b, S)
+            z = 1 / torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
+            # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
+            attn_output = torch.einsum('nld,nmd,nl->nlm', q, kv, z)
 
-                    # 分母
-                    # N, L, H
-                    z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q_, torch.cumsum(k_, dim=1)), eps)
+            # N, L, H, D -> L, N, H, D -> L, N, E
+            attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
 
-                    # (N * b, S, e1)
-                    # N, L, H, D
-                    # N, L, H, D -> L, N, H, D -> L, N, E
-                    attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-                else:
-                    # (N * b, e1, e2)
-                    kv_ = torch.einsum('nsd,nsm->ndm', k_, v)
-                    # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
-                    attn_output = torch.einsum('nld,ndm->nlm', q_, kv_)
+        # GLU
+        output = query * attn_output + query
+        output = self.out_proj(output)
 
-                    # N, L, H, D -> L, N, H, D -> L, N, E
-                    attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-
-                
-                attn_output = self.layer_norm(attn_output)
-            else:
-                if self.causal:
-                    # to do
-                    # N, L, H, D
-                    qkv_cos_sin = causal_linear(q_, k_, v)
-
-                    # 分母
-                    # N, L, H
-                    z_cos_sin = 1 / torch.clamp_min(torch.einsum('nlhi,nlhi->nlh', q_, torch.cumsum(k_, dim=1)), eps)
-
-                    # (N * b, S, e1)
-                    # N, L, H, D
-                    # N, L, H, D -> L, N, H, D -> L, N, E
-                    attn_output = (qkv_cos_sin * z_cos_sin.unsqueeze(-1)).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-                else:
-                    # (N * b, e1, e2)
-                    kv_ = torch.einsum('nsd,nsm->nmd', k_, v)
-                    # (N * b, S, e1) (N * b, e1) -> (N * b, S)
-                    z_ = 1 / torch.clamp_min(torch.einsum('nld,nd->nl', q_, torch.sum(k_, axis=1)), eps)
-                    # (N * b, S, e1) (N * b, e1, e2) (N * b, S)
-                    attn_output = torch.einsum('nld,nmd,nl->nlm', q_, kv_, z_)
-
-                    # N, L, H, D -> L, N, H, D -> L, N, E
-                    attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-            # print(attn_output.shape)
-            # add
-            if self.has_out:
-                attn_output = self.out_proj(attn_output)
 
         return attn_output, None
 
