@@ -197,12 +197,14 @@ class MultiheadWeightAttention(nn.Module):
         return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
 
     def get_weight(self, max_l):
+        # cosformer
         if (self.weight_type == 1):
             a = np.pi / 2
             index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
             return nn.Parameter(index, requires_grad=False)
         elif (self.weight_type == 2) or (self.weight_type == 3) or (self.weight_type == 4):
+            # 1 - x^2
             index = torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
             return nn.Parameter(index, requires_grad=False)
