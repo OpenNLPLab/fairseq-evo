@@ -1758,3 +1758,13 @@ def roberta_cosformer_architecture(args):
     args.has_out = False
     args.encoder_attention_heads = 1
     args.encoder_layers = 24
+
+@register_model_architecture("roberta_gau", "roberta_mem_v1")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
