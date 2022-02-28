@@ -139,6 +139,9 @@ from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, Weight
 # GAU
 from .flash_attention import FlashAttention
 from .flash_layer import GAUEncoderLayer
+# men
+from .mem_attention import MemAttention
+from .mem_layer import MemEncoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -237,4 +240,7 @@ __all__ = [
     "WeightFormerDecoderLayer",
     "FlashAttention",
     "GAUEncoderLayer",
+    # men
+    "MemAttention",
+    "MemEncoderLayer",
 ]
