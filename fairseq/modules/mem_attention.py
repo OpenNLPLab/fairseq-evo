@@ -58,6 +58,7 @@ class MemAttention(nn.Module):
         seq_p=0.3,
         lambda_=0.001,
         use_gelu=False,
+        mem_use_gelu=False,
     ):
         # add
         self.index = index
@@ -110,10 +111,12 @@ class MemAttention(nn.Module):
         self.bound = embed_dim ** -0.5
         self.causal = causal
         self.use_gelu = use_gelu
+        self.mem_use_gelu = mem_use_gelu
 
         print("flash attention")
         print(f"causal {self.causal}")
         print(f"use gelu {self.use_gelu}")
+        print(f"mem_use_gelu {self.mem_use_gelu}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -257,7 +260,10 @@ class MemAttention(nn.Module):
             # output = self.memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
             # output = memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
             # B, e1, e2
-            memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+            if self.mem_use_gelu:
+                memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+            else:
+                memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
             o1 = torch.matmul(k.transpose(1, 2), memory)
             output = torch.bmm(q, o1)
             # B, N, e2

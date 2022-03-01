@@ -96,7 +96,8 @@ class MemEncoderLayer(nn.Module):
             seq_dropout=getattr(args, "seq_dropout", False),
             seq_p=getattr(args, "seq_p", 0.3),
             lambda_=getattr(args, "lambda_", 0.001),
-            use_gelu=getattr(args, "use_gelu", False)
+            use_gelu=getattr(args, "use_gelu", False),
+            mem_use_gelu=getattr(args, "mem_use_gelu", False)
         )
 
     def residual_connection(self, x, residual):
