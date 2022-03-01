@@ -264,6 +264,7 @@ class MemAttention(nn.Module):
                 memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
             else:
                 memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+            
             o1 = torch.matmul(k.transpose(1, 2), memory)
             output = torch.bmm(q, o1)
             # B, N, e2

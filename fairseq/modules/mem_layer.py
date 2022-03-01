@@ -24,7 +24,9 @@ class MemEncoderLayer(nn.Module):
         self.quant_noise_block_size = getattr(args, 'quant_noise_pq_block_size', 8) or 8
         self.self_attn = self.build_self_attention(self.embed_dim, args)
         self.use_layernorm = getattr(args, "use_layernorm", True)
+        self.use_forward = getattr(args, "use_forward", True)
         print(f"self.use_layernorm {self.use_layernorm}")
+        print(f"self.use_forward {self.use_forward}")
         if self.use_layernorm:
             self.self_attn_layer_norm = LayerNorm(self.embed_dim)
         self.dropout_module = FairseqDropout(
@@ -41,23 +43,22 @@ class MemEncoderLayer(nn.Module):
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
         self.normalize_before = args.encoder_normalize_before
-        self.fc1 = self.build_fc1(
-            self.embed_dim,
-            args.encoder_ffn_embed_dim,
-            self.quant_noise,
-            self.quant_noise_block_size,
-        )
-        self.fc2 = self.build_fc2(
-            args.encoder_ffn_embed_dim,
-            self.embed_dim,
-            self.quant_noise,
-            self.quant_noise_block_size,
-        )
-
         if self.use_layernorm:
             self.final_layer_norm = LayerNorm(self.embed_dim)
 
-        
+        if self.use_forward:
+            self.fc1 = self.build_fc1(
+                self.embed_dim,
+                args.encoder_ffn_embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
+            self.fc2 = self.build_fc2(
+                args.encoder_ffn_embed_dim,
+                self.embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
@@ -141,34 +142,55 @@ class MemEncoderLayer(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
 
-        residual = x
-        if self.use_layernorm:
-            if self.normalize_before:
-                x = self.self_attn_layer_norm(x)
-        x, _ = self.self_attn(
-            query=x,
-            key=x,
-            value=x,
-            key_padding_mask=encoder_padding_mask,
-            need_weights=False,
-            attn_mask=attn_mask,
-        )
-        x = self.dropout_module(x)
-        x = self.residual_connection(x, residual)
-        if self.use_layernorm:
-            if not self.normalize_before:
-                x = self.self_attn_layer_norm(x)
 
-        residual = x
-        if self.use_layernorm:
-            if self.normalize_before:
-                x = self.final_layer_norm(x)
-        x = self.activation_fn(self.fc1(x))
-        x = self.activation_dropout_module(x)
-        x = self.fc2(x)
-        x = self.dropout_module(x)
-        x = self.residual_connection(x, residual)
-        if self.use_layernorm:
-            if not self.normalize_before:
-                x = self.final_layer_norm(x)
+        if self.use_forward:
+            residual = x
+            if self.use_layernorm:
+                if self.normalize_before:
+                    x = self.self_attn_layer_norm(x)
+            x, _ = self.self_attn(
+                query=x,
+                key=x,
+                value=x,
+                key_padding_mask=encoder_padding_mask,
+                need_weights=False,
+                attn_mask=attn_mask,
+            )
+            x = self.dropout_module(x)
+            x = self.residual_connection(x, residual)
+            if self.use_layernorm:
+                if not self.normalize_before:
+                    x = self.self_attn_layer_norm(x)
+
+            residual = x
+            if self.use_layernorm:
+                if self.normalize_before:
+                    x = self.final_layer_norm(x)
+            x = self.activation_fn(self.fc1(x))
+            x = self.activation_dropout_module(x)
+            x = self.fc2(x)
+            x = self.dropout_module(x)
+            x = self.residual_connection(x, residual)
+            if self.use_layernorm:
+                if not self.normalize_before:
+                    x = self.final_layer_norm(x)
+        else:
+            residual = x
+            if self.use_layernorm:
+                if self.normalize_before:
+                    x = self.self_attn_layer_norm(x)
+            x, _ = self.self_attn(
+                query=x,
+                key=x,
+                value=x,
+                key_padding_mask=encoder_padding_mask,
+                need_weights=False,
+                attn_mask=attn_mask,
+            )
+            x = self.dropout_module(x)
+            x = self.residual_connection(x, residual)
+            if self.use_layernorm:
+                if not self.normalize_before:
+                    x = self.self_attn_layer_norm(x)
+
         return x
