@@ -1852,3 +1852,19 @@ def roberta_cosformer_architecture(args):
     args.use_forward = False
     args.encoder_ffn_embed_dim = 1536
     args.use_anotherforward = True
+    
+@register_model_architecture("roberta_mem", "roberta_mem_v6")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.use_forward = False
+    args.encoder_ffn_embed_dim = 1536
+    args.use_anotherforward = True
+    args.encoder_layers = 17
