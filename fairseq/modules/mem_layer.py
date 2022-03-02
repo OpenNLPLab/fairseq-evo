@@ -25,8 +25,10 @@ class MemEncoderLayer(nn.Module):
         self.self_attn = self.build_self_attention(self.embed_dim, args)
         self.use_layernorm = getattr(args, "use_layernorm", True)
         self.use_forward = getattr(args, "use_forward", True)
+        self.use_anotherforward = getattr(args, "use_anotherforward", False)
         print(f"self.use_layernorm {self.use_layernorm}")
         print(f"self.use_forward {self.use_forward}")
+        print(f"self.use_anotherforward {self.use_anotherforward}")
         if self.use_layernorm:
             self.self_attn_layer_norm = LayerNorm(self.embed_dim)
         self.dropout_module = FairseqDropout(
@@ -59,6 +61,25 @@ class MemEncoderLayer(nn.Module):
                 self.quant_noise,
                 self.quant_noise_block_size,
             )
+        elif self.use_anotherforward:
+            self.fc1 = self.build_fc1(
+                self.embed_dim,
+                self.embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
+            self.fc2 = self.build_fc2(
+                self.embed_dim,
+                args.encoder_ffn_embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
+            self.fc3 = self.build_fc3(
+                args.encoder_ffn_embed_dim,
+                self.embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
@@ -66,6 +87,11 @@ class MemEncoderLayer(nn.Module):
         )
 
     def build_fc2(self, input_dim, output_dim, q_noise, qn_block_size):
+        return quant_noise(
+            nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
+        )
+
+    def build_fc3(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
             nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
         )
@@ -174,6 +200,27 @@ class MemEncoderLayer(nn.Module):
             if self.use_layernorm:
                 if not self.normalize_before:
                     x = self.final_layer_norm(x)
+        elif self.use_anotherforward:
+            residual = x
+            x = self.self_attn_layer_norm(x)
+            x, _ = self.self_attn(
+                query=x,
+                key=x,
+                value=x,
+                key_padding_mask=encoder_padding_mask,
+                need_weights=False,
+                attn_mask=attn_mask,
+            )
+            x = self.dropout_module(x)
+            x = self.fc1(x)
+            x = self.residual_connection(x, residual)
+
+            residual = x
+            x = self.final_layer_norm(x)
+            x = self.dropout_module(x)
+            x = self.activation_dropout_module(self.fc2(x))
+            x = self.fc3(x)
+            x = self.residual_connection(x, residual)
         else:
             residual = x
             if self.use_layernorm:
