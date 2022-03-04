@@ -1869,7 +1869,7 @@ def roberta_cosformer_architecture(args):
     args.use_anotherforward = True
     args.encoder_layers = 17
 
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_v6")
+@register_model_architecture("roberta_mem", "roberta_mem_hasout")
 def roberta_cosformer_architecture(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
