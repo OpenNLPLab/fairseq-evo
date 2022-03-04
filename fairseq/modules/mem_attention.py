@@ -112,11 +112,20 @@ class MemAttention(nn.Module):
         self.causal = causal
         self.use_gelu = use_gelu
         self.mem_use_gelu = mem_use_gelu
+        self.has_out = has_out
+
+        if self.has_out:
+            self.out_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
 
         print("flash attention")
         print(f"causal {self.causal}")
         print(f"use gelu {self.use_gelu}")
         print(f"mem_use_gelu {self.mem_use_gelu}")
+        print(f"has_out {self.has_out}")
+
+        self.reset_parameters()
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -125,14 +134,21 @@ class MemAttention(nn.Module):
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
-            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
         else:
-            nn.init.xavier_uniform_(self.v_proj.weight)
+            nn.init.xavier_uniform_(self.k_proj.weight)
+            nn.init.xavier_uniform_(self.q_proj.weight)
 
         if self.has_out:
             nn.init.xavier_uniform_(self.out_proj.weight)
             if self.out_proj.bias is not None:
                 nn.init.constant_(self.out_proj.bias, 0.0)
+
+            if self.out_proj.bias is not None:
+                nn.init.constant_(self.out_proj.bias, 0.0)
+        # if self.bias_k is not None:
+        #     nn.init.xavier_normal_(self.bias_k)
 
     # def get_weight(self, max_l):
     #     if (self.weight_type == 1):
@@ -272,6 +288,8 @@ class MemAttention(nn.Module):
 
         # L, N, e1
         output = output.transpose(0, 1)
+        if self.has_out:
+            output = self.out_proj(output)
         # GLU
         output = F.gelu(output)
 
