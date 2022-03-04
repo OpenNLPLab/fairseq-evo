@@ -59,6 +59,7 @@ class MemAttention(nn.Module):
         lambda_=0.001,
         use_gelu=False,
         mem_use_gelu=False,
+        mem_use_grad=True,
     ):
         # add
         self.index = index
@@ -99,7 +100,11 @@ class MemAttention(nn.Module):
         # self.memory = quant_noise(
         #     nn.Linear(max_l, embed_dim, bias=bias), q_noise, qn_block_size
         # )
-        self.memory = nn.Parameter(torch.zeros(max_l, embed_dim))
+        self.mem_use_grad = mem_use_grad
+        if self.mem_use_grad:
+            self.memory = nn.Parameter(torch.zeros(max_l, embed_dim))
+        else:
+            self.register_buffer("memory", torch.zeros(max_l, embed_dim))
         self.lambda_ = lambda_
 
         # add begin
@@ -113,6 +118,7 @@ class MemAttention(nn.Module):
         self.use_gelu = use_gelu
         self.mem_use_gelu = mem_use_gelu
         self.has_out = has_out
+        
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -124,6 +130,7 @@ class MemAttention(nn.Module):
         print(f"use gelu {self.use_gelu}")
         print(f"mem_use_gelu {self.mem_use_gelu}")
         print(f"has_out {self.has_out}")
+        print(f"mem_use_grad {self.mem_use_grad}")
 
         self.reset_parameters()
 
@@ -262,7 +269,6 @@ class MemAttention(nn.Module):
         # with torch.no_grad():
         #     self.memory[:tgt_len] = (1 - self.lambda_) * q.mean(dim=0) + self.lambda_ * self.memory[:tgt_len]
 
-
         if self.causal:
             # to do
             output = 0
@@ -281,7 +287,11 @@ class MemAttention(nn.Module):
             else:
                 memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
             
-            o1 = torch.matmul(k.transpose(1, 2), memory)
+            if self.mem_use_grad:
+                o1 = torch.matmul(k.transpose(1, 2), memory)
+            else:
+                self.memory[:tgt_len] = memory.mean(dim=0)
+                o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
             output = torch.bmm(q, o1)
             # B, N, e2
             output = self.layer_norm(output)
