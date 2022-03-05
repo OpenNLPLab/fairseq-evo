@@ -12,7 +12,7 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
-from fast_transformers.causal_product import causal_dot_product
+# from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
 
@@ -294,14 +294,16 @@ class MemAttention(nn.Module):
             if self.mem_use_grad:
                 if self.mem_use_q:
                     if self.mem_use_gelu:
-                        memory = self.lambda_ * F.gelu(self.memory.unsqueeze(0))
+                        # memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
 
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+                        memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
                     else:
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
-                        memory = self.lambda_ * self.memory.unsqueeze(0)
-                    memory[:tgt_len] += (1 - self.lambda_) * q
-                    memory = memory[:tgt_len]
+                        memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                    #     memory = self.lambda_ * self.memory.unsqueeze(0)
+                    # # b, l, e
+                    # memory = memory.repeat(bsz, 1, 1)
+                    # memory[:, :tgt_len] += (1 - self.lambda_) * q
+                    # memory = memory[:, :src_len]
                 else:
                     if self.mem_use_gelu:
                         memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))

@@ -12,7 +12,7 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
-from fast_transformers.causal_product import causal_dot_product
+# from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
 # cosformer

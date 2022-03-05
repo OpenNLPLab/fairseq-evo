@@ -440,8 +440,8 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
 import sys
-from fast_transformers.causal_product import causal_dot_product
-from fast_transformers.attention.causal_linear_attention import causal_linear
+# from fast_transformers.causal_product import causal_dot_product
+# from fast_transformers.attention.causal_linear_attention import causal_linear
 # N, L, H, E, batch, length, head, dim
 
 # cosformer
@@ -841,7 +841,7 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
 import sys
-from fast_transformers.causal_product import causal_dot_product
+# from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
 # cosformer
