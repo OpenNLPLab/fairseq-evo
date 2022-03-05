@@ -106,8 +106,8 @@ class MemAttention(nn.Module):
         if self.mem_use_grad:
             self.memory = nn.Parameter(torch.zeros(max_l, embed_dim))
         else:
-            # self.register_buffer("memory", torch.zeros(max_l, embed_dim))
-            self.memory = nn.Parameter(torch.zeros(max_l, embed_dim), requires_grad=False)
+            self.register_buffer("memory", torch.zeros(max_l, embed_dim))
+            # self.memory = nn.Parameter(torch.zeros(max_l, embed_dim), requires_grad=False)
         self.lambda_ = lambda_
 
         # add begin
@@ -305,6 +305,7 @@ class MemAttention(nn.Module):
                     memory[:, :tgt_len] += (1 - self.lambda_) * q
                     memory = memory[:, :src_len]
                 else:
+                    # 会oom, Qk^TK形式反传有问题
                     if self.mem_use_gelu:
                         memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
                     else:
@@ -312,10 +313,21 @@ class MemAttention(nn.Module):
                 o1 = torch.matmul(k.transpose(1, 2), memory)
             else:
                 with torch.no_grad():
+                    # if self.mem_use_gelu:
+                    #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                    # else:
+                    #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
                     if self.mem_use_gelu:
-                        memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                        memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
                     else:
-                        memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                        memory = self.lambda_ * self.memory.unsqueeze(0)
+                    # # b, l, e
+                    memory = memory.repeat(bsz, 1, 1)
+                    memory[:, :tgt_len] += (1 - self.lambda_) * q
+                    memory = memory[:, :src_len]
+
                     self.memory[:src_len] = memory.mean(dim=0)
                 
                 o1 = torch.matmul(k.transpose(1, 2), memory.detach())

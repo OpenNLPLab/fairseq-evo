@@ -1905,9 +1905,6 @@ def roberta_cosformer_architecture(args):
     args.encoder_normalize_before = True
     args.use_gelu = True
     args.mem_use_grad = False
-    args.mem_use_q = False
-    args.mem_use_k = True
-
 
 @register_model_architecture("roberta_mem", "roberta_mem_v2_test")
 def roberta_cosformer_architecture(args):
