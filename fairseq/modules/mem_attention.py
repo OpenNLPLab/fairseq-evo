@@ -60,6 +60,8 @@ class MemAttention(nn.Module):
         use_gelu=False,
         mem_use_gelu=False,
         mem_use_grad=True,
+        mem_use_q=True,
+        mem_use_k=False,
     ):
         # add
         self.index = index
@@ -104,7 +106,8 @@ class MemAttention(nn.Module):
         if self.mem_use_grad:
             self.memory = nn.Parameter(torch.zeros(max_l, embed_dim))
         else:
-            self.register_buffer("memory", torch.zeros(max_l, embed_dim))
+            # self.register_buffer("memory", torch.zeros(max_l, embed_dim))
+            self.memory = nn.Parameter(torch.zeros(max_l, embed_dim), requires_grad=False)
         self.lambda_ = lambda_
 
         # add begin
@@ -118,6 +121,8 @@ class MemAttention(nn.Module):
         self.use_gelu = use_gelu
         self.mem_use_gelu = mem_use_gelu
         self.has_out = has_out
+        self.mem_use_q = mem_use_q
+        self.mem_use_k = mem_use_k
         
 
         if self.has_out:
@@ -131,6 +136,8 @@ class MemAttention(nn.Module):
         print(f"mem_use_gelu {self.mem_use_gelu}")
         print(f"has_out {self.has_out}")
         print(f"mem_use_grad {self.mem_use_grad}")
+        print(f"mem_use_q {self.mem_use_q}")
+        print(f"mem_use_k {self.mem_use_k}")
 
         self.reset_parameters()
 
@@ -282,19 +289,61 @@ class MemAttention(nn.Module):
             # output = self.memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
             # output = memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
             # B, e1, e2
-            if self.mem_use_gelu:
-                memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
-            else:
-                memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+
             
             if self.mem_use_grad:
+                if self.mem_use_q:
+                    if self.mem_use_gelu:
+                        memory = self.lambda_ * F.gelu(self.memory.unsqueeze(0))
+
+                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+                    else:
+                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                        memory = self.lambda_ * self.memory.unsqueeze(0)
+                    memory[:tgt_len] += (1 - self.lambda_) * q
+                    memory = memory[:tgt_len]
+                else:
+                    if self.mem_use_gelu:
+                        memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                    else:
+                        memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
                 o1 = torch.matmul(k.transpose(1, 2), memory)
             else:
-                self.memory[:tgt_len] = memory.mean(dim=0)
-                o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
+                with torch.no_grad():
+                    if self.mem_use_gelu:
+                        memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                    else:
+                        memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+                    self.memory[:src_len] = memory.mean(dim=0)
+                
+                o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+
+                # o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
+                # o1 = torch.matmul(k.transpose(1, 2), memory.detach())
             output = torch.bmm(q, o1)
+            # print(memory.requires_grad)
+            # print(o1.requires_grad)
+            # print(f"memory min: {torch.min(memory)} max: {torch.max(memory)}")
+            # print(f"memory nan: {torch.isnan(memory).int().sum()}")
+            # print(f"memory inf: {torch.isinf(memory).int().sum()}")
+            # print(f"self.memory min: {torch.min(self.memory)} max: {torch.max(self.memory)}")
+            # print(f"self.memory nan: {torch.isnan(self.memory).int().sum()}")
+            # print(f"self.memory inf: {torch.isinf(self.memory).int().sum()}")
+            # print(f"o1 min: {torch.min(o1)} max: {torch.max(o1)}")
+            # print(f"o1 nan: {torch.isnan(o1).int().sum()}")
+            # print(f"o1 inf: {torch.isinf(o1).int().sum()}")
+            # print("---------------------------------------")
+            # print("before")
+            # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
+            # print(f"output nan: {torch.isnan(output).int().sum()}")
+            # print(f"output inf: {torch.isinf(output).int().sum()}")
+            # print("---------------------------------------")
             # B, N, e2
             output = self.layer_norm(output)
+            # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
+            # print(f"output nan: {torch.isnan(output).int().sum()}")
+            # print(f"output inf: {torch.isinf(output).int().sum()}")
+
 
         # L, N, e1
         output = output.transpose(0, 1)

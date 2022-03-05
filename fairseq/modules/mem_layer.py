@@ -125,7 +125,9 @@ class MemEncoderLayer(nn.Module):
             lambda_=getattr(args, "lambda_", 0.001),
             use_gelu=getattr(args, "use_gelu", False),
             mem_use_gelu=getattr(args, "mem_use_gelu", False),
-            mem_use_grad=getattr(args, "mem_use_grad", True)
+            mem_use_grad=getattr(args, "mem_use_grad", True),
+            mem_use_q=getattr(args, "mem_use_q", True),
+            mem_use_k=getattr(args, "mem_use_k", False),
         )
 
     def residual_connection(self, x, residual):
