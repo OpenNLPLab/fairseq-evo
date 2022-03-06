@@ -1894,7 +1894,8 @@ def roberta_cosformer_architecture(args):
     args.use_gelu = True
     args.mem_use_grad = False
 
-@register_model_architecture("roberta_mem", "roberta_mem_use_k")
+# test
+@register_model_architecture("roberta_mem", "roberta_mem_use_q")
 def roberta_cosformer_architecture(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
