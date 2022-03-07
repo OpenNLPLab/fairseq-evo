@@ -128,6 +128,7 @@ class MemEncoderLayer(nn.Module):
             mem_use_grad=getattr(args, "mem_use_grad", True),
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
+            attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
         )
 
     def residual_connection(self, x, residual):

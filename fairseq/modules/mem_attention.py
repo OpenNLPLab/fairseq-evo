@@ -62,6 +62,7 @@ class MemAttention(nn.Module):
         mem_use_grad=True,
         mem_use_q=True,
         mem_use_k=False,
+        attention_use_layer_norm=True,
     ):
         # add
         self.index = index
@@ -96,7 +97,10 @@ class MemAttention(nn.Module):
         self.q_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
-        self.layer_norm = nn.LayerNorm(embed_dim)
+
+        self.attention_use_layer_norm = attention_use_layer_norm
+        if self.attention_use_layer_norm:
+            self.layer_norm = nn.LayerNorm(embed_dim)
 
         # memory
         # self.memory = quant_noise(
@@ -138,6 +142,7 @@ class MemAttention(nn.Module):
         print(f"mem_use_grad {self.mem_use_grad}")
         print(f"mem_use_q {self.mem_use_q}")
         print(f"mem_use_k {self.mem_use_k}")
+        print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
 
         self.reset_parameters()
 
@@ -353,7 +358,8 @@ class MemAttention(nn.Module):
             # print(f"output inf: {torch.isinf(output).int().sum()}")
             # print("---------------------------------------")
             # B, N, e2
-            output = self.layer_norm(output)
+            if self.attention_use_layer_norm:
+                output = self.layer_norm(output)
             # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
             # print(f"output nan: {torch.isnan(output).int().sum()}")
             # print(f"output inf: {torch.isinf(output).int().sum()}")
