@@ -256,6 +256,7 @@ class MemAttention(nn.Module):
         # N, L, e1
         q = q.transpose(0, 1)
         k = k.transpose(0, 1)
+        head_dim = embed_dim // num_heads
 
         if self.use_gelu:
             q = F.gelu(q)
@@ -315,6 +316,11 @@ class MemAttention(nn.Module):
                         memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
                     else:
                         memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+                # (N * h, L, d)
+                q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+                # (N * h, S, d)
+                k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+                memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
                 o1 = torch.matmul(k.transpose(1, 2), memory)
             else:
                 with torch.no_grad():
@@ -334,7 +340,11 @@ class MemAttention(nn.Module):
                     memory = memory[:, :src_len]
 
                     self.memory[:src_len] = memory.mean(dim=0)
-                
+                # (N * h, L, d)
+                q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+                # (N * h, S, d)
+                k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+                memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
                 o1 = torch.matmul(k.transpose(1, 2), memory.detach())
 
                 # o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
@@ -357,6 +367,8 @@ class MemAttention(nn.Module):
             # print(f"output nan: {torch.isnan(output).int().sum()}")
             # print(f"output inf: {torch.isinf(output).int().sum()}")
             # print("---------------------------------------")
+            # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+            output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
             # B, N, e2
             if self.attention_use_layer_norm:
                 output = self.layer_norm(output)
@@ -366,7 +378,7 @@ class MemAttention(nn.Module):
 
 
         # L, N, e1
-        output = output.transpose(0, 1)
+        # output = output.transpose(0, 1)
         if self.has_out:
             output = self.out_proj(output)
         # GLU
