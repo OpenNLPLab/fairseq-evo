@@ -282,101 +282,162 @@ class MemAttention(nn.Module):
         # memory = (1 - self.lambda_) * q.mean(dim=0) + self.lambda_ * self.memory[:tgt_len]
         # with torch.no_grad():
         #     self.memory[:tgt_len] = (1 - self.lambda_) * q.mean(dim=0) + self.lambda_ * self.memory[:tgt_len]
+        if self.mem_use_grad:
+            if self.mem_use_q:
+                if self.mem_use_gelu:
+                    memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+                else:
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                    memory = self.lambda_ * self.memory.unsqueeze(0)
+                # # b, l, e
+                memory = memory.repeat(bsz, 1, 1)
+                memory[:, :tgt_len] += (1 - self.lambda_) * q
+                memory = memory[:, :src_len]
+            else:
+                # 会oom, Qk^TK形式反传有问题
+                if self.mem_use_gelu:
+                    memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                else:
+                    memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+        else:
+            with torch.no_grad():
+                # if self.mem_use_gelu:
+                #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                # else:
+                #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+                if self.mem_use_gelu:
+                    memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+                else:
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                    memory = self.lambda_ * self.memory.unsqueeze(0)
+                # # b, l, e
+                memory = memory.repeat(bsz, 1, 1)
+                memory[:, :tgt_len] += (1 - self.lambda_) * q
+                memory = memory[:, :src_len].detach()
+
+                self.memory[:src_len] = memory.mean(dim=0)
+        # (N * h, L, d)
+        q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # (N * h, S, d)
+        k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
 
         if self.causal:
-            # to do
-            output = 0
+            # (N * h, L, d) (N * h, L, d) -> (N * h, L, h, d, d)
+            km = torch.einsum("nld,nlm->nldm", k, memory)
+            # (N * h, L, d, d) -> (N * h, L, d, d)
+            km_cum = torch.cumsum(km, dim=1)
+            # (N * h, L, d) (N * h, L, d, d) -> (N * h, L, d)
+            output = torch.einsum("nld,nldm->nlm", q, km_cum)
         else:
-            # method1, fail
-            # output = k + self.memory.mean(dim=0)
-            # output = k + self.memory[:src_len]
-            # output = k + self.memory[:src_len].unsqueeze(0)
-            # k.sum(dim=-1): (B, L)
-            # F.softmax(k.sum(dim=-1), dim=-1): (B, L)
-            # output = self.memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
-            # output = memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
-            # B, e1, e2
+            o1 = torch.matmul(k.transpose(1, 2), memory)
+            output = torch.bmm(q, o1)
+        
+        # --------------------------------------------------------
+        # if self.causal:
+        #     # to do
+        #     return 0
+        # else:
+        #     # method1, fail
+        #     # output = k + self.memory.mean(dim=0)
+        #     # output = k + self.memory[:src_len]
+        #     # output = k + self.memory[:src_len].unsqueeze(0)
+        #     # k.sum(dim=-1): (B, L)
+        #     # F.softmax(k.sum(dim=-1), dim=-1): (B, L)
+        #     # output = self.memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
+        #     # output = memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
+        #     # B, e1, e2
 
             
-            if self.mem_use_grad:
-                if self.mem_use_q:
-                    if self.mem_use_gelu:
-                        memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+        #     if self.mem_use_grad:
+        #         if self.mem_use_q:
+        #             if self.mem_use_gelu:
+        #                 memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
 
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
-                    else:
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
-                        memory = self.lambda_ * self.memory.unsqueeze(0)
-                    # # b, l, e
-                    memory = memory.repeat(bsz, 1, 1)
-                    memory[:, :tgt_len] += (1 - self.lambda_) * q
-                    memory = memory[:, :src_len]
-                else:
-                    # 会oom, Qk^TK形式反传有问题
-                    if self.mem_use_gelu:
-                        memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
-                    else:
-                        memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
-                # (N * h, L, d)
-                q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                # (N * h, S, d)
-                k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                o1 = torch.matmul(k.transpose(1, 2), memory)
-            else:
-                with torch.no_grad():
-                    # if self.mem_use_gelu:
-                    #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
-                    # else:
-                    #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
-                    if self.mem_use_gelu:
-                        memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
-                    else:
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
-                        memory = self.lambda_ * self.memory.unsqueeze(0)
-                    # # b, l, e
-                    memory = memory.repeat(bsz, 1, 1)
-                    memory[:, :tgt_len] += (1 - self.lambda_) * q
-                    memory = memory[:, :src_len]
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+        #             else:
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+        #                 memory = self.lambda_ * self.memory.unsqueeze(0)
+        #             # # b, l, e
+        #             memory = memory.repeat(bsz, 1, 1)
+        #             memory[:, :tgt_len] += (1 - self.lambda_) * q
+        #             memory = memory[:, :src_len]
+        #         else:
+        #             # 会oom, Qk^TK形式反传有问题
+        #             if self.mem_use_gelu:
+        #                 memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+        #             else:
+        #                 memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+        #         # (N * h, L, d)
+        #         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         # (N * h, S, d)
+        #         k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         o1 = torch.matmul(k.transpose(1, 2), memory)
+        #     else:
+        #         with torch.no_grad():
+        #             # if self.mem_use_gelu:
+        #             #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+        #             # else:
+        #             #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+        #             if self.mem_use_gelu:
+        #                 memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+        #             else:
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+        #                 memory = self.lambda_ * self.memory.unsqueeze(0)
+        #             # # b, l, e
+        #             memory = memory.repeat(bsz, 1, 1)
+        #             memory[:, :tgt_len] += (1 - self.lambda_) * q
+        #             memory = memory[:, :src_len]
 
-                    self.memory[:src_len] = memory.mean(dim=0)
-                # (N * h, L, d)
-                q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                # (N * h, S, d)
-                k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+        #             self.memory[:src_len] = memory.mean(dim=0)
+        #         # (N * h, L, d)
+        #         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         # (N * h, S, d)
+        #         k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+        
 
-                # o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
-                # o1 = torch.matmul(k.transpose(1, 2), memory.detach())
-            output = torch.bmm(q, o1)
-            # print(memory.requires_grad)
-            # print(o1.requires_grad)
-            # print(f"memory min: {torch.min(memory)} max: {torch.max(memory)}")
-            # print(f"memory nan: {torch.isnan(memory).int().sum()}")
-            # print(f"memory inf: {torch.isinf(memory).int().sum()}")
-            # print(f"self.memory min: {torch.min(self.memory)} max: {torch.max(self.memory)}")
-            # print(f"self.memory nan: {torch.isnan(self.memory).int().sum()}")
-            # print(f"self.memory inf: {torch.isinf(self.memory).int().sum()}")
-            # print(f"o1 min: {torch.min(o1)} max: {torch.max(o1)}")
-            # print(f"o1 nan: {torch.isnan(o1).int().sum()}")
-            # print(f"o1 inf: {torch.isinf(o1).int().sum()}")
-            # print("---------------------------------------")
-            # print("before")
-            # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
-            # print(f"output nan: {torch.isnan(output).int().sum()}")
-            # print(f"output inf: {torch.isinf(output).int().sum()}")
-            # print("---------------------------------------")
-            # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-            output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-            # B, N, e2
-            if self.attention_use_layer_norm:
-                output = self.layer_norm(output)
-            # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
-            # print(f"output nan: {torch.isnan(output).int().sum()}")
-            # print(f"output inf: {torch.isinf(output).int().sum()}")
-
+            #     # o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
+            #     # o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+            # output = torch.bmm(q, o1)
+            # # print(memory.requires_grad)
+            # # print(o1.requires_grad)
+            # # print(f"memory min: {torch.min(memory)} max: {torch.max(memory)}")
+            # # print(f"memory nan: {torch.isnan(memory).int().sum()}")
+            # # print(f"memory inf: {torch.isinf(memory).int().sum()}")
+            # # print(f"self.memory min: {torch.min(self.memory)} max: {torch.max(self.memory)}")
+            # # print(f"self.memory nan: {torch.isnan(self.memory).int().sum()}")
+            # # print(f"self.memory inf: {torch.isinf(self.memory).int().sum()}")
+            # # print(f"o1 min: {torch.min(o1)} max: {torch.max(o1)}")
+            # # print(f"o1 nan: {torch.isnan(o1).int().sum()}")
+            # # print(f"o1 inf: {torch.isinf(o1).int().sum()}")
+            # # print("---------------------------------------")
+            # # print("before")
+            # # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
+            # # print(f"output nan: {torch.isnan(output).int().sum()}")
+            # # print(f"output inf: {torch.isinf(output).int().sum()}")
+            # # print("---------------------------------------")
+            # # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+            # output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+            # # B, N, e2
+            # if self.attention_use_layer_norm:
+            #     output = self.layer_norm(output)
+            # # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
+            # # print(f"output nan: {torch.isnan(output).int().sum()}")
+            # # print(f"output inf: {torch.isinf(output).int().sum()}")
+        # --------------------------------------------------------
+        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # B, N, e2
+        if self.attention_use_layer_norm:
+            output = self.layer_norm(output)
 
         # L, N, e1
         # output = output.transpose(0, 1)
