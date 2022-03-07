@@ -143,6 +143,7 @@ class MemAttention(nn.Module):
         print(f"mem_use_q {self.mem_use_q}")
         print(f"mem_use_k {self.mem_use_k}")
         print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
+        print(f"num_heads {self.num_heads}")
 
         self.reset_parameters()
 

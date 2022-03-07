@@ -1913,7 +1913,7 @@ def roberta_cosformer_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.causal = False
     args.has_out = False
-    args.encoder_attention_heads = 1
+    # args.encoder_attention_heads = 1
     args.encoder_normalize_before = True
     args.use_gelu = True
     args.mem_use_grad = False
