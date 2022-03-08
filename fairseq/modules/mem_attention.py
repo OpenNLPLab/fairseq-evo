@@ -63,6 +63,7 @@ class MemAttention(nn.Module):
         mem_use_q=True,
         mem_use_k=False,
         attention_use_layer_norm=True,
+        model_update_freq=1,
     ):
         # add
         self.index = index
@@ -111,6 +112,9 @@ class MemAttention(nn.Module):
             self.memory = nn.Parameter(torch.zeros(max_l, embed_dim))
         else:
             self.register_buffer("memory", torch.zeros(max_l, embed_dim))
+            self.register_buffer("old_memory", torch.zeros(max_l, embed_dim))
+            self.i = 0
+            self.model_update_freq = model_update_freq
             # self.memory = nn.Parameter(torch.zeros(max_l, embed_dim), requires_grad=False)
         self.lambda_ = lambda_
 
@@ -134,7 +138,7 @@ class MemAttention(nn.Module):
                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
             )
 
-        print("flash attention")
+        print("mem attention")
         print(f"causal {self.causal}")
         print(f"use gelu {self.use_gelu}")
         print(f"mem_use_gelu {self.mem_use_gelu}")
@@ -144,6 +148,7 @@ class MemAttention(nn.Module):
         print(f"mem_use_k {self.mem_use_k}")
         print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
         print(f"num_heads {self.num_heads}")
+        print(f"model_update_freq {self.model_update_freq}")
 
         self.reset_parameters()
 
@@ -246,6 +251,7 @@ class MemAttention(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        self.i += 1
 
         # q *= self.scaling
         # L, N, E1
@@ -320,12 +326,19 @@ class MemAttention(nn.Module):
                 memory = memory.repeat(bsz, 1, 1)
                 # memory[:, :tgt_len] += (1 - self.lambda_) * q
                 # memory = memory[:, :src_len].detach()
-
+                # print(memory.shape)
+                # print(q.shape)
                 memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
+                # 缓存old memory
+                self.old_memory = memory.mean(dim=0)
+                # 用于计算
                 memory = memory[:, :src_len].clone().detach()
-                
 
-                self.memory[:src_len] = memory.mean(dim=0)
+                # self.memory[:src_len] = memory.mean(dim=0)
+                # self.old_memory = memory.mean(dim=0)
+                # 只有整除update_freq时才更新memory
+                if self.i % self.model_update_freq == 0:
+                    self.memory = self.old_memory
         # (N * h, L, d)
         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         # (N * h, S, d)

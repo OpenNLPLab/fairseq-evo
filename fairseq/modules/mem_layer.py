@@ -129,6 +129,7 @@ class MemEncoderLayer(nn.Module):
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
             attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
+            model_update_freq=getattr(args, "model_update_freq", 1)
         )
 
     def residual_connection(self, x, residual):
@@ -418,10 +419,11 @@ class MemDecoderLayer(nn.Module):
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
             attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
+            model_update_freq=getattr(args, "model_update_freq", 1)
         )
 
     def build_encoder_attention(self, embed_dim, args):
-        return MultiheadWeightAttention(
+        return MemAttention(
             embed_dim,
             args.decoder_attention_heads,
             kdim=getattr(args, "encoder_embed_dim", None),
@@ -456,6 +458,7 @@ class MemDecoderLayer(nn.Module):
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
             attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
+            model_update_freq=getattr(args, "model_update_freq", 1)
         )
 
     def prepare_for_onnx_export_(self):

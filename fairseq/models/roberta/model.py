@@ -1917,6 +1917,10 @@ def roberta_cosformer_architecture(args):
     args.encoder_normalize_before = True
     args.use_gelu = True
     args.mem_use_grad = False
+    args.model_update_freq = args.update_freq[0]
+    print("-------------------")
+    print(args.model_update_freq)
+    print("-------------------")
 
 # test
 @register_model_architecture("roberta_mem", "roberta_mem_use_q")
