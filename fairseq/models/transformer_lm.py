@@ -2660,4 +2660,3 @@ def transformer_lm_baevski_wiki103(args):
     args.encoder_attention_heads = 1
     args.encoder_normalize_before = True
     args.use_gelu = True
-    args.decoder_attention_heads = 16
