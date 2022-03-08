@@ -293,7 +293,10 @@ class MemAttention(nn.Module):
                     memory = self.lambda_ * self.memory.unsqueeze(0)
                 # # b, l, e
                 memory = memory.repeat(bsz, 1, 1)
-                memory[:, :tgt_len] += (1 - self.lambda_) * q
+                # memory[:, :tgt_len] += (1 - self.lambda_) * q
+                # memory = memory[:, :src_len]
+
+                memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
                 memory = memory[:, :src_len]
             else:
                 # 会oom, Qk^TK形式反传有问题
@@ -315,8 +318,12 @@ class MemAttention(nn.Module):
                     memory = self.lambda_ * self.memory.unsqueeze(0)
                 # # b, l, e
                 memory = memory.repeat(bsz, 1, 1)
-                memory[:, :tgt_len] += (1 - self.lambda_) * q
-                memory = memory[:, :src_len].detach()
+                # memory[:, :tgt_len] += (1 - self.lambda_) * q
+                # memory = memory[:, :src_len].detach()
+
+                memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
+                memory = memory[:, :src_len].clone().detach()
+                
 
                 self.memory[:src_len] = memory.mean(dim=0)
         # (N * h, L, d)
