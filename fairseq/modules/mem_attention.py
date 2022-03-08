@@ -113,8 +113,8 @@ class MemAttention(nn.Module):
         else:
             self.register_buffer("memory", torch.zeros(max_l, embed_dim))
             self.register_buffer("old_memory", torch.zeros(max_l, embed_dim))
-            self.i = 0
-            self.model_update_freq = model_update_freq
+        self.i = 0
+        self.model_update_freq = model_update_freq
             # self.memory = nn.Parameter(torch.zeros(max_l, embed_dim), requires_grad=False)
         self.lambda_ = lambda_
 
@@ -347,12 +347,16 @@ class MemAttention(nn.Module):
 
 
         if self.causal:
-            # (N * h, L, d) (N * h, L, d) -> (N * h, L, h, d, d)
-            km = torch.einsum("nld,nlm->nldm", k, memory)
-            # (N * h, L, d, d) -> (N * h, L, d, d)
-            km_cum = torch.cumsum(km, dim=1)
-            # (N * h, L, d) (N * h, L, d, d) -> (N * h, L, d)
-            output = torch.einsum("nld,nldm->nlm", q, km_cum)
+            # # (N * h, L, d) (N * h, L, d) -> (N * h, L, d, d)
+            # km = torch.einsum("nld,nlm->nldm", k, memory)
+            # # (N * h, L, d, d) -> (N * h, L, d, d)
+            # km_cum = torch.cumsum(km, dim=1)
+            # # (N * h, L, d) (N * h, L, d, d) -> (N * h, L, d)
+            # output = torch.einsum("nld,nldm->nlm", q, km_cum)
+
+            weights = torch.bmm(q, k.transpose(1, 2))
+            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            output = torch.bmm(weights, memory)
         else:
             o1 = torch.matmul(k.transpose(1, 2), memory)
             output = torch.bmm(q, o1)
