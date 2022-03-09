@@ -360,12 +360,15 @@ class MemAttention(nn.Module):
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             output = torch.bmm(weights, memory)
         else:
-            if l > head_dim:
+            # if l > head_dim:
+            #     o1 = torch.matmul(k.transpose(1, 2), memory)
+            #     output = torch.bmm(q, o1)
+            # else:
+            #     o1 = torch.matmul(q, k.transpose(1, 2))
+            #     output = torch.bmm(o1, memory)
+
                 o1 = torch.matmul(k.transpose(1, 2), memory)
                 output = torch.bmm(q, o1)
-            else:
-                o1 = torch.matmul(q, k.transpose(1, 2))
-                output = torch.bmm(o1, memory)
         
         # --------------------------------------------------------
         # if self.causal:
