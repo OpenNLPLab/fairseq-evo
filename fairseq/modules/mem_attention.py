@@ -265,6 +265,8 @@ class MemAttention(nn.Module):
         k = k.transpose(0, 1)
         head_dim = embed_dim // num_heads
 
+        l = max(src_len, tgt_len)
+
         if self.use_gelu:
             q = F.gelu(q)
             k = F.gelu(k)
@@ -358,8 +360,12 @@ class MemAttention(nn.Module):
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             output = torch.bmm(weights, memory)
         else:
-            o1 = torch.matmul(k.transpose(1, 2), memory)
-            output = torch.bmm(q, o1)
+            if l > head_dim:
+                o1 = torch.matmul(k.transpose(1, 2), memory)
+                output = torch.bmm(q, o1)
+            else:
+                o1 = torch.matmul(q, k.transpose(1, 2))
+                output = torch.bmm(o1, memory)
         
         # --------------------------------------------------------
         # if self.causal:
