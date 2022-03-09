@@ -367,8 +367,8 @@ class MemAttention(nn.Module):
             #     o1 = torch.matmul(q, k.transpose(1, 2))
             #     output = torch.bmm(o1, memory)
 
-                o1 = torch.matmul(k.transpose(1, 2), memory)
-                output = torch.bmm(q, o1)
+            o1 = torch.matmul(k.transpose(1, 2), memory)
+            output = torch.bmm(q, o1)
         
         # --------------------------------------------------------
         # if self.causal:
