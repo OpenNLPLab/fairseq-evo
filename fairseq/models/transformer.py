@@ -3755,6 +3755,41 @@ class MemDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+
+@register_model("Mem_model")
+class MemModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return MemEncoder(args, src_dict, embed_tokens)
+
+    @classmethod
+    def build_decoder(cls, args, tgt_dict, embed_tokens):
+        return MemDecoder(
+            args,
+            tgt_dict,
+            embed_tokens,
+            no_encoder_attn=getattr(args, "no_cross_attention", False),
+        )
+
 @register_model_architecture("transformer", "transformer_tiny")
 def tiny_architecture(args):
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 64)
@@ -4082,3 +4117,14 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.do_scale = getattr(args, "do_scale", False)
     args.use_linear = getattr(args, "use_linear", True)
     args.norm_taylor = getattr(args, "norm_taylor", False)
+
+@register_model_architecture("Mem_model", "mem_vaswani_wmt_en_de_small")
+def cosformer_vaswani_wmt_en_de_big(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.decoder_attention_heads = 1

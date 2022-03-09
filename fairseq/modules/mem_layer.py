@@ -385,6 +385,8 @@ class MemDecoderLayer(nn.Module):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
+        print("-----------------------")
+        print("decoder self attention")
         return MemAttention(
             embed_dim,
             args.decoder_attention_heads,
