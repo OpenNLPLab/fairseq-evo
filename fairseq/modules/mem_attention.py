@@ -337,7 +337,7 @@ class MemAttention(nn.Module):
                 # self.memory[:src_len] = memory.mean(dim=0)
                 # self.old_memory = memory.mean(dim=0)
                 # 只有整除update_freq时才更新memory
-                if self.i % self.model_update_freq == 0:
+                if self.training and (self.i % self.model_update_freq == 0):
                     self.memory = self.old_memory
         # (N * h, L, d)
         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
