@@ -142,6 +142,7 @@ from .flash_layer import GAUEncoderLayer
 # men
 from .mem_attention import MemAttention
 from .mem_layer import MemEncoderLayer, MemDecoderLayer
+from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
 
 __all__ = [
     "AdaptiveInput",
