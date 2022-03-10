@@ -2770,4 +2770,5 @@ def transformer_lm_baevski_wiki103(args):
     args.use_gelu = True
     args.decoder_attention_heads = 1
     # args.decoder_layers = 36
-    args.decoder_layers = 40
+    # args.decoder_layers = 40
+    args.decoder_layers = 32
