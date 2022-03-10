@@ -1072,6 +1072,7 @@ class MemGauDecoderLayer(nn.Module):
         #print('residule connection', x.shape)
 
         if self.encoder_attn is not None and encoder_out is not None:
+            # print("here")
             residual = x
             x = self.encoder_attn_layer_norm(x)
             if prev_attn_state is not None:
