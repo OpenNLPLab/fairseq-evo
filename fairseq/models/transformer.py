@@ -3757,18 +3757,6 @@ class MemDecoder(TransformerDecoder):
         )
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
-    """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
-    is a :class:`TransformerEncoderLayer`.
-
-    Args:
-        args (argparse.Namespace): parsed command-line arguments
-        dictionary (~fairseq.data.Dictionary): encoding dictionary
-        embed_tokens (torch.nn.Embedding): input embedding
-    """
-
-    def __init__(self, args, dictionary, embed_tokens):
-        super().__init__(args, dictionary, embed_tokens)
 
     def build_encoder_layer(self, args):
         layer = MemEncoderLayer(args)
@@ -3784,7 +3772,6 @@ class MemDecoder(TransformerDecoder):
         )
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
-
 
 @register_model("Mem_model")
 class MemModel(TransformerModel):
@@ -3874,18 +3861,6 @@ class MemGauDecoder(TransformerDecoder):
         )
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
-    """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
-    is a :class:`TransformerEncoderLayer`.
-
-    Args:
-        args (argparse.Namespace): parsed command-line arguments
-        dictionary (~fairseq.data.Dictionary): encoding dictionary
-        embed_tokens (torch.nn.Embedding): input embedding
-    """
-
-    def __init__(self, args, dictionary, embed_tokens):
-        super().__init__(args, dictionary, embed_tokens)
 
     def build_encoder_layer(self, args):
         layer = MemGauEncoderLayer(args)
@@ -4274,3 +4249,18 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.encoder_normalize_before = True
     args.use_gelu = True
     args.decoder_attention_heads = 1
+
+@register_model_architecture("MemGau_model", "mem_gau_vaswani_wmt_en_de_small")
+def cosformer_vaswani_wmt_en_de_big(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.decoder_attention_heads = 1
+    args.encoder_layers = 12
+    args.decoder_layers = 12
+    args.encoder_layers = 8
+    args.decoder_layers = 8

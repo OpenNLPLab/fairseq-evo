@@ -355,7 +355,10 @@ class MemAttention(nn.Module):
             # km_cum = torch.cumsum(km, dim=1)
             # # (N * h, L, d) (N * h, L, d, d) -> (N * h, L, d)
             # output = torch.einsum("nld,nldm->nlm", q, km_cum)
-
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
             weights = torch.bmm(q, k.transpose(1, 2))
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             output = torch.bmm(weights, memory)
