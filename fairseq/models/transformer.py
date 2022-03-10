@@ -4262,5 +4262,5 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.decoder_attention_heads = 1
     args.encoder_layers = 12
     args.decoder_layers = 12
-    args.encoder_layers = 8
-    args.decoder_layers = 8
+    # args.encoder_layers = 8
+    # args.decoder_layers = 8
