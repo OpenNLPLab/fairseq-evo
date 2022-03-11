@@ -1988,6 +1988,20 @@ def roberta_cosformer_architecture(args):
     args.use_gelu = True
     args.encoder_layers = 24
 
+@register_model_architecture("roberta_mem_gau", "roberta_mem_gau_v2")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.encoder_embed_dim
+    args.encoder_layers = 12
+    args.encoder_embed_dim = int(2 ** 0.5 * args.encoder_embed_dim)
+
 # @register_model_architecture("roberta_mem_gau", "roberta_mem_gau_v1")
 # def roberta_cosformer_architecture(args):
 #     base_architecture(args)
