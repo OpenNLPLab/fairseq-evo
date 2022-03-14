@@ -56,7 +56,7 @@ from fairseq.models.transformer import WeightFormerEncoder
 # weight diff head
 from fairseq.models.transformer import WeightFormerEncoder_diff
 # GAU
-from fairseq.models.transformer import GAUEncoder
+from fairseq.models.transformer import FlashEncoder
 # mem
 from fairseq.models.transformer import MemEncoder
 # memgau
@@ -1044,19 +1044,19 @@ class RobertaWeightModel_diff(RobertaModel):
         encoder = RobertaWeightEncoder_diff(args, task.source_dictionary)
         return cls(args, encoder)
 
-class RobertaGAUEncoder(RobertaEncoder):
+class RobertaFlashEncoder(RobertaEncoder):
     """RoBERTa encoder."""
 
     def __init__(self, args, dictionary):
         super().__init__(args, dictionary)
 
     def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = GAUEncoder(args, dictionary, embed_tokens)
+        encoder = FlashEncoder(args, dictionary, embed_tokens)
         encoder.apply(init_bert_params)
         return encoder
 
-@register_model("roberta_gau")
-class RobertaGAUModel(RobertaModel):
+@register_model("roberta_flash")
+class RobertaFlashModel(RobertaModel):
     def __init__(self, args, encoder):
         super().__init__(args, encoder)
 
@@ -1070,7 +1070,7 @@ class RobertaGAUModel(RobertaModel):
         if not hasattr(args, "max_positions"):
             args.max_positions = args.tokens_per_sample
 
-        encoder = RobertaGAUEncoder(args, task.source_dictionary)
+        encoder = RobertaFlashEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
 class RobertaMemEncoder(RobertaEncoder):
@@ -1841,7 +1841,7 @@ def roberta_cosformer_architecture(args):
     # args.encoder_layers = 2
     # args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
 
-@register_model_architecture("roberta_gau", "roberta_gau_v1")
+@register_model_architecture("roberta_flash", "roberta_flash_v1")
 def roberta_cosformer_architecture(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)

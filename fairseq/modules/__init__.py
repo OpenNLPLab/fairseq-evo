@@ -138,7 +138,7 @@ from .multihead_weight_attention_diff import MultiheadWeightAttention_diff
 from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, WeightFormerDecoderLayer_diff
 # GAU
 from .flash_attention import FlashAttention
-from .flash_layer import GAUEncoderLayer
+from .flash_layer import FlashEncoderLayer, FlashDecoderLayer
 # men
 from .mem_attention import MemAttention
 from .mem_layer import MemEncoderLayer, MemDecoderLayer
@@ -243,8 +243,10 @@ __all__ = [
     "MultiheadWeightAttention",
     "WeightFormerEncoderLayer", 
     "WeightFormerDecoderLayer",
+    # flash
     "FlashAttention",
-    "GAUEncoderLayer",
+    "FlashEncoderLayer",
+    "FlashDecoderLayer",
     # men
     "MemAttention",
     "MemEncoderLayer",
