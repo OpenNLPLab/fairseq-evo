@@ -141,7 +141,10 @@ from .flash_attention import FlashAttention
 from .flash_layer import GAUEncoderLayer
 # men
 from .mem_attention import MemAttention
-from .mem_layer import MemEncoderLayer
+from .mem_layer import MemEncoderLayer, MemDecoderLayer
+from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
+# rms norm
+from .rms_norm import RMSNorm, GatedRMSNorm
 
 __all__ = [
     "AdaptiveInput",
@@ -243,4 +246,5 @@ __all__ = [
     # men
     "MemAttention",
     "MemEncoderLayer",
+    "MemDecoderLayer",
 ]

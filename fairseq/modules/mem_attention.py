@@ -62,7 +62,8 @@ class MemAttention(nn.Module):
         mem_use_grad=True,
         mem_use_q=True,
         mem_use_k=False,
-        use_mem_proj=False,
+        attention_use_layer_norm=True,
+        model_update_freq=1,
     ):
         # add
         self.index = index
@@ -97,7 +98,10 @@ class MemAttention(nn.Module):
         self.q_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
-        self.layer_norm = nn.LayerNorm(embed_dim)
+
+        self.attention_use_layer_norm = attention_use_layer_norm
+        if self.attention_use_layer_norm:
+            self.layer_norm = nn.LayerNorm(embed_dim)
 
         # memory
         # self.memory = quant_noise(
@@ -108,6 +112,9 @@ class MemAttention(nn.Module):
             self.memory = nn.Parameter(torch.zeros(max_l, embed_dim))
         else:
             self.register_buffer("memory", torch.zeros(max_l, embed_dim))
+            self.register_buffer("old_memory", torch.zeros(max_l, embed_dim))
+        self.i = 0
+        self.model_update_freq = model_update_freq
             # self.memory = nn.Parameter(torch.zeros(max_l, embed_dim), requires_grad=False)
         self.lambda_ = lambda_
 
@@ -124,7 +131,6 @@ class MemAttention(nn.Module):
         self.has_out = has_out
         self.mem_use_q = mem_use_q
         self.mem_use_k = mem_use_k
-        self.use_mem_proj = use_mem_proj
         
 
         if self.has_out:
@@ -132,7 +138,7 @@ class MemAttention(nn.Module):
                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
             )
 
-        print("flash attention")
+        print("mem attention")
         print(f"causal {self.causal}")
         print(f"use gelu {self.use_gelu}")
         print(f"mem_use_gelu {self.mem_use_gelu}")
@@ -140,7 +146,9 @@ class MemAttention(nn.Module):
         print(f"mem_use_grad {self.mem_use_grad}")
         print(f"mem_use_q {self.mem_use_q}")
         print(f"mem_use_k {self.mem_use_k}")
-        print(f"use_mem_proj {self.use_mem_proj}")
+        print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
+        print(f"num_heads {self.num_heads}")
+        print(f"model_update_freq {self.model_update_freq}")
 
         self.reset_parameters()
 
@@ -243,6 +251,7 @@ class MemAttention(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        self.i += 1
 
         # q *= self.scaling
         # L, N, E1
@@ -254,6 +263,9 @@ class MemAttention(nn.Module):
         # N, L, e1
         q = q.transpose(0, 1)
         k = k.transpose(0, 1)
+        head_dim = embed_dim // num_heads
+
+        l = max(src_len, tgt_len)
 
         if self.use_gelu:
             q = F.gelu(q)
@@ -278,92 +290,193 @@ class MemAttention(nn.Module):
         # memory = (1 - self.lambda_) * q.mean(dim=0) + self.lambda_ * self.memory[:tgt_len]
         # with torch.no_grad():
         #     self.memory[:tgt_len] = (1 - self.lambda_) * q.mean(dim=0) + self.lambda_ * self.memory[:tgt_len]
+        if self.mem_use_grad:
+            if self.mem_use_q:
+                if self.mem_use_gelu:
+                    memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+                else:
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                    memory = self.lambda_ * self.memory.unsqueeze(0)
+                # # b, l, e
+                memory = memory.repeat(bsz, 1, 1)
+                # memory[:, :tgt_len] += (1 - self.lambda_) * q
+                # memory = memory[:, :src_len]
+
+                memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
+                memory = memory[:, :src_len]
+            else:
+                # 会oom, Qk^TK形式反传有问题
+                if self.mem_use_gelu:
+                    memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                else:
+                    memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+        else:
+            with torch.no_grad():
+                # if self.mem_use_gelu:
+                #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                # else:
+                #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+                if self.mem_use_gelu:
+                    memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+                else:
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                    memory = self.lambda_ * self.memory.unsqueeze(0)
+                # # b, l, e
+                memory = memory.repeat(bsz, 1, 1)
+                # memory[:, :tgt_len] += (1 - self.lambda_) * q
+                # memory = memory[:, :src_len].detach()
+                # print(memory.shape)
+                # print(q.shape)
+                memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
+                # 缓存old memory
+                self.old_memory = memory.mean(dim=0)
+                # 用于计算
+                memory = memory[:, :src_len].clone().detach()
+
+                # self.memory[:src_len] = memory.mean(dim=0)
+                # self.old_memory = memory.mean(dim=0)
+                # 只有整除update_freq时才更新memory
+                if self.training and (self.i % self.model_update_freq == 0):
+                    self.memory = self.old_memory
+        # (N * h, L, d)
+        q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # (N * h, S, d)
+        k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
 
         if self.causal:
-            # to do
-            output = 0
+            # # (N * h, L, d) (N * h, L, d) -> (N * h, L, d, d)
+            # km = torch.einsum("nld,nlm->nldm", k, memory)
+            # # (N * h, L, d, d) -> (N * h, L, d, d)
+            # km_cum = torch.cumsum(km, dim=1)
+            # # (N * h, L, d) (N * h, L, d, d) -> (N * h, L, d)
+            # output = torch.einsum("nld,nldm->nlm", q, km_cum)
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
+            weights = torch.bmm(q, k.transpose(1, 2))
+            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            output = torch.bmm(weights, memory)
         else:
-            # method1, fail
-            # output = k + self.memory.mean(dim=0)
-            # output = k + self.memory[:src_len]
-            # output = k + self.memory[:src_len].unsqueeze(0)
-            # k.sum(dim=-1): (B, L)
-            # F.softmax(k.sum(dim=-1), dim=-1): (B, L)
-            # output = self.memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
-            # output = memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
-            # B, e1, e2
+            # if l > head_dim:
+            #     o1 = torch.matmul(k.transpose(1, 2), memory)
+            #     output = torch.bmm(q, o1)
+            # else:
+            #     o1 = torch.matmul(q, k.transpose(1, 2))
+            #     output = torch.bmm(o1, memory)
+
+            o1 = torch.matmul(k.transpose(1, 2), memory)
+            output = torch.bmm(q, o1)
+        
+        # --------------------------------------------------------
+        # if self.causal:
+        #     # to do
+        #     return 0
+        # else:
+        #     # method1, fail
+        #     # output = k + self.memory.mean(dim=0)
+        #     # output = k + self.memory[:src_len]
+        #     # output = k + self.memory[:src_len].unsqueeze(0)
+        #     # k.sum(dim=-1): (B, L)
+        #     # F.softmax(k.sum(dim=-1), dim=-1): (B, L)
+        #     # output = self.memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
+        #     # output = memory[:src_len].unsqueeze(0) * F.softmax(k.sum(dim=-1), dim=-1).unsqueeze(-1)
+        #     # B, e1, e2
 
             
-            if self.mem_use_grad:
-                if self.mem_use_q:
-                    if self.mem_use_gelu:
-                        memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+        #     if self.mem_use_grad:
+        #         if self.mem_use_q:
+        #             if self.mem_use_gelu:
+        #                 memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
 
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
-                    else:
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
-                        memory = self.lambda_ * self.memory.unsqueeze(0)
-                    # # b, l, e
-                    memory = memory.repeat(bsz, 1, 1)
-                    memory[:, :tgt_len] += (1 - self.lambda_) * q
-                    memory = memory[:, :src_len]
-                else:
-                    # 会oom, Qk^TK形式反传有问题
-                    if self.mem_use_gelu:
-                        memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
-                    else:
-                        memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
-                o1 = torch.matmul(k.transpose(1, 2), memory)
-            else:
-                with torch.no_grad():
-                    # if self.mem_use_gelu:
-                    #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
-                    # else:
-                    #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
-                    if self.mem_use_gelu:
-                        memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
-                    else:
-                        # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
-                        memory = self.lambda_ * self.memory.unsqueeze(0)
-                    # # b, l, e
-                    memory = memory.repeat(bsz, 1, 1)
-                    memory[:, :tgt_len] += (1 - self.lambda_) * q
-                    memory = memory[:, :src_len]
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+        #             else:
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+        #                 memory = self.lambda_ * self.memory.unsqueeze(0)
+        #             # # b, l, e
+        #             memory = memory.repeat(bsz, 1, 1)
+        #             memory[:, :tgt_len] += (1 - self.lambda_) * q
+        #             memory = memory[:, :src_len]
+        #         else:
+        #             # 会oom, Qk^TK形式反传有问题
+        #             if self.mem_use_gelu:
+        #                 memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+        #             else:
+        #                 memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+        #         # (N * h, L, d)
+        #         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         # (N * h, S, d)
+        #         k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         o1 = torch.matmul(k.transpose(1, 2), memory)
+        #     else:
+        #         with torch.no_grad():
+        #             # if self.mem_use_gelu:
+        #             #     memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+        #             # else:
+        #             #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+        #             if self.mem_use_gelu:
+        #                 memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
+        #             else:
+        #                 # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+        #                 memory = self.lambda_ * self.memory.unsqueeze(0)
+        #             # # b, l, e
+        #             memory = memory.repeat(bsz, 1, 1)
+        #             memory[:, :tgt_len] += (1 - self.lambda_) * q
+        #             memory = memory[:, :src_len]
 
-                    self.memory[:src_len] = memory.mean(dim=0)
-                
-                o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+        #             self.memory[:src_len] = memory.mean(dim=0)
+        #         # (N * h, L, d)
+        #         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         # (N * h, S, d)
+        #         k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        #         o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+        
 
-                # o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
-                # o1 = torch.matmul(k.transpose(1, 2), memory.detach())
-            output = torch.bmm(q, o1)
-            # print(memory.requires_grad)
-            # print(o1.requires_grad)
-            # print(f"memory min: {torch.min(memory)} max: {torch.max(memory)}")
-            # print(f"memory nan: {torch.isnan(memory).int().sum()}")
-            # print(f"memory inf: {torch.isinf(memory).int().sum()}")
-            # print(f"self.memory min: {torch.min(self.memory)} max: {torch.max(self.memory)}")
-            # print(f"self.memory nan: {torch.isnan(self.memory).int().sum()}")
-            # print(f"self.memory inf: {torch.isinf(self.memory).int().sum()}")
-            # print(f"o1 min: {torch.min(o1)} max: {torch.max(o1)}")
-            # print(f"o1 nan: {torch.isnan(o1).int().sum()}")
-            # print(f"o1 inf: {torch.isinf(o1).int().sum()}")
-            # print("---------------------------------------")
-            # print("before")
-            # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
-            # print(f"output nan: {torch.isnan(output).int().sum()}")
-            # print(f"output inf: {torch.isinf(output).int().sum()}")
-            # print("---------------------------------------")
-            # B, N, e2
+            #     # o1 = torch.matmul(k.transpose(1, 2), memory.clone().detach())
+            #     # o1 = torch.matmul(k.transpose(1, 2), memory.detach())
+            # output = torch.bmm(q, o1)
+            # # print(memory.requires_grad)
+            # # print(o1.requires_grad)
+            # # print(f"memory min: {torch.min(memory)} max: {torch.max(memory)}")
+            # # print(f"memory nan: {torch.isnan(memory).int().sum()}")
+            # # print(f"memory inf: {torch.isinf(memory).int().sum()}")
+            # # print(f"self.memory min: {torch.min(self.memory)} max: {torch.max(self.memory)}")
+            # # print(f"self.memory nan: {torch.isnan(self.memory).int().sum()}")
+            # # print(f"self.memory inf: {torch.isinf(self.memory).int().sum()}")
+            # # print(f"o1 min: {torch.min(o1)} max: {torch.max(o1)}")
+            # # print(f"o1 nan: {torch.isnan(o1).int().sum()}")
+            # # print(f"o1 inf: {torch.isinf(o1).int().sum()}")
+            # # print("---------------------------------------")
+            # # print("before")
+            # # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
+            # # print(f"output nan: {torch.isnan(output).int().sum()}")
+            # # print(f"output inf: {torch.isinf(output).int().sum()}")
+            # # print("---------------------------------------")
+            # # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+            # output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+            # # B, N, e2
+            # if self.attention_use_layer_norm:
+            #     output = self.layer_norm(output)
+            # # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
+            # # print(f"output nan: {torch.isnan(output).int().sum()}")
+            # # print(f"output inf: {torch.isinf(output).int().sum()}")
+        # --------------------------------------------------------
+        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # B, N, e2
+        if self.attention_use_layer_norm:
             output = self.layer_norm(output)
-            # print(f"output min: {torch.min(output)} max: {torch.max(output)}")
-            # print(f"output nan: {torch.isnan(output).int().sum()}")
-            # print(f"output inf: {torch.isinf(output).int().sum()}")
-
 
         # L, N, e1
-        output = output.transpose(0, 1)
+        # output = output.transpose(0, 1)
         if self.has_out:
             output = self.out_proj(output)
         # GLU
