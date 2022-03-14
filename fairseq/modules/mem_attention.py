@@ -62,6 +62,7 @@ class MemAttention(nn.Module):
         mem_use_grad=True,
         mem_use_q=True,
         mem_use_k=False,
+        use_mem_proj=False,
     ):
         # add
         self.index = index
@@ -123,6 +124,7 @@ class MemAttention(nn.Module):
         self.has_out = has_out
         self.mem_use_q = mem_use_q
         self.mem_use_k = mem_use_k
+        self.use_mem_proj = use_mem_proj
         
 
         if self.has_out:
@@ -138,6 +140,7 @@ class MemAttention(nn.Module):
         print(f"mem_use_grad {self.mem_use_grad}")
         print(f"mem_use_q {self.mem_use_q}")
         print(f"mem_use_k {self.mem_use_k}")
+        print(f"use_mem_proj {self.use_mem_proj}")
 
         self.reset_parameters()
 
