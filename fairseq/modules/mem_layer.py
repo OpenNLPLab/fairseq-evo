@@ -129,7 +129,11 @@ class MemEncoderLayer(nn.Module):
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
             attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
-            model_update_freq=getattr(args, "model_update_freq", 1)
+            model_update_freq=getattr(args, "model_update_freq", 1),
+            act_fun=getattr(args, "act_fu", "gelu"),
+            out_use_act=getattr(args, "out_use_act", True),
+            init_type=getattr(args, "init_type", "default"),
+            norm_type=getattr(args, "norm_type", "layernorm")
         )
 
     def residual_connection(self, x, residual):
@@ -421,7 +425,11 @@ class MemDecoderLayer(nn.Module):
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
             attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
-            model_update_freq=getattr(args, "model_update_freq", 1)
+            model_update_freq=getattr(args, "model_update_freq", 1),
+            act_fun=getattr(args, "act_fu", "gelu"),
+            out_use_act=getattr(args, "out_use_act", True),
+            init_type=getattr(args, "init_type", "default"),
+            norm_type=getattr(args, "norm_type", "layernorm")
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -460,7 +468,11 @@ class MemDecoderLayer(nn.Module):
             mem_use_q=getattr(args, "mem_use_q", True),
             mem_use_k=getattr(args, "mem_use_k", False),
             attention_use_layer_norm=getattr(args, "attention_use_layer_norm", True),
-            model_update_freq=getattr(args, "model_update_freq", 1)
+            model_update_freq=getattr(args, "model_update_freq", 1),
+            act_fun=getattr(args, "act_fu", "gelu"),
+            out_use_act=getattr(args, "out_use_act", True),
+            init_type=getattr(args, "init_type", "default"),
+            norm_type=getattr(args, "norm_type", "layernorm")
         )
 
     def prepare_for_onnx_export_(self):

@@ -12,6 +12,8 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
+from fairseq.modules import GatedRMSNorm
+from fairseq.modules import RMSNorm
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -64,6 +66,10 @@ class MemAttention(nn.Module):
         mem_use_k=False,
         attention_use_layer_norm=True,
         model_update_freq=1,
+        act_fun="gelu",
+        out_use_act=True,
+        init_type="default",
+        norm_type="layernorm",
     ):
         # add
         self.index = index
@@ -100,8 +106,12 @@ class MemAttention(nn.Module):
         )
 
         self.attention_use_layer_norm = attention_use_layer_norm
+        self.norm_type = norm_type
         if self.attention_use_layer_norm:
-            self.layer_norm = nn.LayerNorm(embed_dim)
+            if self.norm_type == "rmsnorm":
+                self.layer_norm = RMSNorm(embed_dim)
+            else:
+                self.layer_norm = nn.LayerNorm(embed_dim)
 
         # memory
         # self.memory = quant_noise(
@@ -131,7 +141,11 @@ class MemAttention(nn.Module):
         self.has_out = has_out
         self.mem_use_q = mem_use_q
         self.mem_use_k = mem_use_k
-        
+        self.act_fun = act_fun
+        self.out_use_act = out_use_act
+        self.init_type = init_type
+
+        self.act = self.get_act_fun()
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -149,13 +163,29 @@ class MemAttention(nn.Module):
         print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
         print(f"num_heads {self.num_heads}")
         print(f"model_update_freq {self.model_update_freq}")
+        print(f"act_fun_type: {act_fun}")
+        print(f"out_use_act {self.out_use_act}")
+        print(f"init_type {self.init_type}")
+        print(f"norm_type {self.norm_type}")
 
-        self.reset_parameters()
+        if self.init_type == "gelu":
+            self.gelu_reset()
+        else:
+            self.reset_parameters()
+
+    def get_act_fun(self):
+        if self.act_fun == "gelu":
+            return F.gelu
+        elif self.act_fun == "relu":
+            return F.relu
+        else:
+            return None
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
+        print("normal init")
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
@@ -172,6 +202,17 @@ class MemAttention(nn.Module):
 
             if self.out_proj.bias is not None:
                 nn.init.constant_(self.out_proj.bias, 0.0)
+
+    def gelu_reset(self):
+        print("use gelu init")
+        # std gelu
+        c = 0.5874
+        d1, d2 = self.k_proj.weight.shape
+        nn.init.normal_(self.k_proj.weight, std=c * np.sqrt(2 / (d1 + d2)))
+        d1, d2 = self.q_proj.weight.shape
+        nn.init.normal_(self.q_proj.weight, std=c * np.sqrt(2 / (d1 + d2)))
+        d1, d2 = self.out_proj.weight.shape
+        nn.init.normal_(self.out_proj.weight, std=np.sqrt(2 / (d1 + d2)))
         # if self.bias_k is not None:
         #     nn.init.xavier_normal_(self.bias_k)
 
@@ -267,9 +308,11 @@ class MemAttention(nn.Module):
 
         l = max(src_len, tgt_len)
 
-        if self.use_gelu:
-            q = F.gelu(q)
-            k = F.gelu(k)
+        # if self.use_gelu:
+        #     q = F.gelu(q)
+        #     k = F.gelu(k)
+        q = self.act(q)
+        k = self.act(k)
 
         # update
         # with torch.no_grad():
@@ -480,7 +523,8 @@ class MemAttention(nn.Module):
         if self.has_out:
             output = self.out_proj(output)
         # GLU
-        output = F.gelu(output)
+        if self.out_use_act:
+            output = F.gelu(output)
 
         return output, None
 

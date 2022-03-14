@@ -139,14 +139,14 @@ from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, Weight
 # GAU
 from .flash_attention import FlashAttention
 from .flash_layer import FlashEncoderLayer, FlashDecoderLayer
-# men
-from .mem_attention import MemAttention
-from .mem_layer import MemEncoderLayer, MemDecoderLayer
-from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
 # rms norm
 from .rms_norm import RMSNorm, GatedRMSNorm
 from .relu_sparse_attention import ReLAttention
 from .relu_sparse_layer import ReLAEncoderLayer, ReLADecoderLayer
+# men
+from .mem_attention import MemAttention
+from .mem_layer import MemEncoderLayer, MemDecoderLayer
+from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
 
 __all__ = [
     "AdaptiveInput",
