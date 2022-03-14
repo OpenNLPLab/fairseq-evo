@@ -16,9 +16,8 @@ from fairseq.modules import GatedRMSNorm
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
-# cosformer
 @with_incremental_state
-class MultiheadWeightAttention(nn.Module):
+class ReLAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -94,112 +93,46 @@ class MultiheadWeightAttention(nn.Module):
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
+        self.out_proj = quant_noise(
+            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+
         self.dropout_module = FairseqDropout(
             dropout, module_name=self.__class__.__name__
         )
 
         self.gated_rms_norm = GatedRMSNorm(embed_dim)
 
-        # add begin
-        self.use_relu = use_relu
-        self.use_elu = use_elu
-        self.use_leak = use_leak
-        self.use_bound = use_bound
-        self.max_l = max_l
-        self.has_out = has_out
-        self.causal = causal
-        self.weight_type = weight_type
-        self.weight_index = self.get_weight(self.max_l)
-        self.add_zero_attn = add_zero_attn
-        self.v_act = v_act
-        self.use_dropout = use_dropout
-        self.use_layer_norm = use_layer_norm
-        self.qk_layer_norm = qk_layer_norm
-        self.seq_dropout = seq_dropout
-        self.seq_p = seq_p
+        if add_bias_kv:
+            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
+            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
+        else:
+            self.bias_k = self.bias_v = None
 
-        if self.use_layer_norm:
-            self.layer_norm = nn.LayerNorm(embed_dim)
-
-        if self.qk_layer_norm:
-            self.k_layer_norm = nn.LayerNorm(embed_dim)
-            self.q_layer_norm = nn.LayerNorm(embed_dim)
-            # self.k_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
-            # self.q_layer_norm = nn.LayerNorm(embed_dim // self.num_heads)
-
-        if (self.weight_type == 0):
-            print("only relu")
-        elif (self.weight_type == 1):
-            print("cos")
-        elif (self.weight_type == 2):
-            self.c = c
-            print(f"1 - {self.c} * x^2")
-        elif (self.weight_type == 3):
-            a0 = 1 - np.exp(-1)
-            a2 = 25 / 2 - 35 * np.exp(-1)
-            self.b0 = 3 * a2 / 2
-            self.b1 = a0 - a2 / 2
-            
-            print("e^-|x|")
-        elif (self.weight_type == 4):
-            self.c0 = 1 - np.exp(-1)
-            self.c1 = self.fft_coef(1)
-            self.c2 = self.fft_coef(2)
-            print("fourier")
-            print("e^-|x|")
-
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-
-        if self.use_dropout:
-            print(f"use dropout, p={p}")
-            self.dropout = Dropout(p)
 
         self.reset_parameters()
 
         # for test
-        self.cnt = 0
-
         self.onnx_trace = False
 
-        print(f"causal {self.causal}")
-        print(f"use relu {self.use_relu}")
-        print(f"v use act {self.v_act}")
-        print(f"use bound {self.use_bound}")
-        print(f"use use_layer_norm {self.use_layer_norm}")
-        print(f"head {self.num_heads}")
-        print(f"qk layer_norm {self.qk_layer_norm}")
-        print(f"use seq_drop {self.seq_dropout}")
-        print(f"seq_drop_rate {self.seq_p}")
+        print("use relu sparse")
+        print(f"add_bias_kv {add_bias_kv}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        if self.qkv_same_dim:
-            # Empirically observed the convergence to be much better with
-            # the scaled initialization
-            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
-        else:
-            nn.init.xavier_uniform_(self.v_proj.weight)
+        nn.init.xavier_uniform_(self.k_proj.weight)
+        nn.init.xavier_uniform_(self.v_proj.weight)
+        nn.init.xavier_uniform_(self.q_proj.weight)
 
-        if self.has_out:
-            nn.init.xavier_uniform_(self.out_proj.weight)
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
-
-    # def get_weight(self, max_l):
-    #     if (self.weight_type == 1):
-    #         a = np.pi / 2
-    #         index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1, 1)
-
-    #         return nn.Parameter(index, requires_grad=False)
-    #     elif (self.weight_type == 2) or (self.weight_type == 3):
-    #         index = torch.arange(1, max_l + 1).reshape(1, -1, 1, 1)
-
-    #         return nn.Parameter(index, requires_grad=False)
+        nn.init.xavier_uniform_(self.out_proj.weight)
+        if self.out_proj.bias is not None:
+            nn.init.constant_(self.out_proj.bias, 0.0)
+        if self.bias_k is not None:
+            nn.init.xavier_normal_(self.bias_k)
+        if self.bias_v is not None:
+            nn.init.xavier_normal_(self.bias_v)
 
     def forward(
         self,
@@ -276,8 +209,8 @@ class MultiheadWeightAttention(nn.Module):
         logits = torch.bmm(q, k.transpose(1, 2))
         if attn_mask is not None:
             logits = logits.masked_fill(attn_mask==float("-inf"), 0)
-        weights = F.relu(logits)
-        weights = self.dropout_module(weights)
+        prob = F.relu(logits)
+        weights = self.dropout_module(prob)
 
         # N * h, L, e2
         output = torch.bmm(weights, v)
@@ -285,10 +218,10 @@ class MultiheadWeightAttention(nn.Module):
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # perform RMSNorm to stabilize running
         output = self.gated_rms_norm(output)
-        
+        # outprojection
+        output = self.out_proj(output)
 
-
-        return attn_output, None
+        return output, prob
 
     @staticmethod
     def _append_prev_key_padding_mask(

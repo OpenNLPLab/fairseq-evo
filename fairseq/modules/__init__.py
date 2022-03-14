@@ -145,6 +145,8 @@ from .mem_layer import MemEncoderLayer, MemDecoderLayer
 from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
 # rms norm
 from .rms_norm import RMSNorm, GatedRMSNorm
+from .relu_sparse_attention import ReLAttention
+from .relu_sparse_layer import ReLAEncoderLayer, ReLADecoderLayer
 
 __all__ = [
     "AdaptiveInput",

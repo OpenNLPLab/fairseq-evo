@@ -57,7 +57,7 @@ class GatedRMSNorm(nn.Module):
         :param bias: whether use bias term for RMSNorm, disabled by
             default because RMSNorm doesn't enforce re-centering invariance.
         """
-        super(RMSNorm, self).__init__()
+        super(GatedRMSNorm, self).__init__()
 
         self.eps = eps
         self.d = d
@@ -76,4 +76,4 @@ class GatedRMSNorm(nn.Module):
         rms_x = norm_x * d_x ** (-1. / 2)
         x_normed = x / (rms_x + self.eps)
 
-        return self.scale * x_normed * F.sigmoid(self.gate * x)
+        return self.scale * x_normed * torch.sigmoid(self.gate * x)

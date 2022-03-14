@@ -61,6 +61,8 @@ from fairseq.models.transformer import GAUEncoder
 from fairseq.models.transformer import MemEncoder
 # memgau
 from fairseq.models.transformer import MemGauEncoder
+# ReLA
+from fairseq.models.transformer import ReLAEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -1129,6 +1131,35 @@ class RobertaMemModel(RobertaModel):
         encoder = RobertaMemGauEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+class RobertaReLAEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = ReLAEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_rela")
+class RobertaReLAModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaReLAEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -2013,3 +2044,7 @@ def roberta_cosformer_architecture(args):
 #     args.encoder_normalize_before = True
 #     args.use_gelu = True
 #     args.encoder_layers = 72
+
+@register_model_architecture("roberta_rela", "roberta_rela_v1")
+def roberta_rela_architecture(args):
+    base_architecture(args)
