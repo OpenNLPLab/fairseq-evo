@@ -144,6 +144,8 @@ class MemAttention(nn.Module):
         self.act_fun = act_fun
         self.out_use_act = out_use_act
         self.init_type = init_type
+        self.seq_dropout = seq_dropout
+        self.seq_p = seq_p
 
         self.act = self.get_act_fun()
 
@@ -167,6 +169,8 @@ class MemAttention(nn.Module):
         print(f"out_use_act {self.out_use_act}")
         print(f"init_type {self.init_type}")
         print(f"norm_type {self.norm_type}")
+        print(f"seq_dropout {self.seq_dropout}")
+        print(f"seq_p {self.seq_p}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -390,6 +394,12 @@ class MemAttention(nn.Module):
         k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         memory = memory.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
+        if self.training and self.seq_dropout:
+            N = k.shape[0]
+            rand = torch.rand(N, max(tgt_len, src_len))
+            index = rand < self.seq_p
+            q[index[:, :tgt_len]] = 0
+            k[index[:, :src_len]] = 0
 
         if self.causal:
             # # (N * h, L, d) (N * h, L, d) -> (N * h, L, d, d)

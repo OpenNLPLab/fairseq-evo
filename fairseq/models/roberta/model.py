@@ -2099,3 +2099,18 @@ def roberta_cosformer_architecture(args):
     args.act_fun = "gelu"
     args.init_type = "gelu"
     args.norm_type = "rmsnorm"
+
+@register_model_architecture("roberta_mem", "roberta_mem_hasout_seqdrop")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.has_out = True
+    args.seq_dropout = True
+    args.seq_p = 0.3
