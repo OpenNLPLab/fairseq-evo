@@ -400,6 +400,8 @@ class MemAttention(nn.Module):
             index = rand < self.seq_p
             q[index[:, :tgt_len]] = 0
             k[index[:, :src_len]] = 0
+            # 保持期望不变
+            k = k / (1 - (1 - self.seq_p) ** 2)
 
         if self.causal:
             # # (N * h, L, d) (N * h, L, d) -> (N * h, L, d, d)

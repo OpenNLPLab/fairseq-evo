@@ -63,6 +63,8 @@ from fairseq.models.transformer import MemEncoder
 from fairseq.models.transformer import MemGauEncoder
 # ReLA
 from fairseq.models.transformer import ReLAEncoder
+# Gmu
+from fairseq.models.transformer import GmuEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -1160,6 +1162,36 @@ class RobertaReLAModel(RobertaModel):
         encoder = RobertaReLAEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+############# Gmu
+class RobertaGmuEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = GmuEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_gmu")
+class RobertaGmuModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaGmuEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -2114,3 +2146,15 @@ def roberta_cosformer_architecture(args):
     args.has_out = True
     args.seq_dropout = True
     args.seq_p = 0.3
+
+@register_model_architecture("roberta_gmu", "roberta_gmu_v1")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_layers = 24
+    args.norm_type = "rms_norm"
+    args.act_fun = "silu"

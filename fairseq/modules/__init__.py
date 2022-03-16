@@ -147,6 +147,9 @@ from .relu_sparse_layer import ReLAEncoderLayer, ReLADecoderLayer
 from .mem_attention import MemAttention
 from .mem_layer import MemEncoderLayer, MemDecoderLayer
 from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
+# Gmu, gau + memory
+from .mem_gau_attention import GmuAttention
+from .mem_gau_layer import GmuEncoderLayer, GmuDecoderLayer
 
 __all__ = [
     "AdaptiveInput",
@@ -251,4 +254,5 @@ __all__ = [
     "MemAttention",
     "MemEncoderLayer",
     "MemDecoderLayer",
+    # gmu
 ]
