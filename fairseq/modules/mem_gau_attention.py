@@ -157,10 +157,8 @@ class GmuAttention(nn.Module):
         self.seq_dropout = seq_dropout
         self.seq_p = seq_p
 
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
+        nn.init.normal_(self.q_weight, std=0.02)
+        nn.init.normal_(self.k_weight, std=0.02)
 
         print("mem gau attention")
         print(f"causal {self.causal}")
