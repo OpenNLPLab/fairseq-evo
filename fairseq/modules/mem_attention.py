@@ -156,8 +156,8 @@ class MemAttention(nn.Module):
 
         print("mem attention")
         print(f"causal {self.causal}")
-        print(f"use gelu {self.use_gelu}")
-        print(f"mem_use_gelu {self.mem_use_gelu}")
+        # print(f"use gelu {self.use_gelu}")
+        print(f"mem_use_act {self.mem_use_gelu}")
         print(f"has_out {self.has_out}")
         print(f"mem_use_grad {self.mem_use_grad}")
         print(f"mem_use_q {self.mem_use_q}")
@@ -171,10 +171,12 @@ class MemAttention(nn.Module):
         print(f"norm_type {self.norm_type}")
         print(f"seq_dropout {self.seq_dropout}")
         print(f"seq_p {self.seq_p}")
+        print(f"act_fun {self.act_fun}")
+        print(f"init_type {self.init_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
-        else:
+        elif self.init_type == "default":
             self.reset_parameters()
 
     def get_act_fun(self):
@@ -182,6 +184,8 @@ class MemAttention(nn.Module):
             return F.gelu
         elif self.act_fun == "relu":
             return F.relu
+        elif self.act_fun == "elu":
+            return F.elu
         else:
             return None
 
@@ -340,7 +344,7 @@ class MemAttention(nn.Module):
         if self.mem_use_grad:
             if self.mem_use_q:
                 if self.mem_use_gelu:
-                    memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+                    memory = self.lambda_ * self.act(self.memory).unsqueeze(0)
 
                     # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
                 else:
@@ -356,7 +360,7 @@ class MemAttention(nn.Module):
             else:
                 # 会oom, Qk^TK形式反传有问题
                 if self.mem_use_gelu:
-                    memory = (1 - self.lambda_) * k + self.lambda_ * F.gelu(self.memory[:src_len].unsqueeze(0))
+                    memory = (1 - self.lambda_) * k + self.lambda_ * self.act(self.memory[:src_len].unsqueeze(0))
                 else:
                     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
         else:
@@ -366,7 +370,7 @@ class MemAttention(nn.Module):
                 # else:
                 #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
                 if self.mem_use_gelu:
-                    memory = self.lambda_ * F.gelu(self.memory).unsqueeze(0)
+                    memory = self.lambda_ * self.act(self.memory).unsqueeze(0)
                     # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
                 else:
                     # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
@@ -536,7 +540,7 @@ class MemAttention(nn.Module):
             output = self.out_proj(output)
         # GLU
         if self.out_use_act:
-            output = F.gelu(output)
+            output = self.act(output)
 
         return output, None
 
