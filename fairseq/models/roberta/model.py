@@ -2173,3 +2173,9 @@ def roberta_cosformer_architecture(args):
     args.has_out = True
     args.act_fun = "elu"
     args.norm_type = "layernorm"
+
+
+@register_model_architecture("roberta_head", "roberta_cos")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    
