@@ -173,6 +173,7 @@ class MemAttention(nn.Module):
         print(f"seq_p {self.seq_p}")
         print(f"act_fun {self.act_fun}")
         print(f"init_type {self.init_type}")
+        print(f"lambda_ {self.lambda_}")
 
         if self.init_type == "gelu":
             self.gelu_reset()

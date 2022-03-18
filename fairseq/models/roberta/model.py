@@ -2171,6 +2171,7 @@ def roberta_cosformer_architecture(args):
     args.use_gelu = True
     args.mem_use_gelu = True
     args.has_out = True
+    ## add
     args.act_fun = "elu"
     args.norm_type = "layernorm"
 
@@ -2178,4 +2179,75 @@ def roberta_cosformer_architecture(args):
 @register_model_architecture("roberta_head", "roberta_cos")
 def roberta_base_architecture(args):
     base_architecture(args)
-    
+
+@register_model_architecture("roberta_head", "roberta_cos_type2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = 2
+
+@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.has_out = True
+    ## add
+    args.act_fun = "elu"
+    args.norm_type = "rmsnorm"
+
+@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.has_out = True
+    ## add
+    args.act_fun = "elu"
+    args.norm_type = "layernorm"
+    args.out_use_act = False
+
+@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_lambda0")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.has_out = True
+    ## add
+    args.act_fun = "elu"
+    args.norm_type = "layernorm"
+    args.lambda_ = 0
+
+@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_lambda05")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.has_out = True
+    ## add
+    args.act_fun = "elu"
+    args.norm_type = "layernorm"
+    args.lambda_ = 0.5

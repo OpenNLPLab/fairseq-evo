@@ -62,6 +62,7 @@ class MultiheadAttention_(nn.Module):
         # 因子
         alpha_beta=False,
         max_l=1024,
+        weight_type=1,
     ):
         # add
         self.index = index
@@ -117,6 +118,10 @@ class MultiheadAttention_(nn.Module):
 
         self.onnx_trace = False
 
+        self.weight_type = weight_type
+
+        print(f"weight_type {weight_type}")
+
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
@@ -146,6 +151,15 @@ class MultiheadAttention_(nn.Module):
         index = np.pi / 2 * torch.arange(1, seq_len + 1).reshape(1, -1, 1)
 
         return nn.Parameter(index, requires_grad=False)
+
+    def get_matrix(self, l1, l2):
+        i1 = torch.arange(1, l1 + 1).reshape(1, -1, 1)
+        i2 = torch.arange(1, l2 + 1).reshape(1, 1, -1)
+        weight = np.pi / 2 * (i1 - i2) / max(l1, l2)
+        m = torch.cos(weight)
+
+        return nn.Parameter(m, requires_grad=False)
+
 
     def forward(
         self,
@@ -214,13 +228,14 @@ class MultiheadAttention_(nn.Module):
         q = q * scaling
 
         # cos transform
-        m = max(src_len, tgt_len)
-        # get index and send to cuda
-        weight_index = self.get_index(m).to(q)
-        # (N * h, L, 2 * d)
-        q = torch.cat([q * torch.sin(weight_index[:, :tgt_len, :] / m), q * torch.cos(weight_index[:, :tgt_len, :] / m)], dim=-1)
-        # (N * h, S, 2 * d)
-        k = torch.cat([k * torch.sin(weight_index[:, :src_len, :] / m), k * torch.cos(weight_index[:, :src_len, :] / m)], dim=-1)
+        if self.weight_type == 1:
+            m = max(src_len, tgt_len)
+            # get index and send to cuda
+            weight_index = self.get_index(m).to(q)
+            # (N * h, L, 2 * d)
+            q = torch.cat([q * torch.sin(weight_index[:, :tgt_len, :] / m), q * torch.cos(weight_index[:, :tgt_len, :] / m)], dim=-1)
+            # (N * h, S, 2 * d)
+            k = torch.cat([k * torch.sin(weight_index[:, :src_len, :] / m), k * torch.cos(weight_index[:, :src_len, :] / m)], dim=-1)
 
         # N * h, L, S
         attn_output_weights = torch.bmm(q, k.transpose(1, 2))
@@ -243,6 +258,14 @@ class MultiheadAttention_(nn.Module):
        
         # N * h, L, S
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        if self.weight_type == 2:
+            matrix = self.get_matrix(tgt_len, tgt_len).to(q)
+            attn_output_weights = attn_output_weights * matrix
+            attn_output_weights_sum = torch.sum(attn_output_weights, dim=-1, keepdim=True)
+            attn_output_weights = attn_output_weights / attn_output_weights_sum
+            # print(attn_output_weights)
+            # print(torch.sum(attn_output_weights, dim=-1))
+
         # dropout
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         # N * h, L, d
