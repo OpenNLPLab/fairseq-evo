@@ -181,12 +181,17 @@ class MemAttention(nn.Module):
             self.reset_parameters()
 
     def get_act_fun(self):
+        print(self.act_fun)
         if self.act_fun == "gelu":
             return F.gelu
         elif self.act_fun == "relu":
             return F.relu
         elif self.act_fun == "elu":
             return F.elu
+        elif self.act_fun == "sigmoid":
+            return F.sigmoid
+        elif self.act_fun == "exp":
+            return torch.exp
         else:
             return None
 
@@ -361,9 +366,23 @@ class MemAttention(nn.Module):
             else:
                 # 会oom, Qk^TK形式反传有问题
                 if self.mem_use_gelu:
-                    memory = (1 - self.lambda_) * k + self.lambda_ * self.act(self.memory[:src_len].unsqueeze(0))
+                    memory = self.lambda_ * self.act(self.memory).unsqueeze(0)
+
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * F.gelu(self.memory[:tgt_len].unsqueeze(0))
                 else:
-                    memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
+                    # memory = (1 - self.lambda_) * q + self.lambda_ * self.memory[:tgt_len].unsqueeze(0)
+                    memory = self.lambda_ * self.memory.unsqueeze(0)
+                memory = memory.repeat(bsz, 1, 1)
+                # memory[:, :tgt_len] += (1 - self.lambda_) * q
+                # memory = memory[:, :src_len]
+
+                memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * k
+                memory = memory[:, :src_len]
+
+                # if self.mem_use_gelu:
+                #     memory = (1 - self.lambda_) * k + self.lambda_ * self.act(self.memory[:src_len].unsqueeze(0))
+                # else:
+                #     memory = (1 - self.lambda_) * k + self.lambda_ * self.memory[:src_len].unsqueeze(0)
         else:
             with torch.no_grad():
                 # if self.mem_use_gelu:

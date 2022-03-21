@@ -45,6 +45,10 @@ class MemEncoderLayer(nn.Module):
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
         self.normalize_before = args.encoder_normalize_before
+        if self.normalize_before:
+            print("pre layernorm")
+        else:
+            print("post layernorm")
         if self.use_layernorm:
             self.final_layer_norm = LayerNorm(self.embed_dim)
 
@@ -308,6 +312,10 @@ class MemDecoderLayer(nn.Module):
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
         self.normalize_before = args.decoder_normalize_before
+        if self.normalize_before:
+            print("pre layernorm")
+        else:
+            print("post layernorm")
 
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
