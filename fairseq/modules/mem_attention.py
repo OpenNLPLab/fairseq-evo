@@ -17,6 +17,32 @@ from fairseq.modules import RMSNorm
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
+def rope(x, dim):
+    """RoPE position embedding."""
+    shape = x.shape
+    if isinstance(dim, int):
+        dim = [dim]
+    spatial_shape = [shape[i] for i in dim]
+    total_len = 1
+    for i in spatial_shape:
+        total_len *= i
+    position = torch.reshape(
+        torch.arange(total_len, dtype=x.dtype,
+                     device=x.device), spatial_shape
+    )
+    for i in range(dim[-1] + 1, len(shape) - 1, 1):
+        position = position.unsqueeze(-1)
+    half_size = shape[-1] // 2
+    freq_seq = -torch.arange(half_size, dtype=x.dtype, device=x.device) / float(
+        half_size
+    )
+    inv_freq = 10000 ** freq_seq
+    sinusoid = torch.einsum("...,d->...d", position, inv_freq)
+    sin = sinusoid.sin()
+    cos = sinusoid.cos()
+    x1, x2 = torch.chunk(x, 2, dim=-1)
+
+    return torch.cat([x1 * cos - x2 * sin, x2 * cos + x1 * sin], dim=-1)
 
 # memory attention
 @with_incremental_state
@@ -70,6 +96,7 @@ class MemAttention(nn.Module):
         out_use_act=True,
         init_type="default",
         norm_type="layernorm",
+        use_rope=False,
     ):
         # add
         self.index = index
@@ -146,6 +173,7 @@ class MemAttention(nn.Module):
         self.init_type = init_type
         self.seq_dropout = seq_dropout
         self.seq_p = seq_p
+        self.use_rope = use_rope
 
         self.act = self.get_act_fun()
 
@@ -174,6 +202,7 @@ class MemAttention(nn.Module):
         print(f"act_fun {self.act_fun}")
         print(f"init_type {self.init_type}")
         print(f"lambda_ {self.lambda_}")
+        print(f"use_rope {self.use_rope}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -327,6 +356,10 @@ class MemAttention(nn.Module):
         #     k = F.gelu(k)
         q = self.act(q)
         k = self.act(k)
+
+        if self.use_rope:
+            q = rope(q, dim=1)
+            k = rope(k, dim=1)
 
         # update
         # with torch.no_grad():

@@ -2321,3 +2321,21 @@ def roberta_cosformer_architecture(args):
     args.norm_type = "layernorm"
     args.out_use_act = False
     args.encoder_normalize_before = False
+
+@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    # args.encoder_normalize_before = True
+    args.use_gelu = True
+    args.mem_use_gelu = True
+    args.has_out = True
+    ## add
+    args.act_fun = "elu"
+    args.norm_type = "layernorm"
+    args.out_use_act = False
+    args.use_rope = True
