@@ -2081,6 +2081,26 @@ def roberta_cosformer_architecture(args):
 def roberta_rela_architecture(args):
     base_architecture(args)
 
+@register_model_architecture("roberta_rela", "roberta_rela_relu2")
+def roberta_rela_architecture(args):
+    base_architecture(args)
+    args.act_fun = "relu2"
+
+@register_model_architecture("roberta_rela", "roberta_rela_1+elu")
+def roberta_rela_architecture(args):
+    base_architecture(args)
+    args.act_fun = "1+elu"
+
+@register_model_architecture("roberta_rela", "roberta_rela_elu")
+def roberta_rela_architecture(args):
+    base_architecture(args)
+    args.act_fun = "elu"
+
+@register_model_architecture("roberta_rela", "roberta_rela_noact")
+def roberta_rela_architecture(args):
+    base_architecture(args)
+    args.act_fun = "noact"
+
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_gelu_init")
 def roberta_cosformer_architecture(args):
     base_architecture(args)

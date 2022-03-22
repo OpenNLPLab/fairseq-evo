@@ -55,6 +55,7 @@ class ReLAttention(nn.Module):
         qk_layer_norm=False,
         seq_dropout=False,
         seq_p=0.3,
+        act_fun="relu",
     ):
         # add
         self.index = index
@@ -115,8 +116,12 @@ class ReLAttention(nn.Module):
         # for test
         self.onnx_trace = False
 
+        # add
+        self.act_fun = act_fun
+        self.act = self.get_act_fun()
         print("use relu sparse")
         print(f"add_bias_kv {add_bias_kv}")
+        print(f"act_fun {self.act_fun}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -133,6 +138,31 @@ class ReLAttention(nn.Module):
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
+
+    def get_act_fun(self):
+        print(self.act_fun)
+        if self.act_fun == "gelu":
+            return F.gelu
+        elif self.act_fun == "relu":
+            return F.relu
+        elif self.act_fun == "elu":
+            return F.elu
+        elif self.act_fun == "sigmoid":
+            return F.sigmoid
+        elif self.act_fun == "exp":
+            return torch.exp
+        elif self.act_fun == "1+elu":
+            def f(x):
+                return F.relu(x) + 1
+            return f
+        elif self.act_fun == "relu2":
+            def f(x):
+                return torch.square(torch.relu(x))
+            return f
+        else:
+            def f(x):
+                return x
+            return f
 
     def forward(
         self,
@@ -209,7 +239,8 @@ class ReLAttention(nn.Module):
         logits = torch.bmm(q, k.transpose(1, 2))
         if attn_mask is not None:
             logits = logits.masked_fill(attn_mask==float("-inf"), 0)
-        prob = F.relu(logits)
+        # prob = F.relu(logits)
+        prob = self.act(logits)
         weights = self.dropout_module(prob)
 
         # N * h, L, e2

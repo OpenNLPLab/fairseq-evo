@@ -27,6 +27,8 @@ class ReLAEncoderLayer(TransformerEncoderLayer):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            act_fun=getattr(args, "act_fun", "relu"),
         )
 
 class ReLADecoderLayer(TransformerDecoderLayer):
@@ -47,6 +49,8 @@ class ReLADecoderLayer(TransformerDecoderLayer):
             self_attention=not getattr(args, "cross_self_attention", False),
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            act_fun=getattr(args, "act_fun", "relu"),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -59,4 +63,6 @@ class ReLADecoderLayer(TransformerDecoderLayer):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            # add
+            act_fun=getattr(args, "act_fun", "relu"),
         )
