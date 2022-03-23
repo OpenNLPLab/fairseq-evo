@@ -137,6 +137,9 @@ class MemAttention(nn.Module):
         if self.attention_use_layer_norm:
             if self.norm_type == "rmsnorm":
                 self.layer_norm = RMSNorm(embed_dim)
+            elif self.norm_type == "gatedrmsnorm":
+                print("here! gatedrmsnorm")
+                self.layer_norm = GatedRMSNorm(embed_dim)
             else:
                 self.layer_norm = nn.LayerNorm(embed_dim)
 
