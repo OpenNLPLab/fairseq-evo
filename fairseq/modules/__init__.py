@@ -150,6 +150,8 @@ from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
 # Gmu, gau + memory
 from .mem_gau_attention import GmuAttention
 from .mem_gau_layer import GmuEncoderLayer, GmuDecoderLayer
+# rope
+from .rope import rope
 
 __all__ = [
     "AdaptiveInput",

@@ -8,6 +8,7 @@ from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
+from fairseq.modules.rope import rope
 from torch import Tensor, nn
 from torch.nn import Parameter
 
@@ -63,6 +64,7 @@ class MultiheadAttention_(nn.Module):
         alpha_beta=False,
         max_l=1024,
         weight_type=1,
+        use_rope=False,
     ):
         # add
         self.index = index
@@ -119,8 +121,10 @@ class MultiheadAttention_(nn.Module):
         self.onnx_trace = False
 
         self.weight_type = weight_type
+        self.use_rope = use_rope
 
         print(f"weight_type {weight_type}")
+        print(f"use_rope {use_rope}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -223,6 +227,10 @@ class MultiheadAttention_(nn.Module):
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         # N * h, S, d
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
+        if self.use_rope:
+            q = rope(q, dim=1)
+            k = rope(k, dim=1)
 
         scaling = float(embed_dim) ** -0.5
         q = q * scaling

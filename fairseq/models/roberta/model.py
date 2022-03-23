@@ -2195,7 +2195,7 @@ def roberta_cosformer_architecture(args):
     args.act_fun = "elu"
     args.norm_type = "layernorm"
 
-
+### base model
 @register_model_architecture("roberta_head", "roberta_cos")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2204,6 +2204,13 @@ def roberta_base_architecture(args):
 def roberta_base_architecture(args):
     base_architecture(args)
     args.weight_type = 2
+
+@register_model_architecture("roberta_head", "roberta_rope")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_rope = True
+### base model
 
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
 def roberta_cosformer_architecture(args):
