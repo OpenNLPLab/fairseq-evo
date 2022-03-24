@@ -138,7 +138,9 @@ from .multihead_weight_attention_diff import MultiheadWeightAttention_diff
 from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, WeightFormerDecoderLayer_diff
 # GAU
 from .flash_attention import FlashAttention
+from .flash_linear_attention import FlashLinearAttention
 from .flash_layer import FlashEncoderLayer, FlashDecoderLayer
+from .flash_linear_layer import FlashLinearEncoderLayer, FlashLinearDecoderLayer
 # rms norm
 from .rms_norm import RMSNorm, GatedRMSNorm
 from .relu_sparse_attention import ReLAttention

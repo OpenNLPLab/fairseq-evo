@@ -55,9 +55,8 @@ class ScaleNorm(nn.Module):
         x = x * torch.rsqrt(mean_square + self.eps) * self.scala
         return x
 
-# Flash attention
 @with_incremental_state
-class FlashAttention(nn.Module):
+class FlashLinearAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -83,6 +82,7 @@ class FlashAttention(nn.Module):
         eps=1e-5,
         max_position_embeddings=512,
         expansion_factor=2,
+        chunk_size=64,
     ):
         super().__init__()
         self.s = s
@@ -93,10 +93,14 @@ class FlashAttention(nn.Module):
         self.u_proj = nn.Linear(embed_dim, self.e)
         self.v_proj = nn.Linear(embed_dim, self.e)
         self.base_proj = nn.Linear(embed_dim, self.s)
-        self.q_weight = nn.Parameter(torch.randn(1, self.s))
-        self.q_bias = nn.Parameter(torch.zeros(1, self.s))
-        self.k_weight = nn.Parameter(torch.randn(1, self.s))
-        self.k_bias = nn.Parameter(torch.zeros(1, self.s))
+        self.quad_q_weight = nn.Parameter(torch.randn(1, self.s))
+        self.quad_q_bias = nn.Parameter(torch.zeros(1, self.s))
+        self.lin_q_weight = nn.Parameter(torch.randn(1, self.s))
+        self.lin_q_bias = nn.Parameter(torch.zeros(1, self.s))
+        self.quad_k_weight = nn.Parameter(torch.randn(1, self.s))
+        self.quad_k_bias = nn.Parameter(torch.zeros(1, self.s))
+        self.lin_k_weight = nn.Parameter(torch.randn(1, self.s))
+        self.lin_k_bias = nn.Parameter(torch.zeros(1, self.s))
         self.o = nn.Linear(self.e, self.embed_dim)
         self.norm = nn.LayerNorm(self.embed_dim, eps=eps) if norm_type == "layer_norm" else ScaleNorm(eps=eps)
         self.w = nn.Parameter(torch.randn(2 * max_position_embeddings - 1))
@@ -104,9 +108,12 @@ class FlashAttention(nn.Module):
         self.b = nn.Parameter(torch.randn(1, self.s))
         self.act_fn = F.silu
         self.max_position_embeddings = max_position_embeddings
+        self.chunk_size = chunk_size
 
-        nn.init.normal_(self.q_weight, std=0.02)
-        nn.init.normal_(self.k_weight, std=0.02)
+        nn.init.normal_(self.quad_q_weight, std=0.02)
+        nn.init.normal_(self.quad_k_weight, std=0.02)
+        nn.init.normal_(self.lin_q_weight, std=0.02)
+        nn.init.normal_(self.lin_k_weight, std=0.02)
         nn.init.normal_(self.w, std=0.02)
         nn.init.normal_(self.a, std=0.02)
         nn.init.normal_(self.b, std=0.02)
@@ -117,6 +124,8 @@ class FlashAttention(nn.Module):
         print(f"eps {eps}")
         print(f"max_position_embeddings {max_position_embeddings}")
         print(f"expansion_factor {expansion_factor}")
+        print(f"chunk_size {self.chunk_size}")
+
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -149,6 +158,12 @@ class FlashAttention(nn.Module):
             t = torch.einsum("mk,nk ->mn", a, b)
 
         return t
+
+    def get_mask(self, num_chunks, causal_flag):
+        mask = torch.ones(num_chunks, num_chunks)
+        if causal_flag:
+            mask = torch.tril(mask, diagonal=-1)
+        return mask
 
     def forward(
         self,
@@ -194,6 +209,8 @@ class FlashAttention(nn.Module):
           the embedding dimension.
         '''
         tgt_len, bsz, embed_dim = query.size()
+        num_chunks = tgt_len // self.chunk_size
+        causal_flag = False
         # bsz, tgt_len, embed_dim
         query = query.transpose(0, 1)
 
@@ -205,19 +222,51 @@ class FlashAttention(nn.Module):
         # bsz, tgt_len, s
         base = self.act_fn(self.base_proj(x))
         # base = base * weight + bias
-        q_base = base * self.q_weight + self.q_bias
-        k_base = base * self.k_weight + self.k_bias
+        quad_q_base = base * self.quad_q_weight + self.quad_q_bias
+        quad_k_base = base * self.quad_k_weight + self.quad_k_bias
+        lin_q_base = base * self.lin_q_weight + self.lin_q_bias
+        lin_k_base = base * self.lin_k_weight + self.lin_k_bias
+        # reshape
+        # bsz, tgt_len, e -> bsz, chunk_num, chunk_size, e
+        # b, g, n, e
+        quad_q_base = quad_q_base.contiguous().reshape(bsz, -1, self.chunk_size, self.s)
+        quad_k_base = quad_k_base.contiguous().reshape(bsz, -1, self.chunk_size, self.s)
+        lin_q_base = lin_q_base.contiguous().reshape(bsz, -1, self.chunk_size, self.s)
+        lin_k_base = lin_k_base.contiguous().reshape(bsz, -1, self.chunk_size, self.s)
+        v = v.contiguous().reshape(bsz, -1, self.chunk_size, self.e)
+        u = u.contiguous().reshape(bsz, -1, self.chunk_size, self.e)
         # base = torch.einsum("...r,hr->...hr", base, self.weight) + self.bias
-        q = rope(q_base, dim=1)
-        k = rope(k_base, dim=1)
-        # bsz, tgt_len, tgt_len
-        qk = torch.bmm(q, k.transpose(1, 2))
-        bias = self.rel_pos_bias(self.max_position_embeddings)[:, :tgt_len, :tgt_len]
-        kernel = torch.square(torch.relu(qk / self.max_position_embeddings + bias))
-        if attn_mask is not None:
-            kernel = kernel.masked_fill(attn_mask==float("-inf"), 0)
+        quad_q = rope(quad_q_base, dim=[1, 2])
+        quad_k = rope(quad_k_base, dim=[1, 2])
+        lin_q = rope(lin_q_base, dim=[1, 2])
+        lin_k = rope(lin_k_base, dim=[1, 2])
+        # bsz, tgt_len, e -> bsz, chunk_num, chunk_size, e
+        # quad
+        quad_qk = torch.einsum("bgne,bgme->bgnm", quad_q, quad_k)
+        bias = self.rel_pos_bias(self.max_position_embeddings)[:, :self.chunk_size, :self.chunk_size]#[0].repeat(bsz, num_chunks, 1, 1)
+        kernel = torch.square(torch.relu(quad_qk / self.chunk_size + bias))
 
-        x = u * torch.bmm(kernel, v)
+        if attn_mask is not None:
+            causal_flag = True
+            attn_mask = (torch.tril(torch.ones(self.chunk_size, self.chunk_size)) == 0).to(v.device)
+            kernel = kernel.masked_fill(attn_mask, 0)
+        # bsz, chunk_num, chunk_size, e
+        quadratic = torch.einsum("bgnm,bgme->bgne", kernel, v)
+
+        # linear
+        lin_kv = torch.einsum("bgnk,bgne->bgke", lin_k, v) / self.chunk_size
+        # chunk_size1 * chunk_size2的矩阵
+        mask = self.get_mask(num_chunks, causal_flag).to(lin_kv)
+        # bsz, chunk_size1, chunk_size2
+        # mask = mask.repeat(bsz, 1, 1)
+        lin_kv = torch.einsum("bhke,gh->bgke", lin_kv, mask)
+        linear = torch.einsum("bgnk,bgke->bgne", lin_q, lin_kv)
+
+        # fusion
+        x = u * (linear + quadratic)
+        # reshape
+        # bsz, chunk_num, chunk_size, e -> sz, tgt_len, e
+        x = x.contiguous().reshape(bsz, tgt_len, -1)
         x = self.o(x)
 
         # bsz, tgt_len, s
@@ -335,4 +384,3 @@ class FlashAttention(nn.Module):
 
         for key, value in items_to_add.items():
             state_dict[key] = value
-

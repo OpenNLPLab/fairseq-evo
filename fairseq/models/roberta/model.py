@@ -57,6 +57,8 @@ from fairseq.models.transformer import WeightFormerEncoder
 from fairseq.models.transformer import WeightFormerEncoder_diff
 # GAU
 from fairseq.models.transformer import FlashEncoder
+# Flash Linear
+from fairseq.models.transformer import FlashLinearEncoder
 # mem
 from fairseq.models.transformer import MemEncoder
 # memgau
@@ -1046,6 +1048,7 @@ class RobertaWeightModel_diff(RobertaModel):
         encoder = RobertaWeightEncoder_diff(args, task.source_dictionary)
         return cls(args, encoder)
 
+### Flash
 class RobertaFlashEncoder(RobertaEncoder):
     """RoBERTa encoder."""
 
@@ -1074,6 +1077,37 @@ class RobertaFlashModel(RobertaModel):
 
         encoder = RobertaFlashEncoder(args, task.source_dictionary)
         return cls(args, encoder)
+
+# Flash Linear
+class RobertaFlashLinearEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = FlashLinearEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_flash_linear")
+class RobertaFlashLinearModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaFlashLinearEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+#### 
 
 class RobertaMemEncoder(RobertaEncoder):
     """RoBERTa encoder."""
@@ -1882,6 +1916,17 @@ def roberta_cosformer_architecture(args):
     args.has_out = False
     args.encoder_attention_heads = 1
     args.encoder_layers = 24
+
+@register_model_architecture("roberta_flash_linear", "roberta_flash_linear_v1")
+def roberta_cosformer_architecture(args):
+    base_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = False
+    args.has_out = False
+    args.encoder_attention_heads = 1
+    args.encoder_layers = 24
+    args.chunk_size = 64
 
 @register_model_architecture("roberta_mem", "roberta_mem_v1")
 def roberta_cosformer_architecture(args):
