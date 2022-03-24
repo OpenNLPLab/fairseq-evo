@@ -2091,6 +2091,16 @@ def roberta_rela_architecture(args):
     base_architecture(args)
     args.act_fun = "1+elu"
 
+@register_model_architecture("roberta_rela", "roberta_rela_1+relu")
+def roberta_rela_architecture(args):
+    base_architecture(args)
+    args.act_fun = "1+relu"
+
+@register_model_architecture("roberta_rela", "roberta_rela_2+elu")
+def roberta_rela_architecture(args):
+    base_architecture(args)
+    args.act_fun = "2+elu"
+
 @register_model_architecture("roberta_rela", "roberta_rela_elu")
 def roberta_rela_architecture(args):
     base_architecture(args)

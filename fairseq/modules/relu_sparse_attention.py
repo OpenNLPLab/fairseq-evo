@@ -153,7 +153,15 @@ class ReLAttention(nn.Module):
             return torch.exp
         elif self.act_fun == "1+elu":
             def f(x):
+                return F.elu(x) + 1
+            return f
+        elif self.act_fun == "1+relu":
+            def f(x):
                 return F.relu(x) + 1
+            return f
+        elif self.act_fun == "2+elu":
+            def f(x):
+                return F.elu(x) + 2
             return f
         elif self.act_fun == "relu2":
             def f(x):

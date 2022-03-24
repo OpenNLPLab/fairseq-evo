@@ -3040,6 +3040,46 @@ def transformer_lm_baevski_wiki103(args):
     ## add
     args.act_fun = "1+elu"
 
+@register_model_architecture("rela_lm", "rela_wiki_ada_2+elu")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    ## add
+    args.act_fun = "2+elu"
+
+@register_model_architecture("rela_lm", "rela_wiki_ada_1+relu")
+def transformer_lm_baevski_wiki103(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    ## add
+    args.act_fun = "1+relu"
+
 @register_model_architecture("rela_lm", "rela_wiki_ada_elu")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
