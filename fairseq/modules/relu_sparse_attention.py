@@ -245,10 +245,10 @@ class ReLAttention(nn.Module):
 
         # N * h, L, S
         logits = torch.bmm(q, k.transpose(1, 2))
-        if attn_mask is not None:
-            logits = logits.masked_fill(attn_mask==float("-inf"), 0)
         # prob = F.relu(logits)
         prob = self.act(logits)
+        if attn_mask is not None:
+            prob = logits.masked_fill(attn_mask==float("-inf"), 0)
         weights = self.dropout_module(prob)
 
         # N * h, L, e2
