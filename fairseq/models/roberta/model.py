@@ -67,6 +67,8 @@ from fairseq.models.transformer import MemGauEncoder
 from fairseq.models.transformer import ReLAEncoder
 # Gmu
 from fairseq.models.transformer import GmuEncoder
+# linear kernel with orpe
+from fairseq.models.transformer import LinearKernelAttentionEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -1226,6 +1228,38 @@ class RobertaGmuModel(RobertaModel):
         encoder = RobertaGmuEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+############# Linear Orpe
+class RobertaLinearOrpeEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = LinearKernelAttentionEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_linear_orpe")
+class RobertaLinearOrpeModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaLinearOrpeEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+
+
+
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
     args.encoder_layers = getattr(args, "encoder_layers", 12)
@@ -2265,6 +2299,38 @@ def roberta_base_architecture(args):
     base_architecture(args)
     args.weight_type = -1
     args.use_rope = True
+
+@register_model_architecture("roberta_head", "roberta_orpe_1_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+
+@register_model_architecture("roberta_head", "roberta_orpe_1_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 2
+
+@register_model_architecture("roberta_head", "roberta_orpe_2_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("roberta_head", "roberta_orpe_2_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 2
 ### base model
 
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
@@ -2438,3 +2504,52 @@ def roberta_cosformer_architecture(args):
     args.act_fun = "elu"
     args.norm_type = "gatedrmsnorm"
     args.out_use_act = False
+
+### linear orpe
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.kernel_type = "1+elu"
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 2
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 2

@@ -100,6 +100,9 @@ from .transformer_cosformer_layer import (
     CosformerEncoderLayer,
     CosformerDecoderLayer,
 )
+# orpe
+from .orpe import Orpe
+
 # debug
 from .multihead_cosformer_attention_ import MultiheadCosformerAttention_
 from .transformer_cosformer_layer_ import (
@@ -154,6 +157,9 @@ from .mem_gau_attention import GmuAttention
 from .mem_gau_layer import GmuEncoderLayer, GmuDecoderLayer
 # rope
 from .rope import rope
+# linearkernel with orpe
+from .linear_kernel_attention import LinearKernelAttention
+from .linear_kernel_attention_layer import LinearKernelAttentionEncoderLayer, LinearKernelAttentionDecoderLayer
 
 __all__ = [
     "AdaptiveInput",

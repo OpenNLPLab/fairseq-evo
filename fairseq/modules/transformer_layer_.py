@@ -112,6 +112,11 @@ class TransformerEncoderLayer_(nn.Module):
             # add
             weight_type=getattr(args, "weight_type", 1),
             use_rope=getattr(args, "use_rope", False),
+            # add
+            use_orpe=getattr(args, "use_orpe", False),
+            core_matrix=getattr(args, "core_matrix", 1),
+            p_matrix=getattr(args, "p_matrix", 1),
+            max_positions=getattr(args, "max_positions", 512),
         )
 
     def residual_connection(self, x, residual):
@@ -312,6 +317,11 @@ class TransformerDecoderLayer_(nn.Module):
             # add
             weight_type=getattr(args, "weight_type", 1),
             use_rope=getattr(args, "use_rope", False),
+            # add
+            use_orpe=getattr(args, "use_orpe", False),
+            core_matrix=getattr(args, "core_matrix", 1),
+            p_matrix=getattr(args, "p_matrix", 1),
+            max_positions=getattr(args, "max_positions", 512),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -352,6 +362,11 @@ class TransformerDecoderLayer_(nn.Module):
             # add
             weight_type=getattr(args, "weight_type", 1),
             use_rope=getattr(args, "use_rope", False),
+            # add
+            use_orpe=getattr(args, "use_orpe", False),
+            core_matrix=getattr(args, "core_matrix", 1),
+            p_matrix=getattr(args, "p_matrix", 1),
+            max_positions=getattr(args, "max_positions", 512),
         )
 
     def prepare_for_onnx_export_(self):

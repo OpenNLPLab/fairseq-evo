@@ -11,6 +11,7 @@ from fairseq.modules.quant_noise import quant_noise
 from fairseq.modules.rope import rope
 from torch import Tensor, nn
 from torch.nn import Parameter
+from fairseq.modules import Orpe
 
 
 @with_incremental_state
@@ -65,6 +66,11 @@ class MultiheadAttention_(nn.Module):
         max_l=1024,
         weight_type=1,
         use_rope=False,
+        # add
+        use_orpe=False,
+        core_matrix=1, 
+        p_matrix=1, 
+        max_positions=512
     ):
         # add
         self.index = index
@@ -122,9 +128,16 @@ class MultiheadAttention_(nn.Module):
 
         self.weight_type = weight_type
         self.use_rope = use_rope
+        self.core_matrix = core_matrix
+        self.p_matrix = p_matrix
+        self.max_positions = max_positions
+        self.use_orpe = use_orpe
+        if self.use_orpe:
+            self.orpe = Orpe(self.core_matrix, self.p_matrix)
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
+        print(f"use_orpe {self.use_orpe}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -231,6 +244,10 @@ class MultiheadAttention_(nn.Module):
         if self.use_rope:
             q = rope(q, dim=1)
             k = rope(k, dim=1)
+        # orpe
+        if self.use_orpe:
+            q = self.orpe(q)
+            k = self.orpe(k)
 
         scaling = float(embed_dim) ** -0.5
         q = q * scaling
