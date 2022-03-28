@@ -224,6 +224,10 @@ class MemAttention(nn.Module):
             return F.sigmoid
         elif self.act_fun == "exp":
             return torch.exp
+        elif self.act_fun == "1+elu":
+            def f(x):
+                return 1 + F.elu(x)
+            return f
         else:
             return None
 
