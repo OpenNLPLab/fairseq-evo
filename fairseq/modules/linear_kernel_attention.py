@@ -43,7 +43,8 @@ class LinearKernelAttention(nn.Module):
         kernel_type="1+elu",
         core_matrix=1, 
         p_matrix=1, 
-        max_positions=512
+        max_positions=512,
+        theta_type="a",
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -104,7 +105,7 @@ class LinearKernelAttention(nn.Module):
         self.causal = causal
         self.use_orpe = use_orpe
         if self.use_orpe:
-            self.orpe = Orpe(self.core_matrix, self.p_matrix)
+            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type)
         self.act = self.get_kernel_transform()
 
         print(f"kernel_type {kernel_type}")

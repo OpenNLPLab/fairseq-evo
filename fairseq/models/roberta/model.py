@@ -2300,6 +2300,7 @@ def roberta_base_architecture(args):
     args.weight_type = -1
     args.use_rope = True
 
+### 单位阵
 @register_model_architecture("roberta_head", "roberta_orpe_1_1")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2307,6 +2308,32 @@ def roberta_base_architecture(args):
     args.use_orpe = True
     args.core_matrix = 1
     args.p_matrix = 1
+
+@register_model_architecture("roberta_head", "roberta_orpe_1b_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_type = "b"
+
+@register_model_architecture("roberta_head", "roberta_orpe_2_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("roberta_head", "roberta_orpe_3_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 3
+    args.p_matrix = 1
+### 单位阵
 
 @register_model_architecture("roberta_head", "roberta_orpe_1_2")
 def roberta_base_architecture(args):
@@ -2316,13 +2343,7 @@ def roberta_base_architecture(args):
     args.core_matrix = 1
     args.p_matrix = 2
 
-@register_model_architecture("roberta_head", "roberta_orpe_2_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 2
-    args.p_matrix = 1
+
 
 @register_model_architecture("roberta_head", "roberta_orpe_2_2")
 def roberta_base_architecture(args):
@@ -2550,6 +2571,7 @@ def roberta_base_architecture(args):
     args.use_orpe = False
     args.kernel_type = "1+elu"
 
+### 单位阵
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_1")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2560,6 +2582,17 @@ def roberta_base_architecture(args):
     args.core_matrix = 1
     args.p_matrix = 1
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1b_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_type = "b"
+
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_1")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2569,6 +2602,17 @@ def roberta_base_architecture(args):
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 1
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_3_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 1
+### 单位阵
 
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_2")
 def roberta_base_architecture(args):

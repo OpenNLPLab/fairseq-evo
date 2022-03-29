@@ -70,7 +70,8 @@ class MultiheadAttention_(nn.Module):
         use_orpe=False,
         core_matrix=1, 
         p_matrix=1, 
-        max_positions=512
+        max_positions=512,
+        theta_type="a"
     ):
         # add
         self.index = index
@@ -133,7 +134,7 @@ class MultiheadAttention_(nn.Module):
         self.max_positions = max_positions
         self.use_orpe = use_orpe
         if self.use_orpe:
-            self.orpe = Orpe(self.core_matrix, self.p_matrix)
+            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type)
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
@@ -248,7 +249,7 @@ class MultiheadAttention_(nn.Module):
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
-
+            
         scaling = float(embed_dim) ** -0.5
         q = q * scaling
 

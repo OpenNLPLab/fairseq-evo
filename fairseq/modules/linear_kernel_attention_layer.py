@@ -34,6 +34,7 @@ class LinearKernelAttentionEncoderLayer(TransformerEncoderLayer):
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
             max_positions=getattr(args, "max_positions", 512),
+            theta_type=getattr(args, "theta_type", "a"),
         )
 
 class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
@@ -61,6 +62,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
             max_positions=getattr(args, "max_positions", 512),
+            theta_type=getattr(args, "theta_type", "a"),
         )
 
     def build_encoder_attention_(self, embed_dim, args):
@@ -80,4 +82,5 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
             max_positions=getattr(args, "max_positions", 512),
+            theta_type=getattr(args, "theta_type", "a"),
         )
