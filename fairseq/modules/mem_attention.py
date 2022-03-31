@@ -14,6 +14,7 @@ from torch.nn import Dropout
 import sys
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
+from fairseq.modules import Orpe
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -97,6 +98,7 @@ class MemAttention(nn.Module):
         init_type="default",
         norm_type="layernorm",
         use_rope=False,
+        rope_type="a",
     ):
         # add
         self.index = index
@@ -177,6 +179,10 @@ class MemAttention(nn.Module):
         self.seq_dropout = seq_dropout
         self.seq_p = seq_p
         self.use_rope = use_rope
+        self.rope_type = rope_type
+
+        if self.use_rope and (self.rope_type != "a"):
+            self.orpe = Orpe(1, 1, embedding_dim=self.head_dim, theta_type=self.rope_type)
 
         self.act = self.get_act_fun()
 
@@ -206,6 +212,7 @@ class MemAttention(nn.Module):
         print(f"init_type {self.init_type}")
         print(f"lambda_ {self.lambda_}")
         print(f"use_rope {self.use_rope}")
+        print(f"rope_type {self.rope_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -365,8 +372,12 @@ class MemAttention(nn.Module):
         k = self.act(k)
 
         if self.use_rope:
-            q = rope(q, dim=1)
-            k = rope(k, dim=1)
+            if self.rope_type == "a":
+                q = rope(q, dim=1)
+                k = rope(k, dim=1)
+            else:
+                q = self.orpe(q)
+                k = self.orpe(k)
 
         # update
         # with torch.no_grad():
