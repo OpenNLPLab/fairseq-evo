@@ -125,6 +125,8 @@ class Orpe(nn.Module):
             theta = 10000 ** (-2 / e * torch.arange(e // 2))
         elif self.theta_type == "b":
             theta = np.pi / 2 / l / (e // 2) * torch.arange(1, e // 2 + 1)
+        elif self.theta_type == "c":
+            theta = np.pi / 2 / l / torch.arange(1, e // 2 + 1)
         theta = theta.reshape(1, 1, -1).to(x)
         # theta = torch.cat([theta, theta], dim=-1)
         theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
