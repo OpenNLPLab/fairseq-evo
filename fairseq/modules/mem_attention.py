@@ -99,6 +99,7 @@ class MemAttention(nn.Module):
         norm_type="layernorm",
         use_rope=False,
         rope_type="a",
+        use_v=False,
     ):
         # add
         self.index = index
@@ -133,6 +134,11 @@ class MemAttention(nn.Module):
         self.q_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
+
+        if use_v:
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
 
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
@@ -180,6 +186,7 @@ class MemAttention(nn.Module):
         self.seq_p = seq_p
         self.use_rope = use_rope
         self.rope_type = rope_type
+        self.use_v = use_v
 
         if self.use_rope and (self.rope_type != "a"):
             self.orpe = Orpe(1, 1, embedding_dim=self.head_dim, theta_type=self.rope_type)
@@ -213,6 +220,7 @@ class MemAttention(nn.Module):
         print(f"lambda_ {self.lambda_}")
         print(f"use_rope {self.use_rope}")
         print(f"rope_type {self.rope_type}")
+        print(f"use_v {self.use_v}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -248,9 +256,13 @@ class MemAttention(nn.Module):
             # the scaled initialization
             nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
             nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
+            if self.use_v:
+                nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
         else:
             nn.init.xavier_uniform_(self.k_proj.weight)
             nn.init.xavier_uniform_(self.q_proj.weight)
+            if self.use_v:
+                nn.init.xavier_uniform_(self.v_proj.weight)
 
         if self.has_out:
             nn.init.xavier_uniform_(self.out_proj.weight)
@@ -356,11 +368,15 @@ class MemAttention(nn.Module):
         q = self.q_proj(query)
         # S, N, E1
         k = self.k_proj(key)
+        if self.use_v:
+            v = self.v_proj(value)
 
         # N, L, H, E, batch, length, head, dim
         # N, L, e1
         q = q.transpose(0, 1)
         k = k.transpose(0, 1)
+        if self.use_v:
+            v = v.transpose(0, 1)
         head_dim = embed_dim // num_heads
 
         l = max(src_len, tgt_len)
@@ -412,8 +428,11 @@ class MemAttention(nn.Module):
                 # memory[:, :tgt_len] += (1 - self.lambda_) * q
                 # memory = memory[:, :src_len]
 
-                memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
-                memory = memory[:, :src_len]
+                if self.use_v:
+                    memory = memory[:, :src_len].clone() + (1 - self.lambda_) * v
+                else:
+                    memory[:, :tgt_len] = memory[:, :tgt_len].clone() + (1 - self.lambda_) * q
+                    memory = memory[:, :src_len]
             else:
                 # 会oom, Qk^TK形式反传有问题
                 if self.mem_use_gelu:
