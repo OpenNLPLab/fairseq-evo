@@ -2379,6 +2379,16 @@ def roberta_base_architecture(args):
     args.p_matrix = 2
 ### DCT
 
+### Householder
+@register_model_architecture("roberta_head", "roberta_orpe_1_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+### Householder
+
 ### base model
 
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
@@ -2766,6 +2776,17 @@ def roberta_base_architecture(args):
     args.p_matrix = 2
     args.theta_type = "b"
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1c_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 2
+    args.theta_type = "c"
+
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_2")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2786,3 +2807,16 @@ def roberta_base_architecture(args):
     args.core_matrix = 3
     args.p_matrix = 2
 ### DCT
+
+### Householder
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+
+### Householder
