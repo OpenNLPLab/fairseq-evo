@@ -2396,6 +2396,22 @@ def roberta_base_architecture(args):
     args.use_orpe = True
     args.core_matrix = 1
     args.p_matrix = 3
+
+@register_model_architecture("roberta_head", "roberta_orpe_2_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 3
+
+@register_model_architecture("roberta_head", "roberta_orpe_3_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 3
+    args.p_matrix = 3
 ### Householder
 
 ### base model
@@ -2828,4 +2844,23 @@ def roberta_base_architecture(args):
     args.core_matrix = 1
     args.p_matrix = 3
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 3
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_3_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 3
 ### Householder
