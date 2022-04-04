@@ -2327,6 +2327,16 @@ def roberta_base_architecture(args):
     args.p_matrix = 1
     args.theta_type = "c"
 
+@register_model_architecture("roberta_head", "roberta_orpe_1d_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+    
+
 @register_model_architecture("roberta_head", "roberta_orpe_2_1")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2413,6 +2423,17 @@ def roberta_base_architecture(args):
     args.core_matrix = 3
     args.p_matrix = 3
 ### Householder
+
+### Householder learned
+@register_model_architecture("roberta_head", "roberta_orpe_1_3a")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.householder_learned = True
+### Householder learned
 
 ### base model
 
@@ -2758,6 +2779,17 @@ def roberta_base_architecture(args):
     args.p_matrix = 1
     args.theta_type = "c"
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_1")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -2864,3 +2896,16 @@ def roberta_base_architecture(args):
     args.core_matrix = 3
     args.p_matrix = 3
 ### Householder
+
+### Householder learned
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_3a")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.householder_learned = True
+### Householder learned

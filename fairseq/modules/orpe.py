@@ -7,14 +7,20 @@ import torch.functional as F
 import numpy as np
 
 class Orpe(nn.Module):
-    def __init__(self, core_matrix, p_matrix, max_positions=512, embedding_dim=768, theta_type="a"):
+    def __init__(self, core_matrix, p_matrix, max_positions=512, embedding_dim=768, theta_type="a", theta_learned=False, householder_learned=False):
         super().__init__()
         self.core_matrix = core_matrix
         self.p_matrix = p_matrix
         self.theta_type = theta_type
+        self.theta_learned = theta_learned
+        self.householder_learned = householder_learned
 
         if self.core_matrix == 1:
-            print(f"theta_type {self.theta_type}")
+            if self.theta_learned:
+                print("learn theta!")
+                self.theta = nn.Parameter(10000 ** (-2 / embedding_dim * torch.arange(embedding_dim // 2)).reshape(1, 1, -1))
+            else:
+                print(f"theta_type {self.theta_type}")
             print("rope")
         elif self.core_matrix == 2:
             print("mixed")
@@ -33,10 +39,14 @@ class Orpe(nn.Module):
             print("DCT")
         elif self.p_matrix == 3:
             print("Householder")
-            v = torch.randn(1, embedding_dim, 1)
-            v = v / torch.norm(v)
-            print(f"house holder norm is {torch.norm(v)}")
-            self.v = nn.Parameter(v, requires_grad=False)
+            if self.householder_learned:
+                print("learn householder!")
+                self.v = nn.Parameter(torch.randn(1, embedding_dim, 1))
+            else:
+                v = torch.randn(1, embedding_dim, 1)
+                v = v / torch.norm(v)
+                print(f"house holder norm is {torch.norm(v)}")
+                self.v = nn.Parameter(v, requires_grad=False)
         elif self.p_matrix == 4:
             print("Fourier")
 
@@ -121,13 +131,16 @@ class Orpe(nn.Module):
 
     def rope(self, x):
         b, l, e = x.shape
-        if self.theta_type == "a":
-            theta = 10000 ** (-2 / e * torch.arange(e // 2))
-        elif self.theta_type == "b":
-            theta = np.pi / 2 / l / (e // 2) * torch.arange(1, e // 2 + 1)
-        elif self.theta_type == "c":
-            theta = np.pi / 2 / l / torch.arange(1, e // 2 + 1)
-        theta = theta.reshape(1, 1, -1).to(x)
+        if self.theta_learned:
+            theta = self.theta
+        else:
+            if self.theta_type == "a":
+                theta = 10000 ** (-2 / e * torch.arange(e // 2))
+            elif self.theta_type == "b":
+                theta = np.pi / 2 / l / (e // 2) * torch.arange(1, e // 2 + 1)
+            elif self.theta_type == "c":
+                theta = np.pi / 2 / l / torch.arange(1, e // 2 + 1)
+            theta = theta.reshape(1, 1, -1).to(x)
         # theta = torch.cat([theta, theta], dim=-1)
         theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
         theta = theta * torch.arange(l).reshape(1, -1, 1).to(x)
@@ -250,10 +263,14 @@ class Orpe(nn.Module):
 
         return x.view(*x_shape)
 
-    def householder(self, x):
+    def householder(self, x, eps=1e-6):
+        if self.householder_learned:
+            v = self.v / (torch.norm(self.v) + eps)
+        else:
+            v = self.v
         # b, n, e; 1, e, 1 -> 1, n, 1
-        y = torch.matmul(x, self.v)
+        y = torch.matmul(x, v)
         # 1, n, 1; 1, 1, e -> 1, n, e
-        y = torch.matmul(y, self.v.transpose(1, 2))
+        y = torch.matmul(y, v.transpose(1, 2))
 
         return x - 2 * y

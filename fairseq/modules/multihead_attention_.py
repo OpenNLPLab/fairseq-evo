@@ -71,7 +71,9 @@ class MultiheadAttention_(nn.Module):
         core_matrix=1, 
         p_matrix=1, 
         max_positions=512,
-        theta_type="a"
+        theta_type="a",
+        theta_learned=False, 
+        householder_learned=False,
     ):
         # add
         self.index = index
@@ -133,8 +135,10 @@ class MultiheadAttention_(nn.Module):
         self.p_matrix = p_matrix
         self.max_positions = max_positions
         self.use_orpe = use_orpe
+        self.theta_learned = theta_learned
+        self.householder_learned = householder_learned
         if self.use_orpe:
-            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type)
+            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
