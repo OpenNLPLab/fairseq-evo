@@ -141,6 +141,7 @@ class MemEncoderLayer(nn.Module):
             use_rope=getattr(args, "use_rope", False),
             rope_type=getattr(args, "rope_type", "a"),
             use_v=getattr(args, "use_v", False),
+            negative_slope=getattr(args, "negative_slope", 0.1),
         )
 
     def residual_connection(self, x, residual):
@@ -444,6 +445,7 @@ class MemDecoderLayer(nn.Module):
             use_rope=getattr(args, "use_rope", False),
             rope_type=getattr(args, "rope_type", "a"),
             use_v=getattr(args, "use_v", False),
+            negative_slope=getattr(args, "negative_slope", 0.1),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -490,6 +492,7 @@ class MemDecoderLayer(nn.Module):
             use_rope=getattr(args, "use_rope", False),
             rope_type=getattr(args, "rope_type", "a"),
             use_v=getattr(args, "use_v", False),
+            negative_slope=getattr(args, "negative_slope", 0.1),
         )
 
     def prepare_for_onnx_export_(self):

@@ -29,6 +29,7 @@ class ReLAEncoderLayer(TransformerEncoderLayer):
             qn_block_size=self.quant_noise_block_size,
             # add
             act_fun=getattr(args, "act_fun", "relu"),
+            negative_slope=getattr(args, "negative_slope", 0.1),
         )
 
 class ReLADecoderLayer(TransformerDecoderLayer):
@@ -51,6 +52,7 @@ class ReLADecoderLayer(TransformerDecoderLayer):
             qn_block_size=self.quant_noise_block_size,
             # add
             act_fun=getattr(args, "act_fun", "relu"),
+            negative_slope=getattr(args, "negative_slope", 0.1),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -65,4 +67,5 @@ class ReLADecoderLayer(TransformerDecoderLayer):
             qn_block_size=self.quant_noise_block_size,
             # add
             act_fun=getattr(args, "act_fun", "relu"),
+            negative_slope=getattr(args, "negative_slope", 0.1),
         )

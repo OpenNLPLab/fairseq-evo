@@ -56,6 +56,7 @@ class ReLAttention(nn.Module):
         seq_dropout=False,
         seq_p=0.3,
         act_fun="relu",
+        negative_slope=0.1,
     ):
         # add
         self.index = index
@@ -118,10 +119,12 @@ class ReLAttention(nn.Module):
 
         # add
         self.act_fun = act_fun
+        self.negative_slope = negative_slope
         self.act = self.get_act_fun()
         print("use relu sparse")
         print(f"add_bias_kv {add_bias_kv}")
         print(f"act_fun {self.act_fun}")
+        print(f"negative_slope {self.negative_slope}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -166,6 +169,10 @@ class ReLAttention(nn.Module):
         elif self.act_fun == "relu2":
             def f(x):
                 return torch.square(torch.relu(x))
+            return f
+        elif self.act_fun == "leak":
+            def f(x):
+                return F.leaky_relu(x, negative_slope=self.negative_slope)
             return f
         else:
             def f(x):

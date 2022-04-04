@@ -100,6 +100,7 @@ class MemAttention(nn.Module):
         use_rope=False,
         rope_type="a",
         use_v=False,
+        negative_slope=0.1,
     ):
         # add
         self.index = index
@@ -187,6 +188,7 @@ class MemAttention(nn.Module):
         self.use_rope = use_rope
         self.rope_type = rope_type
         self.use_v = use_v
+        self.negative_slope = negative_slope
 
         if self.use_rope and (self.rope_type != "a"):
             self.orpe = Orpe(1, 1, embedding_dim=self.head_dim, theta_type=self.rope_type)
@@ -221,6 +223,7 @@ class MemAttention(nn.Module):
         print(f"use_rope {self.use_rope}")
         print(f"rope_type {self.rope_type}")
         print(f"use_v {self.use_v}")
+        print(f"negative_slope {self.negative_slope}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -239,6 +242,10 @@ class MemAttention(nn.Module):
             return F.sigmoid
         elif self.act_fun == "exp":
             return torch.exp
+        elif self.act_fun == "leak":
+            def f(x):
+                return F.leaky_relu(x, negative_slope=self.negative_slope)
+            return f
         elif self.act_fun == "1+elu":
             def f(x):
                 return 1 + F.elu(x)
