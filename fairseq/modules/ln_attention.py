@@ -47,7 +47,7 @@
 
 # # memory attention
 # @with_incremental_state
-# class MemAttentionV2(nn.Module):
+# class MemAttention(nn.Module):
 #     """Multi-headed attention.
 
 #     See "Attention Is All You Need" for more details.
@@ -99,6 +99,8 @@
 #         norm_type="layernorm",
 #         use_rope=False,
 #         rope_type="a",
+#         use_v=False,
+#         negative_slope=0.1,
 #     ):
 #         # add
 #         self.index = index
@@ -133,6 +135,11 @@
 #         self.q_proj = quant_noise(
 #             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
 #         )
+
+#         if use_v:
+#             self.v_proj = quant_noise(
+#                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+#             )
 
 #         self.attention_use_layer_norm = attention_use_layer_norm
 #         self.norm_type = norm_type
@@ -180,6 +187,8 @@
 #         self.seq_p = seq_p
 #         self.use_rope = use_rope
 #         self.rope_type = rope_type
+#         self.use_v = use_v
+#         self.negative_slope = negative_slope
 
 #         if self.use_rope and (self.rope_type != "a"):
 #             self.orpe = Orpe(1, 1, embedding_dim=self.head_dim, theta_type=self.rope_type)
@@ -213,6 +222,8 @@
 #         print(f"lambda_ {self.lambda_}")
 #         print(f"use_rope {self.use_rope}")
 #         print(f"rope_type {self.rope_type}")
+#         print(f"use_v {self.use_v}")
+#         print(f"negative_slope {self.negative_slope}")
 
 #         if self.init_type == "gelu":
 #             self.gelu_reset()
@@ -231,6 +242,10 @@
 #             return F.sigmoid
 #         elif self.act_fun == "exp":
 #             return torch.exp
+#         elif self.act_fun == "leak":
+#             def f(x):
+#                 return F.leaky_relu(x, negative_slope=self.negative_slope)
+#             return f
 #         elif self.act_fun == "1+elu":
 #             def f(x):
 #                 return 1 + F.elu(x)
@@ -248,9 +263,13 @@
 #             # the scaled initialization
 #             nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
 #             nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
+#             if self.use_v:
+#                 nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
 #         else:
 #             nn.init.xavier_uniform_(self.k_proj.weight)
 #             nn.init.xavier_uniform_(self.q_proj.weight)
+#             if self.use_v:
+#                 nn.init.xavier_uniform_(self.v_proj.weight)
 
 #         if self.has_out:
 #             nn.init.xavier_uniform_(self.out_proj.weight)
@@ -270,8 +289,6 @@
 #         nn.init.normal_(self.q_proj.weight, std=c * np.sqrt(2 / (d1 + d2)))
 #         d1, d2 = self.out_proj.weight.shape
 #         nn.init.normal_(self.out_proj.weight, std=np.sqrt(2 / (d1 + d2)))
-#         # if self.bias_k is not None:
-#         #     nn.init.xavier_normal_(self.bias_k)
 
 #     def fft_coef(self, k):
 #         return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
@@ -341,42 +358,55 @@
 #         eps = 1e-4
 #         self.i += 1
 
+#         # q *= self.scaling
 #         # L, N, E1
 #         q = self.q_proj(query)
 #         # S, N, E1
 #         k = self.k_proj(key)
+#         if self.use_v:
+#             v = self.v_proj(value)
 
 #         # N, L, H, E, batch, length, head, dim
 #         # N, L, e1
 #         q = q.transpose(0, 1)
 #         k = k.transpose(0, 1)
+#         if self.use_v:
+#             v = v.transpose(0, 1)
 #         head_dim = embed_dim // num_heads
 
 #         l = max(src_len, tgt_len)
 
-#         # N, h, L, e
-#         q = self.act(q).view(-1, bsz, num_heads, head_dim).transpose(0, 1).transpose(1, 2).contiguous()
-#         k = self.act(k).view(-1, bsz, num_heads, head_dim).transpose(0, 1).transpose(1, 2).contiguous()
-#         v = q
+#         q = self.act(q)
+#         k = self.act(k)
 
 #         if self.use_rope:
-#             q = self.orpe(q)
-#             k = self.orpe(k)
+#             if self.rope_type == "a":
+#                 q = rope(q, dim=1)
+#                 k = rope(k, dim=1)
+#             else:
+#                 q = self.orpe(q)
+#                 k = self.orpe(k)
+
+#         # (N * h, L, d)
+#         q = q.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+#         # (N * h, S, d)
+#         k = k.transpose(0, 1).contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
 #         if self.causal:
-#             if (attn_mask == None):
-#                 attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
-#                 attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+#             attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+#             attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
             
-#             weights = torch.matmul(q, k.transpose(-2, -1))
+#             weights = torch.bmm(q, k.transpose(1, 2))
 #             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
-#             output = torch.matmul(weights, v)
+#             output = torch.bmm(weights, memory)
 #         else:
-#             o1 = torch.matmul(k.transpose(1, 2), v)
-#             output = torch.matmul(q, o1)
-        
-#         # (N, h, L, d) -> (N, L, h d) -> (L, N, h d) -> (L, N, E)
-#         output = output.transpose(1, 2).transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+#             o1 = torch.matmul(k.transpose(1, 2), memory)
+#             output = torch.bmm(q, o1)
+
+#         # --------------------------------------------------------
+#         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+#         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+#         # B, N, e2
 #         if self.attention_use_layer_norm:
 #             output = self.layer_norm(output)
 
@@ -384,6 +414,9 @@
 #         # output = output.transpose(0, 1)
 #         if self.has_out:
 #             output = self.out_proj(output)
+#         # GLU
+#         if self.out_use_act:
+#             output = self.act(output)
 
 #         return output, None
 

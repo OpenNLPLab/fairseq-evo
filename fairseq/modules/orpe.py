@@ -130,7 +130,27 @@ class Orpe(nn.Module):
         return x
 
     def rope(self, x):
-        b, l, e = x.shape
+        b, l, d = x.shape
+        e = d - 1 if d % 2 == 1 else d
+        return self.mix_transform(x, e)
+
+    def mix_rope(self, x):
+        b, l, d = x.shape
+        assert d >= 3
+        # split
+        e = d // 2
+        # 转换为偶数
+        if e % 2:
+            e += 1
+        return self.mix_transform(x, e)
+
+    def mix_transform(self, x, e):
+        assert e % 2 == 0
+        b, l, d = x.shape
+        # 后e项
+        x1 = x[:, :, e:]
+        # 前e项做rope
+        x = x[:, :, :e]
         if self.theta_learned:
             theta = self.theta
         else:
@@ -144,28 +164,13 @@ class Orpe(nn.Module):
         # theta = torch.cat([theta, theta], dim=-1)
         theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
         theta = theta * torch.arange(l).reshape(1, -1, 1).to(x)
+        # (-q1, -q3), (q0, q2) -> (-q1, q0, -q3, q2)
         x_half = torch.stack([-x[..., 1::2], x[..., ::2]], dim=-1).reshape_as(x)
 
-        x_transform = x * torch.sin(theta) + x_half * torch.cos(theta)
+        x_transform = x * torch.cos(theta) + x_half * torch.sin(theta)
 
-        return x_transform
-
-    def mix_rope(self, x):
-        b, l, d = x.shape
-        # split
-        e = d // 2
-        x1 = x[:, :, :e]
-        x = x[:, :, e:]
-        # transform x
-        theta = 10000 ** (-2 / e * torch.arange(e // 2)).to(x)
-        theta = theta.reshape(1, 1, -1)
-        theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
-        theta = theta * torch.arange(l).reshape(1, -1, 1).to(x)
-        x_half = torch.stack([-x[..., 1::2], x[..., ::2]], dim=-1).reshape_as(x)
-
-        x_transform = x * torch.sin(theta) + x_half * torch.cos(theta)
-
-        x_transform = torch.cat([x1, x_transform], dim=-1)
+        if e != d:
+            x_transform = torch.cat([x_transform, x1], dim=-1)
 
         return x_transform
 
