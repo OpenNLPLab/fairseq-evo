@@ -69,7 +69,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             householder_learned=getattr(args, "householder_learned", False),
         )
 
-    def build_encoder_attention_(self, embed_dim, args):
+    def build_encoder_attention(self, embed_dim, args):
         return LinearKernelAttention(
             embed_dim,
             args.decoder_attention_heads,

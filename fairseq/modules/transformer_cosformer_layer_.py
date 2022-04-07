@@ -71,7 +71,7 @@ class CosformerDecoderLayer_(TransformerDecoderLayer):
             p=getattr(args, "p", 1.0)
         )
 
-    def build_encoder_attention_(self, embed_dim, args):
+    def build_encoder_attention(self, embed_dim, args):
         return MultiheadCosformerAttention_(
             embed_dim,
             args.decoder_attention_heads,

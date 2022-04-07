@@ -161,6 +161,11 @@ from .rope import rope
 from .linear_kernel_attention import LinearKernelAttention
 from .linear_kernel_attention_layer import LinearKernelAttentionEncoderLayer, LinearKernelAttentionDecoderLayer
 
+# norm
+from .norm_linear_attention import NormLinearAttention
+from .norm_local_attention import NormLocalAttention
+from .norm_attention_layer import NormAttentionDecoderLayer, NormAttentionEncoderLayer
+
 __all__ = [
     "AdaptiveInput",
     "AdaptiveSoftmax",

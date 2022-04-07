@@ -103,6 +103,9 @@ from fairseq.modules import (
     # LinearKernelAttention with rope
     LinearKernelAttentionEncoderLayer,
     LinearKernelAttentionDecoderLayer,
+    # NormAttention
+    NormAttentionEncoderLayer,
+    NormAttentionDecoderLayer,
 )
 
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
@@ -474,8 +477,11 @@ class TransformerEncoder(FairseqEncoder):
             self.layers = nn.ModuleList([])
 
         arr = []
+        attention_types = getattr(args, "attention_types", [])
         for _ in range(args.encoder_layers):
             args.index = _
+            if attention_types != []:
+                args.attention_type = attention_types[_]
             # args.index = getattr(args, "index", _)
             arr.append(self.build_encoder_layer(args))
         self.layers.extend(arr)
@@ -804,8 +810,11 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         # )
 
         arr = []
+        attention_types = getattr(args, "attention_types", [])
         for _ in range(args.decoder_layers):
             args.index = _
+            if attention_types != []:
+                args.attention_type = attention_types[_]
             # args.index = getattr(args, "index", _)
             arr.append(self.build_decoder_layer(args, no_encoder_attn))
         self.layers.extend(arr)
@@ -4306,7 +4315,79 @@ class LinearKernelAttentionDecoder(TransformerDecoder):
         return layer
 
     def build_encoder_layer(self, args):
-        layer = GmuEncoderLayer(args)
+        layer = LinearKernelAttentionEncoderLayer(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+############### Norm Attention
+
+class NormAttentionEncoder(TransformerEncoder):
+    """
+    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    is a :class:`TransformerEncoderLayer`.
+
+    Args:
+        args (argparse.Namespace): parsed command-line arguments
+        dictionary (~fairseq.data.Dictionary): encoding dictionary
+        embed_tokens (torch.nn.Embedding): input embedding
+    """
+
+    def __init__(self, args, dictionary, embed_tokens):
+        super().__init__(args, dictionary, embed_tokens)
+
+    def build_encoder_layer(self, args):
+        layer = NormAttentionEncoderLayer(args)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+class NormAttentionDecoder(TransformerDecoder):
+    def __init__(
+        self,
+        args,
+        dictionary,
+        embed_tokens,
+        no_encoder_attn=False,
+        output_projection=None,
+    ):
+        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = NormAttentionDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
+    def build_encoder_layer(self, args):
+        layer = NormAttentionEncoderLayer(args)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)

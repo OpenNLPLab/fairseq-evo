@@ -69,6 +69,8 @@ from fairseq.models.transformer import ReLAEncoder
 from fairseq.models.transformer import GmuEncoder
 # linear kernel with orpe
 from fairseq.models.transformer import LinearKernelAttentionEncoder
+# norm Attention
+from fairseq.models.transformer import NormAttentionEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -1258,6 +1260,35 @@ class RobertaLinearOrpeModel(RobertaModel):
         encoder = RobertaLinearOrpeEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+############# NormAttentionEncoder
+class RobertaNormEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = NormAttentionEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_norm_attention")
+class RobertaNormOrpeModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaNormEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
 
 
 @register_model_architecture("roberta", "roberta")
@@ -2988,3 +3019,20 @@ def roberta_base_architecture(args):
     args.p_matrix = 3
     args.householder_learned = True
 ### Householder learned
+
+############# NormAttentionEncoder
+# linear: attention_type = 1
+# local: attention_type = 2
+# local, ... , local, linear, ... ,linear
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
