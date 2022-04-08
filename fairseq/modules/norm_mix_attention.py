@@ -191,7 +191,7 @@ class NormMixAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_orpe:
-            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=d // num_layers, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         self.linear_act = self.get_act_fun(self.linear_act_fun)
         self.local_act = self.get_act_fun(self.local_act_fun)
@@ -383,19 +383,19 @@ class NormMixAttention(nn.Module):
 
         l = max(src_len, tgt_len)
 
-        q = self.linear_act(q)
-        k = self.linear_act(k)
-
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
-
         # (N * h, L, d)
         q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         # (N * h, S, d)
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         # (N * h, S, d)
         v = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
+        q = self.linear_act(q)
+        k = self.linear_act(k)
+
+        if self.use_orpe:
+            q = self.orpe(q)
+            k = self.orpe(k)
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)

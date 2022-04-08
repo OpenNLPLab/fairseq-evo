@@ -324,18 +324,18 @@ class NormLinearAttention(nn.Module):
 
         l = max(src_len, tgt_len)
 
+        # (N * h, L, d)
+        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # (N * h, S, d)
+        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
         q = self.act(q)
         k = self.act(k)
 
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
-
-        # (N * h, L, d)
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # (N * h, S, d)
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)

@@ -273,10 +273,6 @@ class NormLocalAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
-
         # pad至chunk_size整数倍
         tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
         src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
@@ -295,6 +291,10 @@ class NormLocalAttention(nn.Module):
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
         # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+
+        if self.use_orpe:
+            q = self.orpe(q)
+            k = self.orpe(k)
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)
