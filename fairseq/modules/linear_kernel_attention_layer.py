@@ -37,6 +37,7 @@ class LinearKernelAttentionEncoderLayer(TransformerEncoderLayer):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            use_rope=getattr(args, "use_rope", False),
         )
 
 class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
@@ -67,6 +68,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            use_rope=getattr(args, "use_rope", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -89,4 +91,5 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            use_rope=getattr(args, "use_rope", False),
         )

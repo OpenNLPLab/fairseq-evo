@@ -2963,6 +2963,17 @@ def roberta_base_architecture(args):
     args.p_matrix = 1
 ### 单位阵
 
+### rope
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_rope")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.kernel_type = "1+elu"
+    args.use_rope = True
+### rope
+
 ### Odd Even
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_5")
 def roberta_base_architecture(args):

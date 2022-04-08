@@ -13,7 +13,7 @@ from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
 from fairseq.modules import Orpe
-
+from fairseq.modules.rope import rope
 
 # memory attention
 @with_incremental_state
@@ -47,6 +47,8 @@ class LinearKernelAttention(nn.Module):
         theta_type="a",
         theta_learned=False, 
         householder_learned=False,
+        # rope
+        use_rope=False,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -108,12 +110,14 @@ class LinearKernelAttention(nn.Module):
         self.use_orpe = use_orpe
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
+        self.use_rope = use_rope
         if self.use_orpe:
             self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
         self.act = self.get_kernel_transform()
 
         print(f"kernel_type {kernel_type}")
         print(f"use_orpe {self.use_orpe}")
+        print(f"use_rope {self.use_rope}")
         print(f"causal {self.causal}")
 
     def get_kernel_transform(self):
@@ -232,6 +236,10 @@ class LinearKernelAttention(nn.Module):
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
+        if self.use_rope:
+            q = rope(q, dim=1)
+            k = rope(k, dim=1)
+
 
         if self.causal:
             if (attn_mask == None):
