@@ -49,13 +49,14 @@ class Orpe(nn.Module):
                 self.v = nn.Parameter(v, requires_grad=False)
         elif self.p_matrix == 4:
             print("Fourier")
+        elif self.p_matrix == 5:
+            print("odd_even")
 
-        
         self.p = self.get_p()
         self.core_transform = self.get_core_transform()
         self.p_transpose = self.get_p_transpose()
 
-    def forward(self, x):
+    def forward1(self, x):
         # b, l, e
         x = self.p(x)
         x = self.core_transform(x)
@@ -63,7 +64,7 @@ class Orpe(nn.Module):
 
         return x
 
-    def forward1(self, x):
+    def forward(self, x):
         # b, l, e
         x = self.p(x)
         x = self.core_transform(x)
@@ -82,6 +83,8 @@ class Orpe(nn.Module):
             def f(x):
                 return torch.fft.fft(x, norm="ortho")
             return f
+        elif self.p_matrix == 5:
+            return self.odd_even_permutation
 
     def get_p_transpose(self):
         if self.p_matrix == 1:
@@ -96,6 +99,8 @@ class Orpe(nn.Module):
             def f(x):
                 return torch.fft.ifft(x, norm="ortho")
             return f
+        elif self.p_matrix == 5:
+            return self.odd_even_permutation_transpose
 
     def get_core_transform(self):
         if self.core_matrix == 1:
@@ -108,7 +113,6 @@ class Orpe(nn.Module):
         elif self.core_matrix == 4:
             return self.complex_exp
 
-    # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def get_permutation(self, max_positions, embedding_dim):
         permutation = torch.randperm(embedding_dim).reshape(1, -1)
         # 1 * d
@@ -120,6 +124,30 @@ class Orpe(nn.Module):
         expanded = torch.stack(expanded, dim=1)
         return expanded
 
+    def odd_even_permutation_transpose(self, x):
+        # d = e - e // 2
+        # k->2k, k <= d; k-> 2(k - d) + 1, k > d
+        e = x.shape[-1]
+        d = e - e // 2
+        permutation = torch.cat([2 * torch.arange(d), 2 * (torch.arange(d, e) - d) + 1]).to(x.device)
+        x = x.gather(-1, permutation.expand_as(x))
+
+        return x
+
+    def odd_even_permutation(self, x):
+        # d = e - e // 2
+        # 2k->k, 2k+1->d + k, 
+        e = x.shape[-1]
+        d = e - e // 2
+        permutation = torch.arange(e)
+        index = torch.arange(e)
+        permutation[::2] = index[::2] // 2
+        permutation[1::2] = (index[1::2] - 1) // 2 + d
+        permutation = permutation.to(x.device)
+        x = x.gather(-1, permutation.expand_as(x))
+
+        return x
+
     def do_permutation(self, x):
         b, l, e = x.shape
         # print(x)
@@ -130,11 +158,53 @@ class Orpe(nn.Module):
         return x
 
     def rope(self, x):
+        # b, l, e = x.shape
+        # if self.theta_learned:
+        #     theta = self.theta
+        # else:
+        #     if self.theta_type == "a":
+        #         theta = 10000 ** (-2 / e * torch.arange(e // 2))
+        #     elif self.theta_type == "b":
+        #         theta = np.pi / 2 / l / (e // 2) * torch.arange(1, e // 2 + 1)
+        #     elif self.theta_type == "c":
+        #         theta = np.pi / 2 / l / torch.arange(1, e // 2 + 1)
+        #     theta = theta.reshape(1, 1, -1).to(x)
+        # # theta = torch.cat([theta, theta], dim=-1)
+        # theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
+        # theta = theta * torch.arange(l).reshape(1, -1, 1).to(x)
+        # x_half = torch.stack([-x[..., 1::2], x[..., ::2]], dim=-1).reshape_as(x)
+
+        # x_transform = x * torch.cos(theta) + x_half * torch.sin(theta)
+
+        # return x_transform
         b, l, d = x.shape
         e = d - 1 if d % 2 == 1 else d
         return self.mix_transform(x, e)
 
     def mix_rope(self, x):
+        # b, l, d = x.shape
+        # assert d >= 3
+        # # split
+        # e = d // 2
+        # # 转换为偶数
+        # if e % 2:
+        #     e += 1
+        # x1 = x[:, :, :e]
+        # x = x[:, :, e:]
+        # # transform x
+        # theta = 10000 ** (-2 / e * torch.arange(e // 2)).to(x)
+        # theta = theta.reshape(1, 1, -1)
+        # theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
+        # theta = theta * torch.arange(l).reshape(1, -1, 1).to(x)
+        # # (-q1, -q2), (q0, q3) -> (-q1, q0, -q2, q3)
+        # x_half = torch.stack([-x[..., 1::2], x[..., ::2]], dim=-1).reshape_as(x)
+
+        # x_transform = x * torch.cos(theta) + x_half * torch.sin(theta)
+
+        # x_transform = torch.cat([x1, x_transform], dim=-1)
+
+        # return x_transform
+
         b, l, d = x.shape
         assert d >= 3
         # split

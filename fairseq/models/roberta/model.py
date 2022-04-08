@@ -2394,6 +2394,17 @@ def roberta_base_architecture(args):
     args.p_matrix = 1
 ### 单位阵
 
+### Odd_Even
+@register_model_architecture("roberta_head", "roberta_orpe_1_5")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 5
+
+### Odd_Even
+
 ### DCT
 @register_model_architecture("roberta_head", "roberta_orpe_1_2")
 def roberta_base_architecture(args):
@@ -2920,6 +2931,18 @@ def roberta_base_architecture(args):
     args.core_matrix = 3
     args.p_matrix = 1
 ### 单位阵
+
+### Odd Even
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_5")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 5
+### Odd Even
 
 ### DCT
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_2")
