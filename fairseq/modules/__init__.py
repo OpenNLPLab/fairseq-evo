@@ -166,6 +166,10 @@ from .norm_linear_attention import NormLinearAttention
 from .norm_local_attention import NormLocalAttention
 from .norm_attention_layer import NormAttentionDecoderLayer, NormAttentionEncoderLayer
 
+# norm mix
+from .norm_mix_attention import NormMixAttention
+from .norm_mix_layer import NormMixAttentionDecoderLayer, NormMixAttentionEncoderLayer
+
 __all__ = [
     "AdaptiveInput",
     "AdaptiveSoftmax",

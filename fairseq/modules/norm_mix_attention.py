@@ -19,7 +19,7 @@ from fairseq.modules import Orpe
 # N, L, H, E, batch, length, head, dim
 
 @with_incremental_state
-class NormLinearAttention(nn.Module):
+class NormMixAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -65,7 +65,8 @@ class NormLinearAttention(nn.Module):
         mem_use_k=False,
         attention_use_layer_norm=True,
         model_update_freq=1,
-        act_fun="gelu",
+        linear_act_fun="gelu",
+        local_act_fun="relu",
         out_use_act=True,
         init_type="default",
         norm_type="layernorm",
@@ -81,6 +82,9 @@ class NormLinearAttention(nn.Module):
         theta_type="a",
         theta_learned=False, 
         householder_learned=False,
+        # chunk_size
+        chunk_size=32,
+
     ):
         # add
         self.index = index
@@ -108,27 +112,50 @@ class NormLinearAttention(nn.Module):
         assert not self.self_attention or self.qkv_same_dim, (
             "Self-attention requires query, key and " "value to be of the same size"
         )
+
+        d = embed_dim // 2
         
-        self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.k_proj_linear = quant_noise(
+            nn.Linear(self.kdim, d, bias=bias), q_noise, qn_block_size
         )
-        self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.q_proj_linear = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
         )
-        self.v_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.v_proj_linear = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
         )
+        self.out_proj_linear = quant_noise(
+            nn.Linear(d, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+
+        self.k_proj_local = quant_noise(
+            nn.Linear(self.kdim, d, bias=bias), q_noise, qn_block_size
+        )
+        self.q_proj_local = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
+        )
+        self.v_proj_local = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
+        )
+        self.out_proj_local = quant_noise(
+            nn.Linear(d, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+        self.dropout_module = FairseqDropout(
+            dropout, module_name=self.__class__.__name__
+        )
+
+        self.gated_rms_norm = GatedRMSNorm(d)
 
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
         if self.attention_use_layer_norm:
             if self.norm_type == "rmsnorm":
-                self.layer_norm = RMSNorm(embed_dim)
+                self.layer_norm = RMSNorm(d)
             elif self.norm_type == "gatedrmsnorm":
                 print("here! gatedrmsnorm")
-                self.layer_norm = GatedRMSNorm(embed_dim)
+                self.layer_norm = GatedRMSNorm(d)
             else:
-                self.layer_norm = nn.LayerNorm(embed_dim)
+                self.layer_norm = nn.LayerNorm(d)
 
         self.i = 0
         self.model_update_freq = model_update_freq
@@ -146,13 +173,15 @@ class NormLinearAttention(nn.Module):
         self.has_out = has_out
         self.mem_use_q = mem_use_q
         self.mem_use_k = mem_use_k
-        self.act_fun = act_fun
+        self.linear_act_fun = linear_act_fun
+        self.local_act_fun = local_act_fun
         self.out_use_act = out_use_act
         self.init_type = init_type
         self.seq_dropout = seq_dropout
         self.seq_p = seq_p
         self.use_v = use_v
         self.negative_slope = negative_slope
+        self.chunk_size = chunk_size
 
         # orpe
         self.core_matrix = core_matrix
@@ -164,44 +193,41 @@ class NormLinearAttention(nn.Module):
         if self.use_orpe:
             self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
-        self.act = self.get_act_fun()
-
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
+        self.linear_act = self.get_act_fun(self.linear_act_fun)
+        self.local_act = self.get_act_fun(self.local_act_fun)
 
         print(f"causal {self.causal}")
         print(f"has_out {self.has_out}")
         print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
         print(f"num_heads {self.num_heads}")
-        print(f"act_fun_type: {act_fun}")
+        print(f"linear_act_fun: {self.linear_act_fun}")
+        print(f"local_act_fun: {self.local_act_fun}")
         print(f"norm_type {self.norm_type}")
         print(f"init_type {self.init_type}")
         print(f"use_orpe {self.use_orpe}")
+        print(f"chunk_size {self.chunk_size}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
         elif self.init_type == "default":
             self.reset_parameters()
 
-    def get_act_fun(self):
-        print(self.act_fun)
-        if self.act_fun == "gelu":
+    def get_act_fun(self, act_fun):
+        if act_fun == "gelu":
             return F.gelu
-        elif self.act_fun == "relu":
+        elif act_fun == "relu":
             return F.relu
-        elif self.act_fun == "elu":
+        elif act_fun == "elu":
             return F.elu
-        elif self.act_fun == "sigmoid":
+        elif act_fun == "sigmoid":
             return F.sigmoid
-        elif self.act_fun == "exp":
+        elif act_fun == "exp":
             return torch.exp
-        elif self.act_fun == "leak":
+        elif act_fun == "leak":
             def f(x):
                 return F.leaky_relu(x, negative_slope=self.negative_slope)
             return f
-        elif self.act_fun == "1+elu":
+        elif act_fun == "1+elu":
             def f(x):
                 return 1 + F.elu(x)
             return f
@@ -216,21 +242,32 @@ class NormLinearAttention(nn.Module):
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
-            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.k_proj_linear.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.q_proj_linear.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.v_proj_linear.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.k_proj_local.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.q_proj_local.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.v_proj_local.weight, gain=1 / math.sqrt(2))
         else:
-            nn.init.xavier_uniform_(self.k_proj.weight)
-            nn.init.xavier_uniform_(self.q_proj.weight)
-            nn.init.xavier_uniform_(self.v_proj.weight)
+            nn.init.xavier_uniform_(self.k_proj_linear.weight)
+            nn.init.xavier_uniform_(self.q_proj_linear.weight)
+            nn.init.xavier_uniform_(self.v_proj_linear.weight)
+            nn.init.xavier_uniform_(self.k_proj_local.weight)
+            nn.init.xavier_uniform_(self.q_proj_local.weight)
+            nn.init.xavier_uniform_(self.v_proj_local.weight)
 
         if self.has_out:
-            nn.init.xavier_uniform_(self.out_proj.weight)
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
+            nn.init.xavier_uniform_(self.out_proj_linear.weight)
+            nn.init.xavier_uniform_(self.out_proj_local.weight)
+            if self.out_proj_linear.bias is not None:
+                nn.init.constant_(self.out_proj_linear.bias, 0.0)
+            if self.out_proj_local.bias is not None:
+                nn.init.constant_(self.out_proj_local.bias, 0.0)
 
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
+            if self.out_proj_linear.bias is not None:
+                nn.init.constant_(self.out_proj_linear.bias, 0.0)
+            if self.out_proj_local.bias is not None:
+                nn.init.constant_(self.out_proj_local.bias, 0.0)
 
     def gelu_reset(self):
         print("use gelu init")
@@ -260,6 +297,129 @@ class NormLinearAttention(nn.Module):
             return nn.Parameter(index, requires_grad=False)
 
     def forward(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        o1, _ = self.forward_linear(query, key, value)
+        o2, _ = self.forward_local(query, key, value)
+        o = (o1 + o2) / 2
+
+        return o, None
+
+    def forward_linear(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        # self.cnt += 1
+        # if self.cnt == 10:
+        #     sys.exit(0)
+        num_heads = self.num_heads
+        
+        src_len = key.size(0)
+        eps = 1e-4
+        self.i += 1
+
+        # q *= self.scaling
+        # L, N, E1
+        q = self.q_proj_linear(query)
+        # S, N, E1
+        k = self.k_proj_linear(key)
+        v = self.v_proj_linear(value)
+
+        tgt_len, bsz, embed_dim = q.size()
+
+        # N, L, H, E, batch, length, head, dim
+        # N, L, e1
+        head_dim = embed_dim // num_heads
+
+
+        l = max(src_len, tgt_len)
+
+        q = self.linear_act(q)
+        k = self.linear_act(k)
+
+        if self.use_orpe:
+            q = self.orpe(q)
+            k = self.orpe(k)
+
+        # (N * h, L, d)
+        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # (N * h, S, d)
+        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # (N * h, S, d)
+        v = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
+        if self.causal:
+            attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
+            weights = torch.bmm(q, k.transpose(1, 2))
+            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            output = torch.bmm(weights, v)
+        else:
+            o1 = torch.matmul(k.transpose(1, 2), v)
+            output = torch.bmm(q, o1)
+
+        # --------------------------------------------------------
+        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # B, N, e2
+        output = self.layer_norm(output)
+
+        # L, N, e1
+        output = self.out_proj_linear(output)
+
+        return output, None
+
+    def forward_local(
         self,
         query,
         key: Optional[Tensor],
@@ -308,56 +468,63 @@ class NormLinearAttention(nn.Module):
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
-        eps = 1e-4
-        self.i += 1
-
-        # q *= self.scaling
-        # L, N, E1
-        q = self.q_proj(query)
-        # S, N, E1
-        k = self.k_proj(key)
-        v = self.v_proj(value)
-
-        # N, L, H, E, batch, length, head, dim
-        # N, L, e1
         head_dim = embed_dim // num_heads
 
-        l = max(src_len, tgt_len)
+        tgt_len, bsz, embed_dim = query.size()
 
-        q = self.act(q)
-        k = self.act(k)
+        scaling = float(head_dim) ** -0.5
+        # L, N, E1
+        q = self.q_proj_local(query)
+        # scale
+        q *= scaling
+        # S, N, E1
+        k = self.k_proj_local(key)
+        # S, N, E2
+        v = self.v_proj_local(value)
 
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
 
-        # (N * h, L, d)
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # (N * h, S, d)
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # pad至chunk_size整数倍
+        tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
+        src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
+        tgt_g = (tgt_len + tgt_len_pad) // self.chunk_size
+        src_g = (src_len + src_len_pad) // self.chunk_size
+
+        # 填充0
+        q = F.pad(q, (0, 0, 0, 0, 0, tgt_len_pad))
+        k = F.pad(k, (0, 0, 0, 0, 0, src_len_pad))
+        v = F.pad(v, (0, 0, 0, 0, 0, src_len_pad))
+
+        # N, L, H, E: batch, length, head, dim
+        # N, L, E1 -> N * h, L, e1 -> N * h, g, l, e1
+        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # N, S, E1 -> N * h, S, e1 -> N * h, g, s, e1
+        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
+        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+
+        # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
+        logits = torch.einsum("bgle,bgse->bgls", q, k)
+        prob = self.local_act(logits)
 
         if self.causal:
-            attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1)
             attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            
-            weights = torch.bmm(q, k.transpose(1, 2))
-            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
-            output = torch.bmm(weights, v)
-        else:
-            o1 = torch.matmul(k.transpose(1, 2), v)
-            output = torch.bmm(q, o1)
+            prob = prob.masked_fill(attn_mask==float("-inf"), 0)
+        weights = self.dropout_module(prob)
 
-        # --------------------------------------------------------
-        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-        # B, N, e2
-        output = self.layer_norm(output)
+        # (N * h, g, l, s), (N * h, g, s, e2) -> (N * h, g, l, e2)
+        output = torch.einsum("bgls,bgsd->bgld", weights, v)
+        # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
+        output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
+        # perform RMSNorm to stabilize running
+        output = self.gated_rms_norm(output)
+        # outprojection
+        output = self.out_proj_local(output)
 
-        # L, N, e1
-        output = self.out_proj(output)
-
-        return output, None
+        return output, prob
 
     @staticmethod
     def _append_prev_key_padding_mask(
