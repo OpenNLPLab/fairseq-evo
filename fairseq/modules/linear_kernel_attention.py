@@ -233,9 +233,6 @@ class LinearKernelAttention(nn.Module):
             q = self.orpe(q)
             k = self.orpe(k)
 
-        # N * h, L, S
-        attn_output_weights = torch.bmm(q, k.transpose(1, 2))
-
         if self.causal:
             if (attn_mask == None):
                 attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)

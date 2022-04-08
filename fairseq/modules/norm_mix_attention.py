@@ -388,7 +388,7 @@ class NormMixAttention(nn.Module):
         # (N * h, S, d)
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         # (N * h, S, d)
-        v = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
         q = self.linear_act(q)
         k = self.linear_act(k)
