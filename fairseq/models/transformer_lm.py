@@ -4913,7 +4913,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 1
     args.p_matrix = 5
 
-@register_model_architecture("linear_orpe_lm", "1+relu_1_5_wiki")
+@register_model_architecture("linear_orpe_lm", "relu_1_5_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
