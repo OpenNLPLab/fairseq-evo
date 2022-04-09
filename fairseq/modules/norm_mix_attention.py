@@ -466,21 +466,21 @@ class NormMixAttention(nn.Module):
         # if self.cnt == 10:
         #     sys.exit(0)
         num_heads = self.num_heads
-        tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
-        head_dim = embed_dim // num_heads
-
-        tgt_len, bsz, embed_dim = query.size()
-
-        scaling = float(head_dim) ** -0.5
+        
         # L, N, E1
         q = self.q_proj_local(query)
-        # scale
-        q *= scaling
         # S, N, E1
         k = self.k_proj_local(key)
         # S, N, E2
         v = self.v_proj_local(value)
+
+        # scaling
+        tgt_len, bsz, embed_dim = q.size()
+        head_dim = embed_dim // self.num_heads
+        scaling = float(head_dim) ** -0.5
+        # scale
+        q *= scaling
 
         if self.use_orpe:
             q = self.orpe(q)
