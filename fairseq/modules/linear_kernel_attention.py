@@ -125,6 +125,8 @@ class LinearKernelAttention(nn.Module):
             def f(x):
                 return 1 + F.elu(x)
             return f
+        elif self.kernel_type == "relu":
+            return F.relu
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -232,6 +234,7 @@ class LinearKernelAttention(nn.Module):
         # act
         q = self.act(q)
         k = self.act(k)
+
         # orpe
         if self.use_orpe:
             q = self.orpe(q)
@@ -239,6 +242,7 @@ class LinearKernelAttention(nn.Module):
         if self.use_rope:
             q = rope(q, dim=1)
             k = rope(k, dim=1)
+
 
 
         if self.causal:
