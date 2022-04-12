@@ -3019,6 +3019,17 @@ def roberta_base_architecture(args):
     args.p_matrix = 2
     args.theta_type = "c"
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 2
+    args.theta_learned = True
+
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_2")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -3101,6 +3112,19 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.encoder_chunk_size = 32
     args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
 
 ############# NormMixAttentionEncoder
 @register_model_architecture("roberta_norm_mix_attention", "roberta_norm_mix_type_1")
