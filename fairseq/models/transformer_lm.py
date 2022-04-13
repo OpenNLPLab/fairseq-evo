@@ -5274,44 +5274,115 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_chunk_size = 32
 
 ######################### small model
-
-
 ### linear orpe
+# @register_model_architecture("linear_orpe_lm", "1+elu_wiki_base")
+# def transformer_lm_baevski_wiki103(args):
+#     base_lm_architecture(args)
+#     args.use_relu = getattr(args, "use_relu", True)
+#     args.max_l = getattr(args, "max_l", 512)
+#     args.causal = True
+#     args.has_out = True
+#     args.encoder_attention_heads = 1
+#     args.encoder_normalize_before = True
+#     args.use_gelu = True
+#     args.decoder_attention_heads = 1
+#     ### add
+#     args.causal = True
+#     args.use_orpe = False
+#     args.kernel_type = "1+elu"
+
+# ### 单位阵
+# @register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki_base")
+# def transformer_lm_baevski_wiki103(args):
+#     base_lm_architecture(args)
+#     args.max_l = getattr(args, "max_l", 512)
+#     args.causal = True
+#     # args.has_out = True
+#     # args.encoder_attention_heads = 1
+#     # args.encoder_normalize_before = True
+#     # args.use_gelu = True
+#     # args.decoder_attention_heads = 1
+#     ### add
+#     args.causal = True
+#     args.use_orpe = True
+#     args.kernel_type = "1+elu"
+#     args.core_matrix = 1
+#     args.p_matrix = 1
+# ### 单位阵
+
 @register_model_architecture("linear_orpe_lm", "1+elu_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
     ### add
     args.causal = True
     args.use_orpe = False
     args.kernel_type = "1+elu"
 
-### 单位阵
+###### Identity
 @register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
     args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
     ### add
-    args.causal = True
     args.use_orpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
-### 单位阵
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1b_1_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_type = "b"
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1c_1_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_type = "c"
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1d_1_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+
+@register_model_architecture("linear_orpe_lm", "1+elu_2_1_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("linear_orpe_lm", "1+elu_3_1_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 1
+
+###### Identity
 
 ### transformer orpe
 @register_model_architecture("transformer_lm", "transformer_lm_base")
