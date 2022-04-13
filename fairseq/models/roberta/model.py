@@ -3062,6 +3062,39 @@ def roberta_base_architecture(args):
     args.core_matrix = 1
     args.p_matrix = 3
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1b_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_type = "b"
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1c_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_type = "c"
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_3")
 def roberta_base_architecture(args):
     base_architecture(args)
