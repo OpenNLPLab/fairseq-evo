@@ -2463,6 +2463,17 @@ def roberta_base_architecture(args):
     args.p_matrix = 2
     args.theta_type = "c"
 
+@register_model_architecture("roberta_head", "roberta_orpe_1d_2")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 2
+    args.theta_learned = True
+
 @register_model_architecture("roberta_head", "roberta_orpe_2_2")
 def roberta_base_architecture(args):
     base_architecture(args)
