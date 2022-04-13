@@ -5397,4 +5397,52 @@ def transformer_lm_baevski_wiki103(args):
     args.use_orpe = True
     args.core_matrix = 1
     args.p_matrix = 1
+
+@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1b_1_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_type = "b"
+
+@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1c_1_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_type = "c"
+
+@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1d_1_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+
+@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_2_1_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_3_1_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 3
+    args.p_matrix = 1
 ### 单位阵
