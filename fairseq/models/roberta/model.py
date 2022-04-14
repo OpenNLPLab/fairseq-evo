@@ -2500,6 +2500,16 @@ def roberta_base_architecture(args):
     args.core_matrix = 1
     args.p_matrix = 3
 
+@register_model_architecture("roberta_head", "roberta_orpe_1d_3")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+
 @register_model_architecture("roberta_head", "roberta_orpe_2_3")
 def roberta_base_architecture(args):
     base_architecture(args)
