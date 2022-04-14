@@ -5384,7 +5384,108 @@ def transformer_lm_baevski_wiki103(args):
 
 ###### Identity
 
-### transformer orpe
+
+###### DCT
+@register_model_architecture("linear_orpe_lm", "1+elu_1_2_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 2
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1d_2_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 2
+    args.theta_learned = True
+
+@register_model_architecture("linear_orpe_lm", "1+elu_2_2_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 2
+
+@register_model_architecture("linear_orpe_lm", "1+elu_3_2_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 2
+
+###### DCT
+
+
+###### Householder
+@register_model_architecture("linear_orpe_lm", "1+elu_1_3_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1d_3_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+
+@register_model_architecture("linear_orpe_lm", "1+elu_2_3_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 3
+
+@register_model_architecture("linear_orpe_lm", "1+elu_3_3_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 3
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1d_3a_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.theta_learned = True
+    args.p_matrix = 3
+    args.householder_learned = True
+###### Householder
+
+################################ transformer orpe
 @register_model_architecture("transformer_lm", "transformer_lm_base")
 def transformer_lm_big(args):
     base_lm_architecture(args)
