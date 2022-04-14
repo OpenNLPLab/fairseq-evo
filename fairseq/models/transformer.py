@@ -1737,6 +1737,31 @@ class TransformerHeadEncoder(TransformerEncoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+@register_model("encoder_transformer_head")
+class TransfomerHeadModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return TransformerHeadEncoder(args, src_dict, embed_tokens)
+
 # add taylor transformer
 class TransformerTaylorDecoder(TransformerDecoder):
     def __init__(
@@ -4332,6 +4357,31 @@ class LinearKernelAttentionDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+@register_model("encoder_linear")
+class Encoder_CosformerModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return LinearKernelAttentionEncoder(args, src_dict, embed_tokens)
+
 ############### Norm Attention
 
 class NormAttentionEncoder(TransformerEncoder):
@@ -4828,3 +4878,106 @@ def cosformer_vaswani_wmt_en_de_big(args):
     args.decoder_layers = 12
     # args.encoder_layers = 8
     # args.decoder_layers = 8
+
+
+######################## Linear
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.kernel_type = "1+elu"
+
+###### Identity
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1d_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_2_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_3_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 1
+
+###### Identity
+
+######################## Vanilla
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+
+###### Identity
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1d_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_2_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 1
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_3_1")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 1
+
+###### Identity
