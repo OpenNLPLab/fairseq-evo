@@ -243,7 +243,9 @@ class LinearKernelAttention(nn.Module):
             q = rope(q, dim=1)
             k = rope(k, dim=1)
 
-
+        if self.use_orpe and self.orpe.core_matrix == 4:
+            q = torch.cat([q.real, -q.imag], dim=-1)
+            k = torch.cat([k.real, -k.imag], dim=-1)
 
         if self.causal:
             if (attn_mask == None):
@@ -251,7 +253,8 @@ class LinearKernelAttention(nn.Module):
                 attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
             
             weights = torch.bmm(q, k.transpose(1, 2))
-            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            if self.causal:
+                weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             # (N * h, L, S) -> (N * h, L, S)
             denom = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
             # (N * h, L, S) (N * h, L, S) -> (N * h, L, S)

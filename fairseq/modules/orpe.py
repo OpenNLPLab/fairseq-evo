@@ -30,7 +30,11 @@ class Orpe(nn.Module):
             print(permutation.shape)
             self.register_buffer("permutation", permutation)
         elif self.core_matrix == 4:
-            print(f"theta_type {self.theta_type}")
+            if self.theta_learned:
+                print("learn theta!")
+                self.theta = nn.Parameter(10000 ** (-2 / embedding_dim * torch.arange(embedding_dim)).reshape(1, 1, -1))
+            else:
+                print(f"theta_type {self.theta_type}")
             print("complex exp")
 
         if self.p_matrix == 1:
@@ -246,18 +250,30 @@ class Orpe(nn.Module):
 
     def complex_exp(self, x):
         b, l, e = x.shape
-        alpha = np.pi / 2 / l / e
-        index = torch.arange(1, l + 1).reshape(1, l, 1)
-        theta = alpha * index
-        distance = torch.arange(1, e + 1).reshape(1, 1, e)
-        matrix = (distance * theta)
+        if self.theta_learned:
+            theta = self.theta
+        else:
+            if self.theta_type == "a":
+                theta = 10000 ** (-2 / e * torch.arange(e))
+            theta = theta.reshape(1, 1, -1).to(x.device)
+        matrix = theta * torch.arange(l).reshape(1, -1, 1).to(x.device)
+        # old
+        # alpha = np.pi / 2 / l / e
+        # index = torch.arange(1, l + 1).reshape(1, l, 1)
+        # theta = alpha * index
+        # distance = torch.arange(1, e + 1).reshape(1, 1, e)
+        # matrix = (distance * theta)
+        
+
         # print("here")
         # print(distance.shape)
         # print(theta.shape)
         # print(matrix.shape)
         # print(x.shape)
         # x = x * torch.complex(torch.cos(matrix),torch.sin(matrix))
-        sin_cos = torch.complex(torch.cos(matrix),torch.sin(matrix)).to(x)
+
+        sin_cos = torch.complex(torch.cos(matrix),torch.sin(matrix)).to(x.device)
+        # sin_cos = torch.complex(torch.cos(theta), torch.sin(theta)).to(x)
         # x = torch.complex(x * torch.cos(matrix), x * torch.sin(matrix))
         x = self.element_wise_complex(x, sin_cos)
 

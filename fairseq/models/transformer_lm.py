@@ -5485,6 +5485,29 @@ def transformer_lm_baevski_wiki103(args):
     args.householder_learned = True
 ###### Householder
 
+###### Fourier
+@register_model_architecture("linear_orpe_lm", "1+elu_4_4_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+@register_model_architecture("linear_orpe_lm", "1+elu_4d_4_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+    args.theta_learned = True
+###### Fourier
+
 ###### Odd Even
 @register_model_architecture("linear_orpe_lm", "1+elu_1_5_wiki_base")
 def transformer_lm_baevski_wiki103(args):
@@ -5642,6 +5665,26 @@ def transformer_lm_baevski_wiki103(args):
     args.householder_learned = True
 ###### Householder
 
+###### Fourier
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_4_4_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_4d_4_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 4
+    args.p_matrix = 4
+    args.theta_learned = True
+###### Fourier
 
 ###### Odd Even
 @register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_5_base")
