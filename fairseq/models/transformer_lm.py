@@ -5543,7 +5543,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 1
     args.p_matrix = 1
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1b_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1b_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5553,7 +5553,7 @@ def transformer_lm_baevski_wiki103(args):
     args.p_matrix = 1
     args.theta_type = "b"
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1c_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1c_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5563,7 +5563,7 @@ def transformer_lm_baevski_wiki103(args):
     args.p_matrix = 1
     args.theta_type = "c"
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1d_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5573,7 +5573,7 @@ def transformer_lm_baevski_wiki103(args):
     args.p_matrix = 1
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_2_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5582,7 +5582,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 2
     args.p_matrix = 1
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_3_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5593,7 +5593,7 @@ def transformer_lm_baevski_wiki103(args):
 ### 单位阵
 
 ###### Householder
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5602,7 +5602,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 1
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1d_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5612,7 +5612,7 @@ def transformer_lm_baevski_wiki103(args):
     args.p_matrix = 3
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_2_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5621,7 +5621,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 2
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_3_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5630,7 +5630,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 3
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1d_3a_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_3a_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5644,7 +5644,7 @@ def transformer_lm_baevski_wiki103(args):
 
 
 ###### Odd Even
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5653,7 +5653,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 1
     args.p_matrix = 5
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_1d_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5663,7 +5663,7 @@ def transformer_lm_baevski_wiki103(args):
     args.p_matrix = 5
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_2_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
@@ -5672,7 +5672,7 @@ def transformer_lm_baevski_wiki103(args):
     args.core_matrix = 2
     args.p_matrix = 5
 
-@register_model_architecture("linear_orpe_lm", "transformer_lm_orpe_3_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
