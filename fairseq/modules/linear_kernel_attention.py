@@ -244,8 +244,8 @@ class LinearKernelAttention(nn.Module):
             k = rope(k, dim=1)
 
         if self.use_orpe and self.orpe.core_matrix == 4:
-            q = torch.cat([q.real, -q.imag], dim=-1)
-            k = torch.cat([k.real, -k.imag], dim=-1)
+            q = torch.cat([q.real, q.imag], dim=-1)
+            k = torch.cat([k.real, k.imag], dim=-1)
 
         if self.causal:
             if (attn_mask == None):

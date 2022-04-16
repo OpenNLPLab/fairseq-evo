@@ -269,8 +269,8 @@ class MultiheadAttention_(nn.Module):
 
         # N * h, L, S
         if self.use_orpe and self.orpe.core_matrix == 4:
-            q = torch.cat([q.real, -q.imag], dim=-1)
-            k = torch.cat([k.real, -k.imag], dim=-1)
+            q = torch.cat([q.real, q.imag], dim=-1)
+            k = torch.cat([k.real, k.imag], dim=-1)
         attn_output_weights = torch.bmm(q, k.transpose(1, 2))
 
         # attn_mask

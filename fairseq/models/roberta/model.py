@@ -2578,6 +2578,30 @@ def roberta_base_architecture(args):
     args.householder_learned = True
 ### Householder learned
 
+###### Fourier
+@register_model_architecture("roberta_head", "roberta_orpe_4_4")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+@register_model_architecture("roberta_head", "roberta_orpe_4d_4")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+    args.theta_learned = True
+
+###### Fourier
+
 ### base model
 
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
@@ -3232,6 +3256,30 @@ def roberta_base_architecture(args):
     args.p_matrix = 3
     args.householder_learned = True
 ### Householder learned
+
+###### Fourier
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_4_4")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_4d_4")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+    args.theta_learned = True
+
+###### Fourier
 
 ############# NormAttentionEncoder
 # linear: attention_type = 1
