@@ -4933,6 +4933,103 @@ def transformer_wmt_en_de(args):
 
 ###### Identity
 
+###### Householder
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1d_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_2_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 3
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_3_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 3
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1d_3a")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.householder_learned = True
+###### Householder
+
+###### Odd Even
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 5
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1d_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 5
+    args.theta_learned = True
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_2_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 2
+    args.p_matrix = 5
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_3_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 5
+###### Odd Even
+
 ######################## Vanilla
 @register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de")
 def transformer_wmt_en_de(args):
@@ -4981,3 +5078,92 @@ def transformer_wmt_en_de(args):
     args.p_matrix = 1
 
 ###### Identity
+
+###### Householder
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1d_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_2_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 3
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_3_3")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 3
+    args.p_matrix = 3
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1d_3a")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.householder_learned = True
+###### Householder
+
+
+###### Odd Even
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 5
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1d_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 5
+    args.theta_learned = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_2_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 2
+    args.p_matrix = 5
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_3_5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 3
+    args.p_matrix = 5
+###### Odd Even
