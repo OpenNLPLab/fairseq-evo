@@ -4979,10 +4979,10 @@ def transformer_wmt_en_de(args):
 def transformer_wmt_en_de(args):
     base_architecture(args)
     ### add
-    args.causal = False
     args.use_orpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
+    args.theta_learned = True
     args.p_matrix = 3
     args.householder_learned = True
 ###### Householder
@@ -5124,6 +5124,7 @@ def transformer_wmt_en_de(args):
     args.weight_type = -1
     args.use_orpe = True
     args.core_matrix = 1
+    args.theta_learned = True
     args.p_matrix = 3
     args.householder_learned = True
 ###### Householder
