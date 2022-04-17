@@ -369,7 +369,8 @@ class NormLocalAttention(nn.Module):
         # b, windows, window_size, s1; b, windows, s1, e -> b, windows, window_size, e
         output = torch.einsum('bhij,bhje->bhie', weights, bv)
         # b, windows, window_size, e -> b, t, e -> t, b, e -> t, b, h * e
-        output = output.reshape(-1, t, e).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        output = output.reshape(-1, t, e)[:, :orig_t, :]
+        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         # perform RMSNorm to stabilize running
         output = self.gated_rms_norm(output)
         # outprojection
