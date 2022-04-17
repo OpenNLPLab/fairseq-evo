@@ -3432,7 +3432,7 @@ def roberta_base_architecture(args):
     args.has_out = True
     args.encoder_attention_heads = 8
     args.encoder_use_orpe = False
-    args.group_type = "window"
+    args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.attention_types = [2 for _ in range(args.encoder_layers)] 
 
