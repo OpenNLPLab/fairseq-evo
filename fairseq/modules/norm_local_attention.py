@@ -18,6 +18,13 @@ from fairseq.modules import Orpe
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
+def look_around(x, backward = 1, forward = 0, pad_value = -1, dim = 2):
+    t = x.shape[1]
+    dims = (len(x.shape) - dim) * (0, 0)
+    padded_x = F.pad(x, (*dims, backward, forward), value= pad_value)
+    tensors = [padded_x[:, ind:(ind + t), ...] for ind in range(forward + backward + 1)]
+    return torch.cat(tensors, dim=dim)
+
 @with_incremental_state
 class NormLocalAttention(nn.Module):
     """Multi-headed attention.
@@ -69,6 +76,9 @@ class NormLocalAttention(nn.Module):
         householder_learned=False,
         # chunk_size
         chunk_size=32,
+        left_window=1,
+        right_window=1,
+        group_type="chunk"
     ):
         # add
         self.index = index
@@ -146,6 +156,9 @@ class NormLocalAttention(nn.Module):
             self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
         
         self.causal = causal
+        self.left_window = left_window
+        self.right_window = right_window
+        self.group_type = group_type
 
         # chunk
         self.chunk_size = chunk_size
@@ -156,6 +169,9 @@ class NormLocalAttention(nn.Module):
         print(f"negative_slope {self.negative_slope}")
         print(f"chunk_size {self.chunk_size}")
         print(f"causal {self.causal}")
+        print(f"self.left_window {self.left_window}")
+        print(f"self.right_window {self.right_window}")
+        print(f"self.group_type {self.group_type}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -211,6 +227,158 @@ class NormLocalAttention(nn.Module):
             return f
 
     def forward(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        if self.group_type == "chunk":
+            return self.forward_chunk(query, key, value, key_padding_mask, 
+                                      incremental_state, need_weights, static_kv,
+                                      attn_mask, before_softmax, need_head_weights)
+        elif self.group_type == "window":
+            return self.forward_window(query, key, value, key_padding_mask, 
+                                      incremental_state, need_weights, static_kv,
+                                      attn_mask, before_softmax, need_head_weights)
+
+
+    # reference
+    # https://github.com/lucidrains/local-attention/blob/master/local_attention/local_attention.py
+    # not used for cross attention
+    # 滑动窗口版本
+    def forward_window(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        # self.cnt += 1
+        # if self.cnt == 10:
+        #     sys.exit(0)
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        head_dim = embed_dim // num_heads
+
+        tgt_len, bsz, embed_dim = query.size()
+
+        scaling = float(head_dim) ** -0.5
+        # L, N, E1
+        q = self.q_proj(query)
+        # scale
+        q *= scaling
+        # S, N, E1
+        k = self.k_proj(key)
+        # S, N, E2
+        v = self.v_proj(value)
+
+        if self.use_orpe:
+            q = self.orpe(q)
+            k = self.orpe(k)
+
+        # pad至chunk_size整数倍
+        tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
+        src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
+
+        # 填充0
+        orig_t = tgt_len
+        q = F.pad(q, (0, 0, 0, 0, 0, tgt_len_pad)).transpose(0, 1)
+        k = F.pad(k, (0, 0, 0, 0, 0, src_len_pad)).transpose(0, 1)
+        v = F.pad(v, (0, 0, 0, 0, 0, src_len_pad)).transpose(0, 1)
+
+        # b * h, l, e
+        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+
+        b, t, e = q.shape
+        s = k.shape[1]
+        windows = t // self.chunk_size
+        ticker = torch.arange(t).reshape(1, -1).to(q)
+        b_t = ticker.reshape(1, windows, -1)
+        # b, windows, window_size, e
+        bq = q.reshape(b, -1, self.chunk_size, e)
+        bk = k.reshape(b, -1, self.chunk_size, e)
+        bv = v.reshape(b, -1, self.chunk_size, e)
+
+
+        look_around_kwargs = {'backward': self.left_window, 'forward': self.right_window}
+        # s1 = window_size * (left + right + 1)
+        # b, windows, s1, e
+        bk = look_around(bk,  self.left_window, self.right_window, 0)
+        # b, windows, s1, e
+        bv = look_around(bv,  self.left_window, self.right_window, 0)
+        bq_t = b_t
+        bq_k = look_around(b_t, self.left_window, self.right_window, -1)
+
+        # b, windows, window_size, s1
+        dots = torch.einsum('bhie,bhje->bhij', bq, bk) * (e ** -0.5)
+
+        self.causal = True
+        if self.causal:
+            # 表示每个位置不能看到哪些部分
+            mask = bq_t[:, :, :, None] < bq_k[:, :, None, :]
+            dots.masked_fill_(mask, 0)
+        prob = self.act(dots)
+        weights = self.dropout_module(prob)
+
+        # b, windows, window_size, s1; b, windows, s1, e -> b, windows, window_size, e
+        output = torch.einsum('bhij,bhje->bhie', weights, bv)
+        # b, windows, window_size, e -> b, t, e -> t, b, e -> t, b, h * e
+        output = output.reshape(-1, t, e).transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        # perform RMSNorm to stabilize running
+        output = self.gated_rms_norm(output)
+        # outprojection
+        output = self.out_proj(output)
+
+        return output, prob
+
+    # 分组版本
+    def forward_chunk(
         self,
         query,
         key: Optional[Tensor],

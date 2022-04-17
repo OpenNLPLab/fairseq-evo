@@ -3285,6 +3285,8 @@ def roberta_base_architecture(args):
 # linear: attention_type = 1
 # local: attention_type = 2
 # local, ... , local, linear, ... ,linear
+# 统一格式_2_1_w32_h1
+# 1, 2, 3: 1表示linear, 2表示分组, 3表示window, c表示window size, h表示头数
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_1")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -3311,7 +3313,188 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 32
     args.attention_types = [2 for _ in range(args.encoder_layers)] 
 
-############# NormMixAttentionEncoder
+######################################### add
+################ pure window
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w32_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 32
+    args.left_window = 1
+    args.right_window = 1
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w64_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 64
+    args.left_window = 1
+    args.right_window = 1
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w32_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 64
+    args.left_window = 1
+    args.right_window = 1
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w64_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 64
+    args.left_window = 1
+    args.right_window = 1
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+################ pure chunk
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w32_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w64_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w32_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w64_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+
+################ mix
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w64_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w64_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+######################################### add
+
+############# NormMixAttentionEncoder, 太慢
 @register_model_architecture("roberta_norm_mix_attention", "roberta_norm_mix_type_1")
 def roberta_base_architecture(args):
     base_architecture(args)

@@ -98,7 +98,10 @@ class NormAttentionEncoderLayer(TransformerEncoderLayer):
                 theta_learned=getattr(args, "encoder_theta_learned", False), 
                 householder_learned=getattr(args, "encoder_householder_learned", False),
                 # add
-                chunk_size=getattr(args, "encoder_chunk_size", 32)
+                chunk_size=getattr(args, "encoder_chunk_size", 32),
+                left_window=getattr(args, "left_window", 1),
+                right_window=getattr(args, "right_window", 1),
+                group_type=getattr(args, "group_type", "chunk")
             )
 
 class NormAttentionDecoderLayer(TransformerDecoderLayer):
@@ -192,7 +195,10 @@ class NormAttentionDecoderLayer(TransformerDecoderLayer):
                 theta_learned=getattr(args, "decoder_theta_learned", False), 
                 householder_learned=getattr(args, "decoder_householder_learned", False),
                 # add
-                chunk_size=getattr(args, "decoder_chunk_size", 32)
+                chunk_size=getattr(args, "decoder_chunk_size", 32),
+                left_window=getattr(args, "left_window", 1),
+                right_window=getattr(args, "right_window", 1),
+                group_type=getattr(args, "group_type", "chunk")
             )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -279,5 +285,8 @@ class NormAttentionDecoderLayer(TransformerDecoderLayer):
                 theta_learned=getattr(args, "encoder_theta_learned", False), 
                 householder_learned=getattr(args, "encoder_householder_learned", False),
                 # add
-                chunk_size=getattr(args, "encoder_chunk_size", 32)
+                chunk_size=getattr(args, "encoder_chunk_size", 32),
+                left_window=getattr(args, "left_window", 1),
+                right_window=getattr(args, "right_window", 1),
+                group_type=getattr(args, "group_type", "chunk")
             )
