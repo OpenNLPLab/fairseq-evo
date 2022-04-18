@@ -5030,6 +5030,29 @@ def transformer_wmt_en_de(args):
     args.p_matrix = 5
 ###### Odd Even
 
+###### Fourier
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_4_4")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_4d_4")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+    args.theta_learned = True
+###### Fourier
+
 ######################## Vanilla
 @register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de")
 def transformer_wmt_en_de(args):
@@ -5168,3 +5191,25 @@ def transformer_wmt_en_de(args):
     args.core_matrix = 3
     args.p_matrix = 5
 ###### Odd Even
+
+###### Fourier
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_4_4")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_4d_4")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 4
+    args.p_matrix = 4
+    args.theta_learned = True
+
+###### Fourier
