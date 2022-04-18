@@ -3492,6 +3492,62 @@ def roberta_base_architecture(args):
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w32_h1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 1
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w32_h8")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 8
+    args.encoder_use_orpe = False
+    args.group_type = "window"
+    args.encoder_chunk_size = 32
+    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 ######################################### add
 
 ############# NormMixAttentionEncoder, 太慢
