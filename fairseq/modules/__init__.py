@@ -102,6 +102,7 @@ from .transformer_cosformer_layer import (
 )
 # orpe
 from .orpe import Orpe
+from .orpe_v2 import OrpeV2
 
 # debug
 from .multihead_cosformer_attention_ import MultiheadCosformerAttention_

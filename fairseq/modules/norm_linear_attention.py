@@ -15,6 +15,7 @@ import sys
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Orpe
+from fairseq.modules import OrpeV2
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -162,7 +163,10 @@ class NormLinearAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_orpe:
-            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            print("=====================================")
+            self.orpe = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            print("=====================================")
 
         self.act = self.get_act_fun()
 
