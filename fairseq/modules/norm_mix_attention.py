@@ -15,6 +15,7 @@ import sys
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Orpe
+from fairseq.modules import OrpeV2
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -191,7 +192,8 @@ class NormMixAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_orpe:
-            self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=d // num_layers, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.orpe = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         self.linear_act = self.get_act_fun(self.linear_act_fun)
         self.local_act = self.get_act_fun(self.local_act_fun)
@@ -309,11 +311,17 @@ class NormMixAttention(nn.Module):
         before_softmax: bool = False,
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
-        o1, _ = self.forward_linear(query, key, value)
-        o2, _ = self.forward_local(query, key, value)
-        o = (o1 + o2) / 2
+        # 并联
+        # o1, _ = self.forward_linear(query, key, value)
+        # o2, _ = self.forward_local(query, key, value)
+        # o = (o1 + o2) / 2
+        # return o, None
 
-        return o, None
+        # 串联
+        o1, _ = self.forward_linear(query, key, value)
+        o2, _ = self.forward_linear(o1, key, value)
+
+        return o2, _
 
     def forward_linear(
         self,
