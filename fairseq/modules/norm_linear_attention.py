@@ -154,6 +154,12 @@ class NormLinearAttention(nn.Module):
         self.seq_p = seq_p
         self.use_v = use_v
         self.negative_slope = negative_slope
+        self.use_dropout = use_dropout
+
+        if self.use_dropout:
+            self.dropout_module = FairseqDropout(
+                dropout, module_name=self.__class__.__name__
+            )
 
         # orpe
         self.core_matrix = core_matrix
@@ -183,6 +189,7 @@ class NormLinearAttention(nn.Module):
         print(f"norm_type {self.norm_type}")
         print(f"init_type {self.init_type}")
         print(f"use_orpe {self.use_orpe}")
+        print(f"use_dropout {self.use_dropout}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -209,6 +216,8 @@ class NormLinearAttention(nn.Module):
             def f(x):
                 return 1 + F.elu(x)
             return f
+        elif self.act_fun == "silu":
+            return F.silu
         else:
             return None
 
@@ -357,6 +366,9 @@ class NormLinearAttention(nn.Module):
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # B, N, e2
         output = self.layer_norm(output)
+
+        if self.use_dropout:
+            output = self.dropout_module(output)
 
         # L, N, e1
         output = self.out_proj(output)

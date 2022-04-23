@@ -79,7 +79,8 @@ class NormLocalAttention(nn.Module):
         chunk_size=32,
         left_window=1,
         right_window=1,
-        group_type="chunk"
+        group_type="chunk",
+        use_softmax=False,
     ):
         # add
         self.index = index
@@ -144,6 +145,7 @@ class NormLocalAttention(nn.Module):
         self.act_fun = act_fun
         self.negative_slope = negative_slope
         self.act = self.get_act_fun()
+        self.use_softmax = use_softmax
 
         # orpe add
         self.core_matrix = core_matrix
@@ -177,6 +179,7 @@ class NormLocalAttention(nn.Module):
         print(f"self.left_window {self.left_window}")
         print(f"self.right_window {self.right_window}")
         print(f"self.group_type {self.group_type}")
+        print(f"self.use_softmax {self.use_softmax}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -226,6 +229,8 @@ class NormLocalAttention(nn.Module):
             def f(x):
                 return F.leaky_relu(x, negative_slope=self.negative_slope)
             return f
+        elif self.act_fun == "silu":
+            return F.silu
         else:
             def f(x):
                 return x
@@ -472,7 +477,10 @@ class NormLocalAttention(nn.Module):
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)
-        prob = self.act(logits)
+        if not self.use_softmax:
+            prob = self.act(logits)
+        else:
+            prob = F.softmax(logits, dim=-1)
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1)
@@ -485,7 +493,8 @@ class NormLocalAttention(nn.Module):
         # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
         output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
         # perform RMSNorm to stabilize running
-        output = self.gated_rms_norm(output)
+        if not self.use_softmax:
+            output = self.gated_rms_norm(output)
         # outprojection
         output = self.out_proj(output)
 
