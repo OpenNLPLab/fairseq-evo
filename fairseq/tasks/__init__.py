@@ -33,7 +33,6 @@ def setup_task(cfg: FairseqDataclass, **kwargs):
             cfg = populate_dataclass(dc(), cfg)
     else:
         task_name = getattr(cfg, "_name", None)
-
         if task_name and task_name in TASK_DATACLASS_REGISTRY:
             dc = TASK_DATACLASS_REGISTRY[task_name]
             cfg = merge_with_parent(dc(), cfg)
