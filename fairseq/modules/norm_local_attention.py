@@ -12,6 +12,7 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
+from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Orpe
@@ -81,6 +82,7 @@ class NormLocalAttention(nn.Module):
         right_window=1,
         group_type="chunk",
         use_softmax=False,
+        norm_type="gatedrmsnorm",
     ):
         # add
         self.index = index
@@ -127,7 +129,20 @@ class NormLocalAttention(nn.Module):
             dropout, module_name=self.__class__.__name__
         )
 
-        self.gated_rms_norm = GatedRMSNorm(embed_dim)
+        self.norm_type = norm_type
+        if self.norm_type == "rmsnorm":
+            print("here! rmsnorm")
+            self.gated_rms_norm = RMSNorm(embed_dim)
+        elif self.norm_type == "gatedrmsnorm":
+            print("here! gatedrmsnorm")
+            self.gated_rms_norm = GatedRMSNorm(embed_dim)
+        elif self.norm_type == "simplermsnorm":
+            print("here! simple rmsnorm")
+            self.gated_rms_norm = SimpleRMSNorm(embed_dim)
+        else:
+            print("here! layer norm")
+            self.gated_rms_norm = nn.LayerNorm(embed_dim)
+        
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))

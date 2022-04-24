@@ -146,7 +146,7 @@ from .flash_linear_attention import FlashLinearAttention
 from .flash_layer import FlashEncoderLayer, FlashDecoderLayer
 from .flash_linear_layer import FlashLinearEncoderLayer, FlashLinearDecoderLayer
 # rms norm
-from .rms_norm import RMSNorm, GatedRMSNorm
+from .rms_norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
 from .relu_sparse_attention import ReLAttention
 from .relu_sparse_layer import ReLAEncoderLayer, ReLADecoderLayer
 # men

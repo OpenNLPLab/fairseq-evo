@@ -102,7 +102,8 @@ class NormAttentionEncoderLayer(TransformerEncoderLayer):
                 left_window=getattr(args, "left_window", 1),
                 right_window=getattr(args, "right_window", 1),
                 group_type=getattr(args, "group_type", "chunk"),
-                use_softmax=getattr(args, "use_softmax", False)
+                use_softmax=getattr(args, "use_softmax", False),
+                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm")
             )
 
 class NormAttentionDecoderLayer(TransformerDecoderLayer):
@@ -200,7 +201,8 @@ class NormAttentionDecoderLayer(TransformerDecoderLayer):
                 left_window=getattr(args, "left_window", 1),
                 right_window=getattr(args, "right_window", 1),
                 group_type=getattr(args, "group_type", "chunk"),
-                use_softmax=getattr(args, "use_softmax", False)
+                use_softmax=getattr(args, "use_softmax", False),
+                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm")
             )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -291,5 +293,6 @@ class NormAttentionDecoderLayer(TransformerDecoderLayer):
                 left_window=getattr(args, "left_window", 1),
                 right_window=getattr(args, "right_window", 1),
                 group_type=getattr(args, "group_type", "chunk"),
-                use_softmax=getattr(args, "use_softmax", False)
+                use_softmax=getattr(args, "use_softmax", False),
+                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm")
             )
