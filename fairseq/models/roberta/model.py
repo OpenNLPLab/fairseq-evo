@@ -3972,6 +3972,61 @@ def roberta_base_architecture(args):
 ######## Linear + Norm
 
 
+######## Linear + kv act
+@register_model_architecture("roberta_norm_attention", "roberta_linear_standard_11")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'elu'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    #### add
+    args.encoder_kv_act = "sigmoid"
+
+@register_model_architecture("roberta_norm_attention", "roberta_linear_standard_12")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'elu'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    #### add
+    args.encoder_kv_act = "relu"
+
+@register_model_architecture("roberta_norm_attention", "roberta_linear_standard_01")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'identity'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    #### add
+    args.encoder_kv_act = "sigmoid"
+
+@register_model_architecture("roberta_norm_attention", "roberta_linear_standard_02")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'identity'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    #### add
+    args.encoder_kv_act = "relu"
+
+######## Linear + kv act
+
 ######################################### add
 
 ############# NormMixAttentionEncoder, 并联太慢

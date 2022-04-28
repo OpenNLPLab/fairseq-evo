@@ -73,6 +73,7 @@ class NormAttentionEncoderLayer(TransformerEncoderLayer):
                 theta_type=getattr(args, "encoder_theta_type", "a"),
                 theta_learned=getattr(args, "encoder_theta_learned", False), 
                 householder_learned=getattr(args, "encoder_householder_learned", False),
+                kv_act=getattr(args, "encoder_kv_act", "identity")
             )
         else:
             print("======================")
@@ -170,6 +171,7 @@ class NormAttentionDecoderLayer(TransformerDecoderLayer):
                 theta_type=getattr(args, "decoder_theta_type", "a"),
                 theta_learned=getattr(args, "decoder_theta_learned", False), 
                 householder_learned=getattr(args, "decoder_householder_learned", False),
+                kv_act=getattr(args, "decoder_kv_act", "identity")
             )
         else:
             print("======================")
@@ -262,6 +264,7 @@ class NormAttentionDecoderLayer(TransformerDecoderLayer):
                 theta_type=getattr(args, "encoder_theta_type", "a"),
                 theta_learned=getattr(args, "encoder_theta_learned", False), 
                 householder_learned=getattr(args, "encoder_householder_learned", False),
+                kv_act=getattr(args, "encoder_kv_act", "identity")
             )
         else:
             print("======================")

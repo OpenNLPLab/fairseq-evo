@@ -83,6 +83,7 @@ class NormLinearAttention(nn.Module):
         theta_type="a",
         theta_learned=False, 
         householder_learned=False,
+        kv_act='identity',
     ):
         # add
         self.index = index
@@ -180,7 +181,13 @@ class NormLinearAttention(nn.Module):
             # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 
-        self.act = self.get_act_fun()
+        print("=========================")
+        print("qk_act")
+        self.act = self.get_act_fun(self.act_fun)
+        print("=========================")
+        print("kv_act")
+        self.kv_act = self.get_act_fun(kv_act)
+        print("=========================")
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -196,36 +203,37 @@ class NormLinearAttention(nn.Module):
         print(f"init_type {self.init_type}")
         print(f"use_orpe {self.use_orpe}")
         print(f"use_dropout {self.use_dropout}")
+        print(f"kv_act {kv_act}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
         elif self.init_type == "default":
             self.reset_parameters()
 
-    def get_act_fun(self):
-        print(self.act_fun)
-        if self.act_fun == "gelu":
+    def get_act_fun(self, act_fun):
+        print(act_fun)
+        if act_fun == "gelu":
             return F.gelu
-        elif self.act_fun == "relu":
+        elif act_fun == "relu":
             return F.relu
-        elif self.act_fun == "elu":
+        elif act_fun == "elu":
             return F.elu
-        elif self.act_fun == "sigmoid":
+        elif act_fun == "sigmoid":
             return F.sigmoid
-        elif self.act_fun == "exp":
+        elif act_fun == "exp":
             return torch.exp
-        elif self.act_fun == "leak":
+        elif act_fun == "leak":
             def f(x):
                 return F.leaky_relu(x, negative_slope=self.negative_slope)
             return f
-        elif self.act_fun == "1+elu":
+        elif act_fun == "1+elu":
             def f(x):
                 return 1 + F.elu(x)
             return f
-        elif self.act_fun == "silu":
+        elif act_fun == "silu":
             return F.silu
         else:
-            return None
+            return lambda x: x
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -365,6 +373,7 @@ class NormLinearAttention(nn.Module):
             output = torch.bmm(weights, v)
         else:
             o1 = torch.matmul(k.transpose(1, 2), v)
+            o1 = self.kv_act(o1)
             output = torch.bmm(q, o1)
 
         # --------------------------------------------------------
