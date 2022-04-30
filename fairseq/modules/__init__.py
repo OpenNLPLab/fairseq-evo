@@ -111,6 +111,9 @@ from .transformer_cosformer_layer_ import (
     CosformerDecoderLayer_,
 )
 
+# glu
+from .glu import GLU
+
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
 #from .transformer_rfa_layer import TransformerRfaNormDecoderLayer

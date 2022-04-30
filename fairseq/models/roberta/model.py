@@ -4027,6 +4027,60 @@ def roberta_base_architecture(args):
 
 ######## Linear + kv act
 
+######## GLU
+@register_model_architecture("roberta_norm_attention", "roberta_normtype_21_glu_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'elu'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = 'chunk'
+    args.encoder_chunk_size = 64
+    l = int(args.encoder_layers * 0.5)
+    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+
+@register_model_architecture("roberta_norm_attention", "roberta_normtype_11_glu_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'elu'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = 'chunk'
+    args.encoder_chunk_size = 64
+    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+
+@register_model_architecture("roberta_norm_attention", "roberta_normtype_22_glu_1")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = 'elu'
+    args.local_act_fun = 'relu'
+    args.max_l = getattr(args, 'max_l', 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = 'chunk'
+    args.encoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.encoder_layers)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+######## GLU
+
 ######################################### add
 
 ############# NormMixAttentionEncoder, 并联太慢
