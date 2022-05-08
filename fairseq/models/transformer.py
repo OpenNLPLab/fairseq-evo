@@ -5061,6 +5061,16 @@ def transformer_wmt_en_de(args):
     args.theta_learned = True
 ###### Fourier
 
+###### abl
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_spe")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.use_spe = True
+###### abl
+
 ######################## Vanilla
 @register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de")
 def transformer_wmt_en_de(args):
@@ -5221,3 +5231,12 @@ def transformer_wmt_en_de(args):
     args.theta_learned = True
 
 ###### Fourier
+
+###### abl
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_spe")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.use_orpe = False
+    args.use_spe = True
+###### abl

@@ -5552,6 +5552,16 @@ def transformer_lm_baevski_wiki103(args):
 
 ###### Odd Even
 
+###### abl
+@register_model_architecture("linear_orpe_lm", "1+elu_spe_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = False
+    args.use_spe = True
+###### abl
+
 ################################ transformer orpe
 @register_model_architecture("transformer_lm", "transformer_lm_base")
 def transformer_lm_big(args):
@@ -5725,3 +5735,12 @@ def transformer_lm_baevski_wiki103(args):
     args.p_matrix = 5
 
 ###### Odd Even
+
+###### abl
+@register_model_architecture("transformer_head_lm", "transformer_lm_spe_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.use_orpe = False
+    args.use_spe = True
+###### abl
