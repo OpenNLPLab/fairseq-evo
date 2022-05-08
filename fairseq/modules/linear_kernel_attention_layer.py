@@ -39,6 +39,8 @@ class LinearKernelAttentionEncoderLayer(TransformerEncoderLayer):
             householder_learned=getattr(args, "householder_learned", False),
             use_rope=getattr(args, "use_rope", False),
             use_spe=getattr(args, "use_spe", False),
+            use_permutate=getattr(args, "use_permutate", False),
+            max_seq_len=getattr(args, "max_seq_len", 512),
         )
 
 class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
@@ -71,6 +73,8 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             householder_learned=getattr(args, "householder_learned", False),
             use_rope=getattr(args, "use_rope", False),
             use_spe=getattr(args, "use_spe", False),
+            use_permutate=getattr(args, "use_permutate", False),
+            max_seq_len=getattr(args, "max_seq_len", 512),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -95,4 +99,6 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             householder_learned=getattr(args, "householder_learned", False),
             use_rope=getattr(args, "use_rope", False),
             use_spe=getattr(args, "use_spe", False),
+            use_permutate=getattr(args, "use_permutate", False),
+            max_seq_len=getattr(args, "max_seq_len", 512),
         )

@@ -78,6 +78,8 @@ class MultiheadAttention_(nn.Module):
         householder_learned=False,
         # spe
         use_spe=False,
+        use_permutate=False,
+        max_seq_len=512,
     ):
         # add
         self.index = index
@@ -150,13 +152,40 @@ class MultiheadAttention_(nn.Module):
                                        num_realizations=self.head_dim,  # New dimension of keys and queries
                                        num_sines=1)          # Number of sinusoidal components
             self.spe_filter = SPEFilter(gated=True, code_shape=self.spe_encoder.code_shape)
-
-
+        self.use_permutate = use_permutate
+        if self.use_permutate:
+            raw_permutation = self.generate_random_permutation(self.num_heads, self.kdim // self.num_heads, 0xdeadbeefdeadbeef)
+            permutation = self.expand_permutation(max_seq_len, raw_permutation)
+            self.register_buffer("permutation", permutation.unsqueeze(0))
+            self.register_buffer("ratio", torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2))
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
         print(f"use_orpe {self.use_orpe}")
         print(f"use_spe {self.use_spe}")
+        print(f"use_permutate {self.use_permutate}")
+
+    # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
+    def generate_random_permutation(self, num_head, head_size, seed):
+        rng = torch.Generator()
+        rng.manual_seed(seed)
+        permutate = torch.randperm(head_size, generator=rng)
+        permutation = [permutate for _ in range(num_head)]
+        # permutation = [torch.randperm(head_size, generator=rng) for _ in range(num_head)]
+        # change to the same setting in orpe
+        permutation = torch.stack(permutation, dim=0)
+        return permutation
+
+    # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
+    def expand_permutation(self, max_seq_length, permutation):
+        num_head, head_size = permutation.shape
+        expanded = [torch.arange(head_size).unsqueeze(0).expand(num_head, head_size)]
+        for _ in range(max_seq_length - 1):
+            previous = expanded[-1]
+            current = previous.gather(-1, permutation)
+            expanded.append(current)
+        expanded = torch.stack(expanded, dim=1)
+        return expanded
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -262,6 +291,21 @@ class MultiheadAttention_(nn.Module):
             q, k = self.spe_filter(q, k, pos_codes)
             q = rearrange(q, 'l n h d -> (n h) l d')
             k = rearrange(k, 'l n h d -> (n h) l d')
+        elif self.use_permutate:
+            q = rearrange(q, 'l n (h d) -> n l h d', h=num_heads)
+            q = rearrange(q, 'n l h d -> n h l d')
+            k = rearrange(k, 'l n (h d) -> n l h d', h=num_heads)
+            k = rearrange(k, 'n l h d -> n h l d')
+            q = q.gather(-1, self.permutation[:, :, :q.shape[2]].expand_as(q))
+            k = k.gather(-1, self.permutation[:, :, :k.shape[2]].expand_as(k))
+            # act
+            q *= (self.ratio.unsqueeze(-1) ** torch.arange(q.shape[2], device=q.device).unsqueeze(0)).unsqueeze(-1)
+            k *= ((1 / self.ratio).unsqueeze(-1) ** torch.arange(k.shape[2], device=k.device).unsqueeze(0)).unsqueeze(-1)
+            # change shape
+            q = rearrange(q, 'n h l d -> (n h) l d')
+            k = rearrange(k, 'n h l d -> (n h) l d')
+            v = rearrange(v, 'l n (h d) -> l (n h) d', h=num_heads)
+            v = rearrange(v, 'l n d -> n l d')
         else:
             # N * h, L, d
             q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)

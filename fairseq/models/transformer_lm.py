@@ -5560,6 +5560,15 @@ def transformer_lm_baevski_wiki103(args):
     ### add
     args.use_orpe = False
     args.use_spe = True
+
+@register_model_architecture("linear_orpe_lm", "1+elu_per_wiki_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = False
+    args.use_spe = False
+    args.use_permutate = True
 ###### abl
 
 ################################ transformer orpe
@@ -5743,4 +5752,12 @@ def transformer_lm_baevski_wiki103(args):
     ### add
     args.use_orpe = False
     args.use_spe = True
+
+@register_model_architecture("transformer_head_lm", "transformer_lm_per_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.use_permutate = True
+    args.use_orpe = False
+    args.use_spe = False
 ###### abl

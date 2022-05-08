@@ -2611,6 +2611,15 @@ def roberta_base_architecture(args):
     args.weight_type = -1
     args.use_orpe = False
     args.use_spe = True
+
+@register_model_architecture("roberta_head", "roberta_per")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = False
+    args.use_spe = False
+    args.use_permutate = True
 ###### abl
 
 ### base model
@@ -3302,6 +3311,15 @@ def roberta_base_architecture(args):
     args.kernel_type = "1+elu"
     args.use_spe = True
 
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_per")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.kernel_type = "1+elu"
+    args.use_spe = False
+    args.use_permutate = True
 ###### abl
 
 
