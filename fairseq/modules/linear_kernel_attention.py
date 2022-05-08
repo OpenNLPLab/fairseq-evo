@@ -122,7 +122,7 @@ class LinearKernelAttention(nn.Module):
             self.spe_encoder = SineSPE(num_heads=self.num_heads,          # Number of attention heads
                                        in_features=self.head_dim,       # Dimension of keys and queries
                                        num_realizations=self.head_dim,  # New dimension of keys and queries
-                                       num_sines=5)          # Number of sinusoidal components
+                                       num_sines=1)          # Number of sinusoidal components
             self.spe_filter = SPEFilter(gated=True, code_shape=self.spe_encoder.code_shape)
 
         print(f"kernel_type {kernel_type}")
