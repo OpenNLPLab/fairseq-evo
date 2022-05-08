@@ -7,6 +7,7 @@ RoBERTa: A Robustly Optimized BERT Pretraining Approach.
 """
 
 import logging
+from numpy import False_
 
 import torch
 import torch.nn as nn
@@ -2602,6 +2603,16 @@ def roberta_base_architecture(args):
 
 ###### Fourier
 
+###### abl
+@register_model_architecture("roberta_head", "roberta_spe")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = False
+    args.use_spe = True
+###### abl
+
 ### base model
 
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
@@ -3280,6 +3291,19 @@ def roberta_base_architecture(args):
     args.theta_learned = True
 
 ###### Fourier
+
+###### abl
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_spe")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.kernel_type = "1+elu"
+    args.use_spe = True
+
+###### abl
+
 
 ############# NormAttentionEncoder
 # linear: attention_type = 1

@@ -14,6 +14,8 @@ from torch.nn import Dropout
 import sys
 from fairseq.modules import Orpe
 from fairseq.modules.rope import rope
+from fairseq.modules import SineSPE, SPEFilter
+from einops import rearrange
 
 # memory attention
 @with_incremental_state
@@ -49,6 +51,7 @@ class LinearKernelAttention(nn.Module):
         householder_learned=False,
         # rope
         use_rope=False,
+        use_spe=False,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -114,11 +117,19 @@ class LinearKernelAttention(nn.Module):
         if self.use_orpe:
             self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
         self.act = self.get_kernel_transform()
+        self.use_spe = use_spe
+        if self.use_spe:
+            self.spe_encoder = SineSPE(num_heads=self.num_heads,          # Number of attention heads
+                                       in_features=self.head_dim,       # Dimension of keys and queries
+                                       num_realizations=self.head_dim,  # New dimension of keys and queries
+                                       num_sines=5)          # Number of sinusoidal components
+            self.spe_filter = SPEFilter(gated=True, code_shape=self.spe_encoder.code_shape)
 
         print(f"kernel_type {kernel_type}")
         print(f"use_orpe {self.use_orpe}")
         print(f"use_rope {self.use_rope}")
         print(f"causal {self.causal}")
+        print(f"use_spe {self.use_spe}")
 
     def get_kernel_transform(self):
         if self.kernel_type == "1+elu":
@@ -224,16 +235,28 @@ class LinearKernelAttention(nn.Module):
         # S, N, E
         v = self.v_proj(value)
 
-        # N * h, L, d
-        q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
-        # N * h, S, d
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # N * h, S, d
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        if self.use_spe:
+            q = rearrange(q, 'l n (h d) -> l n h d', h=num_heads)
+            k = rearrange(k, 'l n (h d) -> l n h d', h=num_heads)
+            v = rearrange(v, 'l n (h d) -> l (n h) d', h=num_heads)
+            v = rearrange(v, 'l n d -> n l d')
+            q = self.act(q)
+            k = self.act(k)
+            pos_codes = self.spe_encoder(q.shape[:2])  # pos_codes is a tuple (qbar, kbar)
+            q, k = self.spe_filter(q, k, pos_codes)
+            q = rearrange(q, 'l n h d -> (n h) l d')
+            k = rearrange(k, 'l n h d -> (n h) l d')
+        else:
+            # N * h, L, d
+            q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
+            # N * h, S, d
+            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+            # N * h, S, d
+            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        # act
-        q = self.act(q)
-        k = self.act(k)
+            # act
+            q = self.act(q)
+            k = self.act(k)
 
         # orpe
         if self.use_orpe:

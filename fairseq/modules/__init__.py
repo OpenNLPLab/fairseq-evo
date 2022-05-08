@@ -113,6 +113,7 @@ from .transformer_cosformer_layer_ import (
 
 # glu
 from .glu import GLU
+from .spe import ConvSPE, SineSPE, SPEFilter
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm

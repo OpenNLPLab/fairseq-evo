@@ -12,6 +12,8 @@ from fairseq.modules.rope import rope
 from torch import Tensor, nn
 from torch.nn import Parameter
 from fairseq.modules import Orpe
+from fairseq.modules import SineSPE, SPEFilter
+from einops import rearrange
 
 
 @with_incremental_state
@@ -74,6 +76,8 @@ class MultiheadAttention_(nn.Module):
         theta_type="a",
         theta_learned=False, 
         householder_learned=False,
+        # spe
+        use_spe=False,
     ):
         # add
         self.index = index
@@ -139,10 +143,20 @@ class MultiheadAttention_(nn.Module):
         self.householder_learned = householder_learned
         if self.use_orpe:
             self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+        self.use_spe = use_spe
+        if self.use_spe:
+            self.spe_encoder = SineSPE(num_heads=self.num_heads,          # Number of attention heads
+                                       in_features=self.head_dim,       # Dimension of keys and queries
+                                       num_realizations=self.head_dim,  # New dimension of keys and queries
+                                       num_sines=5)          # Number of sinusoidal components
+            self.spe_filter = SPEFilter(gated=True, code_shape=self.spe_encoder.code_shape)
+
+
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
         print(f"use_orpe {self.use_orpe}")
+        print(f"use_spe {self.use_spe}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -239,12 +253,22 @@ class MultiheadAttention_(nn.Module):
         # S, N, E
         v = self.v_proj(value)
 
-        # N * h, L, d
-        q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
-        # N * h, S, d
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # N * h, S, d
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        if self.use_spe:
+            q = rearrange(q, 'l n (h d) -> l n h d', h=num_heads)
+            k = rearrange(k, 'l n (h d) -> l n h d', h=num_heads)
+            v = rearrange(v, 'l n (h d) -> l (n h) d', h=num_heads)
+            v = rearrange(v, 'l n d -> n l d')
+            pos_codes = self.spe_encoder(q.shape[:2])  # pos_codes is a tuple (qbar, kbar)
+            q, k = self.spe_filter(q, k, pos_codes)
+            q = rearrange(q, 'l n h d -> (n h) l d')
+            k = rearrange(k, 'l n h d -> (n h) l d')
+        else:
+            # N * h, L, d
+            q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
+            # N * h, S, d
+            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+            # N * h, S, d
+            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
         if self.use_rope:
             q = rope(q, dim=1)

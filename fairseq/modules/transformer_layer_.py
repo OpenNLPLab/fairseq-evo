@@ -120,6 +120,7 @@ class TransformerEncoderLayer_(nn.Module):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            use_spe=getattr(args, "use_spe", False),
         )
 
     def residual_connection(self, x, residual):
@@ -328,6 +329,7 @@ class TransformerDecoderLayer_(nn.Module):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            use_spe=getattr(args, "use_spe", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -376,6 +378,7 @@ class TransformerDecoderLayer_(nn.Module):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            use_spe=getattr(args, "use_spe", False),
         )
 
     def prepare_for_onnx_export_(self):
