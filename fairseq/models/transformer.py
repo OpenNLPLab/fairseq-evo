@@ -5069,6 +5069,15 @@ def transformer_wmt_en_de(args):
     args.causal = False
     args.use_orpe = False
     args.use_spe = True
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_per")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.use_spe = False
+    args.use_permutate = True
 ###### abl
 
 ######################## Vanilla
@@ -5239,4 +5248,12 @@ def transformer_wmt_en_de(args):
     ### add
     args.use_orpe = False
     args.use_spe = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_per")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.use_orpe = False
+    args.use_spe = False
+    args.use_permutate = True
 ###### abl
