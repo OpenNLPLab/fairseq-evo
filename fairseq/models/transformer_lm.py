@@ -5761,3 +5761,52 @@ def transformer_lm_baevski_wiki103(args):
     args.use_orpe = False
     args.use_spe = False
 ###### abl
+
+###### only rel
+@register_model_architecture("linear_orpe_lm", "1+elu_1d_3_wiki_base_no_abs")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    # add
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_3_base_no_abs")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    # add
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_1_base_no_abs")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    # add
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki_base_no_abs")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ### add
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    # add
+    args.no_token_positional_embeddings = True
+###### only rel

@@ -449,7 +449,7 @@ class TransformerEncoder(FairseqEncoder):
         self.embed_scale = 1.0 if args.no_scale_embedding else math.sqrt(embed_dim)
 
         # print(f"args.encoder_learned_pos {args.encoder_learned_pos}")
-        args.no_encoder_token_positional_embeddings = getattr(args, "no_encoder_token_positional_embeddings", False)
+        args.no_encoder_token_positional_embeddings = getattr(args, "no_encoder_token_positional_embeddings", False) or args.no_token_positional_embeddings
         self.embed_positions = (
             PositionalEmbedding(
                 args.max_source_positions,
@@ -793,7 +793,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             if embed_dim != input_embed_dim
             else None
         )
-        args.no_decoder_token_positional_embeddings = getattr(args, "no_decoder_token_positional_embeddings", False)
+        args.no_decoder_token_positional_embeddings = getattr(args, "no_decoder_token_positional_embeddings", False) or args.no_token_positional_embeddings
         self.embed_positions = (
             PositionalEmbedding(
                 self.max_target_positions,
