@@ -2622,6 +2622,8 @@ def roberta_base_architecture(args):
     args.use_permutate = True
 ###### abl
 
+
+
 ### base model
 
 @register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
@@ -4300,3 +4302,54 @@ def roberta_base_architecture(args):
     args.encoder_attention_heads = 12
     args.encoder_use_orpe = False
     args.encoder_chunk_size = 64
+
+###### only rel
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_3_no_abs")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    # add
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("roberta_head", "roberta_orpe_1d_3_no_abs")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    # add
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_1_no_abs")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    # add
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("roberta_head", "roberta_orpe_1_1_no_abs")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    # add
+    args.no_token_positional_embeddings = True
+
+
+###### only rel
