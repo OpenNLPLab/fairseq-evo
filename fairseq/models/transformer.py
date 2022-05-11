@@ -449,6 +449,7 @@ class TransformerEncoder(FairseqEncoder):
         self.embed_scale = 1.0 if args.no_scale_embedding else math.sqrt(embed_dim)
 
         # print(f"args.encoder_learned_pos {args.encoder_learned_pos}")
+        args.no_encoder_token_positional_embeddings = getattr(args, "no_encoder_token_positional_embeddings", False)
         self.embed_positions = (
             PositionalEmbedding(
                 args.max_source_positions,
@@ -456,7 +457,8 @@ class TransformerEncoder(FairseqEncoder):
                 self.padding_idx,
                 learned=args.encoder_learned_pos,
             )
-            if not args.no_token_positional_embeddings
+            # if not args.no_token_positional_embeddings
+            if not args.no_encoder_token_positional_embeddings
             else None
         )
 
@@ -791,6 +793,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             if embed_dim != input_embed_dim
             else None
         )
+        args.no_decoder_token_positional_embeddings = getattr(args, "no_decoder_token_positional_embeddings", False)
         self.embed_positions = (
             PositionalEmbedding(
                 self.max_target_positions,
@@ -798,7 +801,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 self.padding_idx,
                 learned=args.decoder_learned_pos,
             )
-            if not args.no_token_positional_embeddings
+            # if not args.no_token_positional_embeddings
+            if not args.no_decoder_token_positional_embeddings
             else None
         )
 
@@ -5257,3 +5261,54 @@ def transformer_wmt_en_de(args):
     args.use_spe = False
     args.use_permutate = True
 ###### abl
+
+###### only rel
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1d_3_no_abs")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    # add
+    args.no_encoder_token_positional_embeddings = True
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1d_3_no_abs")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    # add
+    args.no_encoder_token_positional_embeddings = True
+
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1_1_no_abs")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    # add
+    args.no_encoder_token_positional_embeddings = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_1_1_no_abs")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    # add
+    args.no_encoder_token_positional_embeddings = True
+###### only rel
