@@ -103,6 +103,7 @@ from .transformer_cosformer_layer import (
 # orpe
 from .orpe import Orpe
 from .orpe_v2 import OrpeV2
+from .t5_rpe import T5RPE
 
 # debug
 from .multihead_cosformer_attention_ import MultiheadCosformerAttention_

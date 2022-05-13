@@ -14,6 +14,7 @@ from torch.nn import Parameter
 from fairseq.modules import Orpe
 from fairseq.modules import SineSPE, SPEFilter
 from einops import rearrange
+from fairseq.modules import T5RPE
 
 
 @with_incremental_state
@@ -80,6 +81,9 @@ class MultiheadAttention_(nn.Module):
         use_spe=False,
         use_permutate=False,
         max_seq_len=512,
+        # t5
+        causal=False,
+        use_t5=False,
     ):
         # add
         self.index = index
@@ -158,12 +162,17 @@ class MultiheadAttention_(nn.Module):
             permutation = self.expand_permutation(max_seq_len, raw_permutation)
             self.register_buffer("permutation", permutation.unsqueeze(0))
             self.register_buffer("ratio", torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2))
+        self.use_t5 = use_t5
+        if self.use_t5:
+            bidirectional = not causal
+            self.rpe = T5RPE(bidirectional)
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
         print(f"use_orpe {self.use_orpe}")
         print(f"use_spe {self.use_spe}")
         print(f"use_permutate {self.use_permutate}")
+        print(f"use_t5 {self.use_t5}")
 
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def generate_random_permutation(self, num_head, head_size, seed):
@@ -354,8 +363,14 @@ class MultiheadAttention_(nn.Module):
                 raise RuntimeError("attn_mask's dimension {} is not supported".format(attn_mask.dim()))
         # attn_mask's dim is 3 now.
 
+        if self.use_t5:
+            # print("here")
+            attn_output_weights = self.rpe(attn_output_weights)
+
         if attn_mask is not None:
             attn_output_weights += attn_mask
+        # print(attn_output_weights[0])
+
     
         # N * h, L, S
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)

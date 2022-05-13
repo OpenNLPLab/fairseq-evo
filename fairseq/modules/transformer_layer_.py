@@ -123,6 +123,9 @@ class TransformerEncoderLayer_(nn.Module):
             use_spe=getattr(args, "use_spe", False),
             use_permutate=getattr(args, "use_permutate", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            # t5
+            causal=getattr(args, "causal", False),
+            use_t5=getattr(args, "use_t5", False),
         )
 
     def residual_connection(self, x, residual):
@@ -334,6 +337,9 @@ class TransformerDecoderLayer_(nn.Module):
             use_spe=getattr(args, "use_spe", False),
             use_permutate=getattr(args, "use_permutate", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            # t5
+            causal=getattr(args, "causal", False),
+            use_t5=getattr(args, "use_t5", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -385,6 +391,9 @@ class TransformerDecoderLayer_(nn.Module):
             use_spe=getattr(args, "use_spe", False),
             use_permutate=getattr(args, "use_permutate", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            # t5
+            causal=getattr(args, "causal", True),
+            use_t5=getattr(args, "use_t5", False),
         )
 
     def prepare_for_onnx_export_(self):

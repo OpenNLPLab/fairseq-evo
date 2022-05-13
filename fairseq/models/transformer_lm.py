@@ -5760,6 +5760,15 @@ def transformer_lm_baevski_wiki103(args):
     args.use_permutate = True
     args.use_orpe = False
     args.use_spe = False
+
+@register_model_architecture("transformer_head_lm", "transformer_lm_t5_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.use_orpe = False
+    args.use_spe = False
+    args.causal = True
+    args.use_t5 = True
 ###### abl
 
 ###### only rel

@@ -5260,6 +5260,16 @@ def transformer_wmt_en_de(args):
     args.use_orpe = False
     args.use_spe = False
     args.use_permutate = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_t5")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.use_orpe = False
+    args.use_spe = False
+    args.use_permutate = False
+    args.causal = False
+    args.use_t5 = True
 ###### abl
 
 ###### only rel
