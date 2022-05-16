@@ -348,7 +348,10 @@ class NormAttentionEncoderLayer(nn.Module):
 
         if self.use_glu:
             d1 = self.embed_dim
-            d2 = int(8 * d1 / 3)
+            p = 8 / 3
+            p = getattr(args, "multiple", p)
+            d2 = int(p * d1)
+            print(f"GLU multiple {p}")
             self.glu = GLU(d1, d2, self.glu_act)
         else:
             self.fc1 = self.build_fc1(
