@@ -5250,6 +5250,7 @@ def transformer_wmt_en_de(args):
 def transformer_wmt_en_de(args):
     base_architecture(args)
     ### add
+    args.weight_type = -1
     args.use_orpe = False
     args.use_spe = True
 
@@ -5257,6 +5258,7 @@ def transformer_wmt_en_de(args):
 def transformer_wmt_en_de(args):
     base_architecture(args)
     ### add
+    args.weight_type = -1
     args.use_orpe = False
     args.use_spe = False
     args.use_permutate = True
@@ -5265,11 +5267,24 @@ def transformer_wmt_en_de(args):
 def transformer_wmt_en_de(args):
     base_architecture(args)
     ### add
+    args.weight_type = -1
     args.use_orpe = False
     args.use_spe = False
     args.use_permutate = False
     args.causal = False
     args.use_t5 = True
+
+@register_model_architecture("encoder_transformer_head", "vanilla_wmt_en_de_rpaw")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = False
+    args.use_spe = False
+    args.use_permutate = False
+    args.causal = False
+    args.use_t5 = False
+    args.use_rpaw = True
 ###### abl
 
 ###### only rel

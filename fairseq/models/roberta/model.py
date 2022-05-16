@@ -2630,6 +2630,17 @@ def roberta_base_architecture(args):
     args.use_spe = False
     args.causal = False
     args.use_t5 = True
+
+@register_model_architecture("roberta_head", "roberta_rpaw")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = False
+    args.use_spe = False
+    args.causal = False
+    args.use_t5 = False
+    args.use_rpaw = True
 ###### abl
 
 

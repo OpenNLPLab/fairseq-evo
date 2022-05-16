@@ -126,6 +126,8 @@ class TransformerEncoderLayer_(nn.Module):
             # t5
             causal=getattr(args, "causal", False),
             use_t5=getattr(args, "use_t5", False),
+            # rpaw
+            use_rpaw=getattr(args, "use_rpaw", False),
         )
 
     def residual_connection(self, x, residual):
@@ -340,6 +342,8 @@ class TransformerDecoderLayer_(nn.Module):
             # t5
             causal=getattr(args, "causal", False),
             use_t5=getattr(args, "use_t5", False),
+            # rpaw
+            use_rpaw=getattr(args, "use_rpaw", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -394,6 +398,8 @@ class TransformerDecoderLayer_(nn.Module):
             # t5
             causal=getattr(args, "causal", True),
             use_t5=getattr(args, "use_t5", False),
+            # rpaw
+            use_rpaw=getattr(args, "use_rpaw", False),
         )
 
     def prepare_for_onnx_export_(self):

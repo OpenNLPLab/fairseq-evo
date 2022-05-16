@@ -5750,6 +5750,7 @@ def transformer_lm_baevski_wiki103(args):
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
+    args.weight_type = -1
     args.use_orpe = False
     args.use_spe = True
 
@@ -5757,6 +5758,7 @@ def transformer_lm_baevski_wiki103(args):
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
+    args.weight_type = -1
     args.use_permutate = True
     args.use_orpe = False
     args.use_spe = False
@@ -5765,10 +5767,22 @@ def transformer_lm_baevski_wiki103(args):
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
+    args.weight_type = -1
     args.use_orpe = False
     args.use_spe = False
     args.causal = True
     args.use_t5 = True
+
+@register_model_architecture("transformer_head_lm", "transformer_lm_rpaw_base")
+def transformer_lm_baevski_wiki103(args):
+    base_lm_architecture(args)
+    ### add
+    args.weight_type = -1
+    args.use_orpe = False
+    args.use_spe = False
+    args.causal = True
+    args.use_t5 = False
+    args.use_rpaw = True
 ###### abl
 
 ###### only rel

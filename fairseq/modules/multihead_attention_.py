@@ -14,7 +14,7 @@ from torch.nn import Parameter
 from fairseq.modules import Orpe
 from fairseq.modules import SineSPE, SPEFilter
 from einops import rearrange
-from fairseq.modules import T5RPE
+from fairseq.modules import T5RPE, RpAwe
 
 
 @with_incremental_state
@@ -84,6 +84,8 @@ class MultiheadAttention_(nn.Module):
         # t5
         causal=False,
         use_t5=False,
+        # Relation-aware
+        use_rpaw=False,
     ):
         # add
         self.index = index
@@ -166,6 +168,9 @@ class MultiheadAttention_(nn.Module):
         if self.use_t5:
             bidirectional = not causal
             self.rpe = T5RPE(bidirectional)
+        self.use_rpaw = use_rpaw
+        if self.use_rpaw:
+            self.rpawe = RpAwe(self.head_dim, max_positions)
 
         print(f"weight_type {weight_type}")
         print(f"use_rope {use_rope}")
@@ -173,6 +178,7 @@ class MultiheadAttention_(nn.Module):
         print(f"use_spe {self.use_spe}")
         print(f"use_permutate {self.use_permutate}")
         print(f"use_t5 {self.use_t5}")
+        print(f"Use_rpaw {self.use_rpaw}")
 
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def generate_random_permutation(self, num_head, head_size, seed):
@@ -336,6 +342,7 @@ class MultiheadAttention_(nn.Module):
 
         # cos transform
         if self.weight_type == 1:
+            # print("here1")
             m = max(src_len, tgt_len)
             # get index and send to cuda
             weight_index = self.get_index(m).to(q)
@@ -346,6 +353,7 @@ class MultiheadAttention_(nn.Module):
 
         # N * h, L, S
         if self.use_orpe and self.orpe.core_matrix == 4:
+            # print("here2")
             q = torch.cat([q.real, q.imag], dim=-1)
             k = torch.cat([k.real, k.imag], dim=-1)
         attn_output_weights = torch.bmm(q, k.transpose(1, 2))
@@ -364,8 +372,16 @@ class MultiheadAttention_(nn.Module):
         # attn_mask's dim is 3 now.
 
         if self.use_t5:
-            # print("here")
+            # print("here3")
             attn_output_weights = self.rpe(attn_output_weights)
+        if self.use_rpaw:
+            # print("here4")
+            # l, s, d
+            k_rpe = self.rpawe(q, tgt_len, src_len)
+            q = rearrange(q, 'b l d -> l b d')
+            # (l, b, d), (l, d, s) -> (l, b, s) -> (b, l, s)
+            weights = torch.matmul(q, k_rpe.transpose(1, 2)).transpose(0, 1)
+            attn_output_weights = attn_output_weights + weights
 
         if attn_mask is not None:
             attn_output_weights += attn_mask
