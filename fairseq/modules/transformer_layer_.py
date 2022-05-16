@@ -110,7 +110,7 @@ class TransformerEncoderLayer_(nn.Module):
             alpha_beta=getattr(args, "alpha_beta", False),
             max_l=getattr(args, "max_l", 1024),
             # add
-            weight_type=getattr(args, "weight_type", 1),
+            weight_type=getattr(args, "weight_type", -1),
             use_rope=getattr(args, "use_rope", False),
             # add
             use_orpe=getattr(args, "use_orpe", False),
@@ -326,7 +326,7 @@ class TransformerDecoderLayer_(nn.Module):
             alpha_beta=getattr(args, "alpha_beta", False),
             max_l=getattr(args, "max_l", 1024),
             # add
-            weight_type=getattr(args, "weight_type", 1),
+            weight_type=getattr(args, "weight_type", -1),
             use_rope=getattr(args, "use_rope", False),
             # add
             use_orpe=getattr(args, "use_orpe", False),
@@ -382,7 +382,7 @@ class TransformerDecoderLayer_(nn.Module):
             alpha_beta=getattr(args, "alpha_beta", False),
             max_l=getattr(args, "max_l", 1024),
             # add
-            weight_type=getattr(args, "weight_type", 1),
+            weight_type=getattr(args, "weight_type", -1),
             use_rope=getattr(args, "use_rope", False),
             # add
             use_orpe=getattr(args, "use_orpe", False),
