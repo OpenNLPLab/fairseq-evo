@@ -17,6 +17,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Orpe
 from fairseq.modules import OrpeV2
+from einops import rearrange
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -273,6 +274,12 @@ class NormLocalAttention(nn.Module):
                                       incremental_state, need_weights, static_kv,
                                       attn_mask, before_softmax, need_head_weights)
 
+    def transform(self, q):
+        q = rearrange(q, 'l b (h e) -> l (b h) e', h=self.num_heads)
+        q = rearrange(q, 'l n e -> n l e')
+        q = rearrange(q, 'n (l c) e -> n l c e', c=self.chunk_size)
+
+        return q
 
     # reference
     # https://github.com/lucidrains/local-attention/blob/master/local_attention/local_attention.py
@@ -480,11 +487,18 @@ class NormLocalAttention(nn.Module):
 
         # N, L, H, E: batch, length, head, dim
         # N, L, E1 -> N * h, L, e1 -> N * h, g, l, e1
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
         # N, S, E1 -> N * h, S, e1 -> N * h, g, s, e1
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
         # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        
+        # q = rearrange(q, 'l b (h e) -> l (b h) e', h=self.num_heads)
+        # q = rearrange(q, 'l n e -> n l e')
+        # q = rearrange(q, 'n (l c) e -> n l c e', c=self.chunk_size)
+        q = self.transform(q)
+        k = self.transform(k)
+        v = self.transform(v)
 
         if self.use_orpe:
             q = self.orpe(q)
@@ -495,25 +509,33 @@ class NormLocalAttention(nn.Module):
         if not self.use_softmax:
             prob = self.act(logits)
         else:
+            logits *= scaling
             prob = F.softmax(logits, dim=-1)
 
         if self.causal:
-            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1)
-            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            prob = prob.masked_fill(attn_mask==float("-inf"), 0)
+            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
+            prob = prob.masked_fill(attn_mask==0, 0)
+            # attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            # prob = prob.masked_fill(attn_mask==float("-inf"), 0)
+            # print(prob[0][0][:9, :9])
+        
         weights = self.dropout_module(prob)
 
         # (N * h, g, l, s), (N * h, g, s, e2) -> (N * h, g, l, e2)
         output = torch.einsum("bgls,bgsd->bgld", weights, v)
         # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
-        output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
+        # output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
+        output = rearrange(output, 'n l c e -> n (l c) e', c=self.chunk_size)
+        output = rearrange(output, 'n l e -> l n e')
+        output = rearrange(output, 'l (b h) e -> l b (h e)', h=self.num_heads)
+        output = output[:tgt_len, ...]
         # perform RMSNorm to stabilize running
         if not self.use_softmax:
             output = self.gated_rms_norm(output)
         # outprojection
         output = self.out_proj(output)
 
-        output = output
+        # output = output
         return output, prob
 
     @staticmethod
