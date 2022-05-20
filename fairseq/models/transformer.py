@@ -4466,6 +4466,40 @@ class NormAttentionDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+@register_model("normattention")
+class TransformerNormModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return NormAttentionEncoder(args, src_dict, embed_tokens)
+
+    @classmethod
+    def build_decoder(cls, args, tgt_dict, embed_tokens):
+        return NormAttentionDecoder(
+            args,
+            tgt_dict,
+            embed_tokens,
+            no_encoder_attn=getattr(args, "no_cross_attention", False),
+        )
+
 ############### NormMixAttention
 class NormMixAttentionEncoder(TransformerEncoder):
     """
@@ -5362,3 +5396,64 @@ def transformer_wmt_en_de(args):
     # add
     args.no_encoder_token_positional_embeddings = True
 ###### only rel
+
+################### mix attention
+@register_model_architecture("normattention", "vanilla_wmt_en_de_norm_glu")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_use_orpe = False
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.decoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+
+@register_model_architecture("normattention", "vanilla_wmt_en_de_norm_glu_small")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_use_orpe = False
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.decoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    args.multiple = 2
+
+@register_model_architecture("normattention", "vanilla_wmt_en_de_norm_ffn")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_use_orpe = False
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.decoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+################### mix attention
