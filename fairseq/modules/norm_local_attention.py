@@ -1,4 +1,6 @@
 import math
+
+from torch import logit
 import numpy as np
 from typing import Dict, Optional, Tuple
 
@@ -474,16 +476,30 @@ class NormLocalAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
+        # 保持q, k, v seq_len维度相同
+        if tgt_len < src_len:
+            q = F.pad(q, (0, 0, 0, 0, 0, src_len - tgt_len))
+        else:
+            k = F.pad(k, (0, 0, 0, 0, 0, tgt_len - src_len))
+            v = F.pad(v, (0, 0, 0, 0, 0, tgt_len - src_len))
+        
+        d = max(tgt_len, src_len)
+        len_pad = (self.chunk_size - d % self.chunk_size) % self.chunk_size
+        q = F.pad(q, (0, 0, 0, 0, 0, len_pad))
+        k = F.pad(k, (0, 0, 0, 0, 0, len_pad))
+        v = F.pad(v, (0, 0, 0, 0, 0, len_pad))
+
         # pad至chunk_size整数倍
-        tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
-        src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
-        tgt_g = (tgt_len + tgt_len_pad) // self.chunk_size
-        src_g = (src_len + src_len_pad) // self.chunk_size
+        # tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
+        # src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
+        # tgt_g = (tgt_len + tgt_len_pad) // self.chunk_size
+        # src_g = (src_len + src_len_pad) // self.chunk_size
+        
 
         # 填充0
-        q = F.pad(q, (0, 0, 0, 0, 0, tgt_len_pad))
-        k = F.pad(k, (0, 0, 0, 0, 0, src_len_pad))
-        v = F.pad(v, (0, 0, 0, 0, 0, src_len_pad))
+        # q = F.pad(q, (0, 0, 0, 0, 0, tgt_len_pad))
+        # k = F.pad(k, (0, 0, 0, 0, 0, src_len_pad))
+        # v = F.pad(v, (0, 0, 0, 0, 0, src_len_pad))
 
         # N, L, H, E: batch, length, head, dim
         # N, L, E1 -> N * h, L, e1 -> N * h, g, l, e1
@@ -499,6 +515,7 @@ class NormLocalAttention(nn.Module):
         q = self.transform(q)
         k = self.transform(k)
         v = self.transform(v)
+        # n, l, c, d
 
         if self.use_orpe:
             q = self.orpe(q)
@@ -506,10 +523,13 @@ class NormLocalAttention(nn.Module):
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)
+        # logits = torch.einsum("bgle,bhse->bghls", q, k)
+        # logits = rearrange(logits, 'b g h l s -> b g l h s')
+        # logits = rearrange(logits, 'b g l h s -> b (g l) (h s)')
         if not self.use_softmax:
             prob = self.act(logits)
         else:
-            logits *= scaling
+            # logits *= scaling
             prob = F.softmax(logits, dim=-1)
 
         if self.causal:
