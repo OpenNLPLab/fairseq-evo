@@ -356,6 +356,7 @@ class NormLinearAttention(nn.Module):
         # (N * h, S, d)
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        
 
         q = self.act(q)
         k = self.act(k)
@@ -365,15 +366,15 @@ class NormLinearAttention(nn.Module):
             k = self.orpe(k)
 
         if self.causal:
-            attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
-            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
             weights = torch.bmm(q, k.transpose(1, 2))
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             output = torch.bmm(weights, v)
         else:
             o1 = torch.matmul(k.transpose(1, 2), v)
-            o1 = self.kv_act(o1)
+            # o1 = self.kv_act(o1)
             output = torch.bmm(q, o1)
 
         # --------------------------------------------------------

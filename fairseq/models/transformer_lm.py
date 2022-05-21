@@ -5922,8 +5922,7 @@ def transformer_lm_big(args):
     args.decoder_chunk_size = 64
     args.attention_types = [2 for _ in range(args.decoder_layers)]
     ### glu
-    args.decoder_causal = False
-    args.use_glu = True
+    args.use_glu = False
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
@@ -5941,8 +5940,7 @@ def transformer_lm_big(args):
     args.decoder_chunk_size = 64
     args.attention_types = [1 for _ in range(args.decoder_layers)]
     ### glu
-    args.decoder_causal = False
-    args.use_glu = True
+    args.use_glu = False
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
