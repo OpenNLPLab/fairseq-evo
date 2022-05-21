@@ -533,10 +533,10 @@ class NormLocalAttention(nn.Module):
             prob = F.softmax(logits, dim=-1)
 
         if self.causal:
-            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
-            prob = prob.masked_fill(attn_mask==0, 0)
+            # attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
+            # prob = prob.masked_fill(attn_mask==0, 0)
             # attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            # prob = prob.masked_fill(attn_mask==float("-inf"), 0)
+            prob = prob.masked_fill(attn_mask[:self.chunk_size, :self.chunk_size]==float("-inf"), 0)
             # print(prob[0][0][:9, :9])
         
         weights = self.dropout_module(prob)

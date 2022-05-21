@@ -5853,6 +5853,25 @@ def transformer_lm_big(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_abl")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.decoder_causal = False
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+
 @register_model_architecture("norm_attention_lm", "norm_glu_small_lm_base")
 def transformer_lm_big(args):
     base_lm_architecture(args)
