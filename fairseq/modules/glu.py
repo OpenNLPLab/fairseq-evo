@@ -5,9 +5,12 @@ import torch.nn.functional as F
 class GLU(nn.Module):
     def __init__(self, d1, d2, act_fun):
         super().__init__()
-        self.l1 = nn.Linear(d1, d2, bias=False)
-        self.l2 = nn.Linear(d1, d2, bias=False)
-        self.l3 = nn.Linear(d2, d1, bias=False)
+        # self.l1 = nn.Linear(d1, d2, bias=False)
+        # self.l2 = nn.Linear(d1, d2, bias=False)
+        # self.l3 = nn.Linear(d2, d1, bias=False)
+        self.l1 = nn.Linear(d1, d2)
+        self.l2 = nn.Linear(d1, d2)
+        self.l3 = nn.Linear(d2, d1)
         self.act_fun = self.get_act_fun(act_fun)
 
     def get_act_fun(self, act_fun):
@@ -41,7 +44,7 @@ class GLU(nn.Module):
         o1 = self.l1(x)
         weight = self.act_fun(o1)
         o2 = self.l2(x)
-        output = o1 * o2
+        output = weight * o2
         output = self.l3(output)
 
         return output
