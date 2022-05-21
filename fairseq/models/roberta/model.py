@@ -3363,7 +3363,7 @@ def roberta_base_architecture(args):
     args.encoder_attention_heads = 1
     args.encoder_use_orpe = False
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2")
 def roberta_base_architecture(args):
@@ -3376,7 +3376,7 @@ def roberta_base_architecture(args):
     args.encoder_attention_heads = 1
     args.encoder_use_orpe = False
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 ######################################### add
 ################ pure window
@@ -3394,7 +3394,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 32
     args.left_window = 1
     args.right_window = 1
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w64_h1")
 def roberta_base_architecture(args):
@@ -3410,7 +3410,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     args.left_window = 1
     args.right_window = 1
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w32_h8")
 def roberta_base_architecture(args):
@@ -3426,7 +3426,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     args.left_window = 1
     args.right_window = 1
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_3_w64_h8")
 def roberta_base_architecture(args):
@@ -3442,7 +3442,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     args.left_window = 1
     args.right_window = 1
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 ################ pure chunk
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w32_h1")
@@ -3457,7 +3457,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w64_h1")
 def roberta_base_architecture(args):
@@ -3471,7 +3471,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w32_h8")
 def roberta_base_architecture(args):
@@ -3485,7 +3485,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_2_w64_h8")
 def roberta_base_architecture(args):
@@ -3499,7 +3499,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers)] 
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
 ################ mix
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h1")
@@ -3514,7 +3514,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h8")
 def roberta_base_architecture(args):
@@ -3528,7 +3528,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w64_h1")
 def roberta_base_architecture(args):
@@ -3542,7 +3542,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w64_h8")
 def roberta_base_architecture(args):
@@ -3556,7 +3556,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h1")
 def roberta_base_architecture(args):
@@ -3570,7 +3570,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h8")
 def roberta_base_architecture(args):
@@ -3584,7 +3584,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w32_h1")
 def roberta_base_architecture(args):
@@ -3598,7 +3598,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_3_1_w32_h8")
 def roberta_base_architecture(args):
@@ -3612,7 +3612,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
 ######## type 2
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h12_p0.25")
@@ -3628,7 +3628,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.25)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h12_p0.5")
 def roberta_base_architecture(args):
@@ -3643,7 +3643,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w64_h12_p0.75")
 def roberta_base_architecture(args):
@@ -3658,7 +3658,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.75)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h12_p0.25")
 def roberta_base_architecture(args):
@@ -3673,7 +3673,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.25)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h12_p0.5")
 def roberta_base_architecture(args):
@@ -3688,7 +3688,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w32_h12_p0.75")
 def roberta_base_architecture(args):
@@ -3703,7 +3703,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.75)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 ##### window size
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w128_h12_p0.5")
@@ -3719,7 +3719,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 128
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_2_1_w256_h12_p0.5")
 def roberta_base_architecture(args):
@@ -3734,7 +3734,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 256
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 ##### window size
 ######## type 2
 
@@ -3752,7 +3752,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
     ###### orpe
     args.encoder_use_orpe = True
     args.encoder_core_matrix = 1
@@ -3772,7 +3772,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
     ###### orpe
     args.encoder_use_orpe = True
     args.encoder_core_matrix = 1
@@ -3792,7 +3792,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 128
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
     ###### orpe
     args.encoder_use_orpe = True
     args.encoder_core_matrix = 1
@@ -3812,7 +3812,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 256
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
     ###### orpe
     args.encoder_use_orpe = True
     args.encoder_core_matrix = 1
@@ -3832,7 +3832,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
 ######## Pure Linear
 
 ######## Linear + Norm 分比测试
@@ -3849,7 +3849,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.25)
-    args.attention_types = [1 for _ in range(l)] + [2 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [1 for _ in range(l)] + [2 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_1_2_w64_h12_p0.5")
 def roberta_base_architecture(args):
@@ -3864,7 +3864,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [1 for _ in range(l)] + [2 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [1 for _ in range(l)] + [2 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_1_2_w64_h12_p0.75")
 def roberta_base_architecture(args):
@@ -3879,7 +3879,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.75)
-    args.attention_types = [1 for _ in range(l)] + [2 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [1 for _ in range(l)] + [2 for _ in range(args.encoder_layers - l)]
 
 ######## act测试
 ######## 0: elu, 1: relu, 2: silu
@@ -3896,7 +3896,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_stand_act22")
 def roberta_base_architecture(args):
@@ -3911,7 +3911,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_stand_softmax")
 def roberta_base_architecture(args):
@@ -3927,7 +3927,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 ######## act测试
 
@@ -3946,7 +3946,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     args.use_dropout = True
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 ######## dropout
 
 ######## norm type
@@ -3964,7 +3964,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_stand_norm_01")
@@ -3979,7 +3979,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.norm_type = "simplermsnorm"
 
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_stand_norm_11")
@@ -3994,7 +3994,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
 
@@ -4010,7 +4010,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
 
@@ -4026,7 +4026,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
@@ -4046,7 +4046,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = [16, 16, 32, 32, 64, 64] + [64] * 6
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 
 ########
@@ -4064,7 +4064,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
     #### add
     args.encoder_kv_act = "sigmoid"
 
@@ -4077,7 +4077,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
     #### add
     args.encoder_kv_act = "relu"
 
@@ -4090,7 +4090,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
     #### add
     args.encoder_kv_act = "sigmoid"
 
@@ -4103,7 +4103,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
     #### add
     args.encoder_kv_act = "relu"
 
@@ -4123,7 +4123,7 @@ def roberta_base_architecture(args):
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -4140,7 +4140,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -4157,7 +4157,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -4175,7 +4175,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     ### glu
     args.use_glu = True
@@ -4194,7 +4194,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
 
 @register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm")
@@ -4209,7 +4209,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -4228,7 +4228,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.use_dropout = True
     ### glu
@@ -4248,7 +4248,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_heads_list = [12 for _ in range(l)] + [24 for _ in range(args.encoder_layers - l)]
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     ### glu
     args.use_glu = True
@@ -4266,7 +4266,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     ### glu
@@ -4286,7 +4286,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     ### glu
@@ -4306,7 +4306,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     ### glu
     args.use_glu = True
@@ -4325,7 +4325,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -4349,7 +4349,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_heads_list = [12 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_normtype_11_head_1_1")
 def roberta_base_architecture(args):
@@ -4363,7 +4363,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
-    args.attention_types = [1 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_normtype_22_head_1_1")
 def roberta_base_architecture(args):
@@ -4377,7 +4377,7 @@ def roberta_base_architecture(args):
     args.encoder_use_orpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.encoder_layers)]
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_normtype_21_head_12_24")
 def roberta_base_architecture(args):
@@ -4393,7 +4393,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_heads_list = [12 for _ in range(l)] + [24 for _ in range(args.encoder_layers - l)]
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 
 @register_model_architecture("roberta_norm_attention", "roberta_normtype_21_head_24_24")
 def roberta_base_architecture(args):
@@ -4409,7 +4409,7 @@ def roberta_base_architecture(args):
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_heads_list = [12 for _ in range(l)] + [24 for _ in range(args.encoder_layers - l)]
-    args.attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
 ######## Heads
 
 ######################################### add

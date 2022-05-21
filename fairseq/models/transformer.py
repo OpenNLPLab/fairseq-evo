@@ -482,7 +482,7 @@ class TransformerEncoder(FairseqEncoder):
             self.layers = nn.ModuleList([])
 
         arr = []
-        attention_types = getattr(args, "attention_types", [])
+        attention_types = getattr(args, "encoder_attention_types", [])
         encoder_chunk_sizes = getattr(args, "encoder_chunk_size", -1)
         encoder_attention_heads_list = getattr(args, "encoder_attention_heads_list", [])
         for _ in range(args.encoder_layers):
@@ -825,7 +825,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         # )
 
         arr = []
-        attention_types = getattr(args, "attention_types", [])
+        attention_types = getattr(args, "decoder_attention_types", [])
         for _ in range(args.decoder_layers):
             args.index = _
             if attention_types != []:
@@ -5398,6 +5398,50 @@ def transformer_wmt_en_de(args):
 ###### only rel
 
 ################### mix attention
+### test
+@register_model_architecture("normattention", "vanilla_wmt_en_de_norm_glu_de_linear")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_use_orpe = False
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.decoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+
+@register_model_architecture("normattention", "vanilla_wmt_en_de_norm_glu_de_local")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_use_orpe = False
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.decoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+### test
+
 @register_model_architecture("normattention", "vanilla_wmt_en_de_norm_glu")
 def transformer_wmt_en_de(args):
     base_architecture(args)
@@ -5411,7 +5455,7 @@ def transformer_wmt_en_de(args):
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -5431,7 +5475,7 @@ def transformer_wmt_en_de(args):
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -5452,7 +5496,7 @@ def transformer_wmt_en_de(args):
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.encoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"

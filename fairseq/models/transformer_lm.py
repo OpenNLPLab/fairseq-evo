@@ -5242,7 +5242,7 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     args.decoder_use_orpe = False
     args.decoder_chunk_size = 32
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
 
 
 ######################################
@@ -5846,7 +5846,7 @@ def transformer_lm_big(args):
     args.decoder_use_orpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -5864,7 +5864,7 @@ def transformer_lm_big(args):
     args.decoder_use_orpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.use_glu = True
     args.glu_act = "swish"
@@ -5883,7 +5883,7 @@ def transformer_lm_big(args):
     args.decoder_use_orpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
@@ -5901,7 +5901,7 @@ def transformer_lm_big(args):
     args.decoder_use_orpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
     ### glu
     args.decoder_causal = False
     args.use_glu = True
@@ -5920,7 +5920,7 @@ def transformer_lm_big(args):
     args.decoder_use_orpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
-    args.attention_types = [2 for _ in range(args.decoder_layers)]
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers)]
     ### glu
     args.use_glu = False
     args.glu_act = "swish"
@@ -5938,7 +5938,7 @@ def transformer_lm_big(args):
     args.decoder_use_orpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
-    args.attention_types = [1 for _ in range(args.decoder_layers)]
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
     ### glu
     args.use_glu = False
     args.glu_act = "swish"
