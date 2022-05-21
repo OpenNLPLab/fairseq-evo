@@ -5835,7 +5835,7 @@ def transformer_lm_baevski_wiki103(args):
 ###### only rel
 
 ################### norm attention(local + linear)
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base")
+@register_model_architecture("norm_attention_lm", "norm_ln_glu_lm_base")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -5853,7 +5853,7 @@ def transformer_lm_big(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
-@register_model_architecture("norm_attention_lm", "norm_glu_small_lm_base")
+@register_model_architecture("norm_attention_lm", "norm_ln_glu_small_lm_base")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -5872,7 +5872,7 @@ def transformer_lm_big(args):
     args.norm_type = "layernorm"
     args.multiple = 2
 
-@register_model_architecture("norm_attention_lm", "norm_glu_ffn_lm_base")
+@register_model_architecture("norm_attention_lm", "norm_ln_ffn_lm_base")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
