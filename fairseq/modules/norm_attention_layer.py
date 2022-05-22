@@ -15,6 +15,12 @@ from torch import Tensor
 # merge attention
 from fairseq.modules import NormLocalAttention, NormLinearAttention
 from fairseq.modules import GLU
+# norm layer
+from fairseq.modules import SimpleRMSNorm
+from fairseq.modules import GatedRMSNorm
+from fairseq.modules import RMSNorm
+from fairseq.modules import Orpe
+from fairseq.modules import OrpeV2
 
 # class NormAttentionEncoderLayer(TransformerEncoderLayer):
 #     def __init__(self, args):
@@ -346,7 +352,12 @@ class NormAttentionDecoderLayer(nn.Module):
         # char_inputs can be used to determint this.
         # TODO  remove this once we update apex with the fix
         export = getattr(args, "char_inputs", False)
-        self.self_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
+        # self.self_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
+        print(f"Decoder Norm Type: {attn_type}")
+        if attn_type == "simplermsnorm":
+            self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
+        else:
+            self.self_attn_layer_norm = LayerNorm(self.embed_dim)
 
         if no_encoder_attn:
             self.encoder_attn = None
@@ -376,7 +387,12 @@ class NormAttentionDecoderLayer(nn.Module):
                 self.quant_noise_block_size,
             )
 
-        self.final_layer_norm = LayerNorm(self.embed_dim, export=export)
+        # self.final_layer_norm = LayerNorm(self.embed_dim, export=export)
+        attn_type = getattr(args, 'attn_type', 'layernorm')
+        if attn_type == "simplermsnorm":
+            self.final_layer_norm = SimpleRMSNorm(self.embed_dim)
+        else:
+            self.final_layer_norm = LayerNorm(self.embed_dim)
         self.need_attn = True
 
         self.onnx_trace = False
@@ -764,7 +780,12 @@ class NormAttentionEncoderLayer(nn.Module):
         self.quant_noise = getattr(args, 'quant_noise_pq', 0)
         self.quant_noise_block_size = getattr(args, 'quant_noise_pq_block_size', 8) or 8
         self.self_attn = self.build_self_attention(self.embed_dim, args)
-        self.self_attn_layer_norm = LayerNorm(self.embed_dim)
+        attn_type = getattr(args, 'attn_type', 'layernorm')
+        print(f"Encoder Norm Type: {attn_type}")
+        if attn_type == "simplermsnorm":
+            self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
+        else:
+            self.self_attn_layer_norm = LayerNorm(self.embed_dim)
         self.dropout_module = FairseqDropout(
             args.dropout, module_name=self.__class__.__name__
         )
@@ -807,7 +828,10 @@ class NormAttentionEncoderLayer(nn.Module):
                 self.quant_noise_block_size,
             )
 
-        self.final_layer_norm = LayerNorm(self.embed_dim)
+        if attn_type == "simplermsnorm":
+            self.final_layer_norm = SimpleRMSNorm(self.embed_dim)
+        else:
+            self.final_layer_norm = LayerNorm(self.embed_dim)
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
