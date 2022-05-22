@@ -353,6 +353,7 @@ class NormAttentionDecoderLayer(nn.Module):
         # TODO  remove this once we update apex with the fix
         export = getattr(args, "char_inputs", False)
         # self.self_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
+        attn_type = getattr(args, 'attn_type', 'layernorm')
         print(f"Decoder Norm Type: {attn_type}")
         if attn_type == "simplermsnorm":
             self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
@@ -388,7 +389,6 @@ class NormAttentionDecoderLayer(nn.Module):
             )
 
         # self.final_layer_norm = LayerNorm(self.embed_dim, export=export)
-        attn_type = getattr(args, 'attn_type', 'layernorm')
         if attn_type == "simplermsnorm":
             self.final_layer_norm = SimpleRMSNorm(self.embed_dim)
         else:
