@@ -4508,6 +4508,31 @@ class TransformerNormModel(TransformerModel):
             no_encoder_attn=getattr(args, "no_cross_attention", False),
         )
 
+@register_model("normattention_only_encoder")
+class TransformerNormModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return NormAttentionEncoder(args, src_dict, embed_tokens)
+
 ############### NormMixAttention
 class NormMixAttentionEncoder(TransformerEncoder):
     """
@@ -5508,4 +5533,26 @@ def transformer_wmt_en_de(args):
     ### glu
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
+
+### for test
+@register_model_architecture("normattention_only_encoder", "vanilla_wmt_en_de_norm_glu_small_only_encoder")
+def transformer_wmt_en_de(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_use_orpe = False
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.decoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    args.multiple = 2
 ################### mix attention

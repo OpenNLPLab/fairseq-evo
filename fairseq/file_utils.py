@@ -85,6 +85,7 @@ def load_archive_file(archive_file):
             )
         )
         ext = os.path.splitext(archive_file)[1][1:]
+        print(resolved_archive_file)
         with tarfile.open(resolved_archive_file, "r:" + ext) as archive:
             top_dir = os.path.commonprefix(archive.getnames())
             archive.extractall(tempdir)

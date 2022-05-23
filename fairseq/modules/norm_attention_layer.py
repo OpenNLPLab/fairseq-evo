@@ -632,7 +632,9 @@ class NormAttentionDecoderLayer(nn.Module):
         #print(x.shape)
         if need_head_weights:
             need_attn = True
-
+        # print("decoder")
+        # print("before")
+        # print(x.shape, encoder_out.shape)
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -673,6 +675,8 @@ class NormAttentionDecoderLayer(nn.Module):
         else:
             y = x
 
+        # print("before self")
+        # print(x.shape, y.shape)
         #print('inside layer', x.shape)
         x, attn = self.self_attn(
             query=x,
@@ -726,6 +730,8 @@ class NormAttentionDecoderLayer(nn.Module):
             if not self.normalize_before:
                 x = self.encoder_attn_layer_norm(x)
 
+        # print("after")
+        # print(x.shape)
         residual = x
         if self.normalize_before:
             x = self.final_layer_norm(x)
@@ -971,7 +977,9 @@ class NormAttentionEncoderLayer(nn.Module):
         # will become -inf, which results in NaN in model parameters
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
-
+        # print("encoder")
+        # print("before")
+        # print(x.shape)
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -1001,4 +1009,6 @@ class NormAttentionEncoderLayer(nn.Module):
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
             x = self.final_layer_norm(x)
+        # print("after")
+        # print(x.shape)
         return x
