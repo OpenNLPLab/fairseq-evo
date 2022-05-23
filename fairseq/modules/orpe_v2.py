@@ -1,5 +1,6 @@
 # - https://github.com/zh217/torch-dct
 # - https://github.com/zh217/torch-dct/issues/15
+# 还是单头版本, 但是适配多维
 
 import torch
 import torch.nn as nn
