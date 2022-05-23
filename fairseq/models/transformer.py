@@ -483,6 +483,8 @@ class TransformerEncoder(FairseqEncoder):
 
         arr = []
         attention_types = getattr(args, "encoder_attention_types", [])
+        if attention_types == []:
+            attention_types = getattr(args, "attention_types", [])
         encoder_chunk_sizes = getattr(args, "encoder_chunk_size", -1)
         encoder_attention_heads_list = getattr(args, "encoder_attention_heads_list", [])
         for _ in range(args.encoder_layers):
@@ -826,6 +828,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         arr = []
         attention_types = getattr(args, "decoder_attention_types", [])
+        if attention_types == []:
+            attention_types = getattr(args, "attention_types", [])
+        print("================================")
+        print("decoder_attention_types")
+        print(attention_types)
+        print("================================")
         for _ in range(args.decoder_layers):
             args.index = _
             if attention_types != []:
