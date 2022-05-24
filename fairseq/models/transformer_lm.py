@@ -5888,6 +5888,47 @@ def transformer_lm_big(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
+################### norm attention + glu act
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_elu")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.fina_act = "elu"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_elu")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.fina_act = "elu"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.multiple = 2
+################### norm attention + glu act
+
 ### speed test
 # 删除mask, 不影响速度
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_abl")
