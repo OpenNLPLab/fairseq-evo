@@ -343,10 +343,12 @@ class NormAttentionDecoderLayer(nn.Module):
         self.normalize_before = args.decoder_normalize_before
         self.use_glu = getattr(args, "use_glu", False)
         self.glu_act = getattr(args, "glu_act", False)
+        self.fina_act = getattr(args, "fina_act", "None")
         print("=============================")
         print("Decoder")
         print(f"self.use_glu {self.use_glu}")
         print(f"self.glu_act {self.glu_act}")
+        print(f"self.fina_act {self.fina_act}")
         print("=============================")
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
@@ -373,7 +375,7 @@ class NormAttentionDecoderLayer(nn.Module):
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
             print(f"GLU multiple {p}")
-            self.glu = GLU(d1, d2, self.glu_act)
+            self.glu = GLU(d1, d2, self.glu_act, self.fina_act)
         else:
             self.fc1 = self.build_fc1(
                 self.embed_dim,
@@ -808,9 +810,11 @@ class NormAttentionEncoderLayer(nn.Module):
         self.normalize_before = args.encoder_normalize_before
         self.use_glu = getattr(args, "use_glu", False)
         self.glu_act = getattr(args, "glu_act", False)
+        self.fina_act = getattr(args, "fina_act", "None")
         print("=============================")
         print(f"self.use_glu {self.use_glu}")
         print(f"self.glu_act {self.glu_act}")
+        print(f"self.fina_act {self.fina_act}")
         print("=============================")
 
         if self.use_glu:
@@ -819,7 +823,7 @@ class NormAttentionEncoderLayer(nn.Module):
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
             print(f"GLU multiple {p}")
-            self.glu = GLU(d1, d2, self.glu_act)
+            self.glu = GLU(d1, d2, self.glu_act, self.fina_act)
         else:
             self.fc1 = self.build_fc1(
                 self.embed_dim,
