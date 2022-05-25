@@ -127,12 +127,13 @@ class TransformerEncoderLayer(nn.Module):
         # will become -inf, which results in NaN in model parameters
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
-        print("encoder")
-        print("before")
-        print(x.shape)
+        # print("encoder")
+        # print("before")
+        # print(x.shape)
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
+        # print("123")
         x, _ = self.self_attn(
             query=x,
             key=x,
@@ -141,6 +142,7 @@ class TransformerEncoderLayer(nn.Module):
             need_weights=False,
             attn_mask=attn_mask,
         )
+        # print("456")
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
         if not self.normalize_before:

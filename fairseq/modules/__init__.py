@@ -177,6 +177,12 @@ from .norm_attention_layer import NormAttentionDecoderLayer, NormAttentionEncode
 from .norm_mix_attention import NormMixAttention
 from .norm_mix_layer import NormMixAttentionDecoderLayer, NormMixAttentionEncoderLayer
 
+# long short attention
+from .ls_attention_causal import LSAttentionCausal
+from .ls_attention_non_causal import LSAttentionNonCausal
+from .ls_attention_layer import LSAttentionEncoderLayer, LSAttentionDecoderLayer
+from .ls_attention_causal_model import TransformerLSModel
+
 __all__ = [
     "AdaptiveInput",
     "AdaptiveSoftmax",
