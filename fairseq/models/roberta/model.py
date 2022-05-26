@@ -4594,6 +4594,88 @@ def roberta_base_architecture(args):
     args.norm_type = "layernorm"
     args.multiple = 2
     args.fina_act = "elu"
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_swish")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.fina_act = "swish"
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_swish")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.multiple = 2
+    args.fina_act = "swish"
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_swish")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    args.fina_act = "swish"
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_swish")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    args.multiple = 2
+    args.fina_act = "swish"
 #### GLU + FINAL ACT
 ######## GLU
 
