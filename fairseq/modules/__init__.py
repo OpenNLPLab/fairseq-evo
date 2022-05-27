@@ -124,8 +124,8 @@ from .spe import ConvSPE, SineSPE, SPEFilter
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
 #from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
 # performer
-# from .multihead_performer_attention import MultiheadPerformerAttention
-# from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
+from .multihead_performer_attention import MultiheadPerformerAttention
+from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
 # transformer merge
 from .multihead_merge_attention import MultiheadMergeAttention
 from .transformer_merge_layer import TransformerMergeDecoderLayer, TransformerMergeEncoderLayer
@@ -177,6 +177,8 @@ from .norm_attention_layer import NormAttentionDecoderLayer, NormAttentionEncode
 from .norm_mix_attention import NormMixAttention
 from .norm_mix_layer import NormMixAttentionDecoderLayer, NormMixAttentionEncoderLayer
 
+# another version
+from .ls_attention import LongShortAttention
 # long short attention
 from .ls_attention_causal import LSAttentionCausal
 from .ls_attention_non_causal import LSAttentionNonCausal

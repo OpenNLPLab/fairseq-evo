@@ -76,6 +76,8 @@ from fairseq.models.transformer import NormAttentionEncoder
 from fairseq.models.transformer import NormMixAttentionEncoder
 # ls attention
 from fairseq.models.transformer import LSAttentionEncoder
+# performer
+from fairseq.models.transformer import PerformerEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -1355,6 +1357,36 @@ class RobertaLSModel(RobertaModel):
         encoder = RobertaLSEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 ############# LSAttentionEncoder
+
+############# PerformerEncoder
+class RobertaPerformerEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = PerformerEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_performer")
+class RobertaPerformerModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaPerformerEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
@@ -4837,10 +4869,27 @@ def roberta_base_architecture(args):
 
 
 ###### roberta_ls_attention
+# @register_model_architecture("roberta_ls_attention", "roberta_ls")
+# def roberta_base_architecture(args):
+#     base_architecture(args)
+#     args.chunk_size = 16
+#     args.chunk_rank = 1
+#     args.window_len = 512
+
 @register_model_architecture("roberta_ls_attention", "roberta_ls")
 def roberta_base_architecture(args):
     base_architecture(args)
-    args.chunk_size = 16
-    args.chunk_rank = 1
-    args.window_len = 512
+    args.causal = False
+    # args.window_size = 128
+    args.window_size = 64
+    args.segment_size = None
+    args.r = 128
 ###### roberta_ls_attention
+
+###### performer
+@register_model_architecture("roberta_performer", "roberta_performer")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.approx_attn_dim = 64
+    args.causal = False
+###### performer
