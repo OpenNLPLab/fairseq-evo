@@ -6341,3 +6341,16 @@ def transformer_lm_big(args):
     args.approx_attn_dim = 64
     args.causal = True
 ############# performer_lm
+
+############# flash_lm
+@register_model_architecture("flash_lm", "flash_wiki")
+def transformer_lm_flash(args):
+    transformer_lm_big(args)
+    args.decoder_layers = 10
+    args.s = 128
+    # args.s = 512
+    args.norm_type = "scale_norm"
+    args.eps = 1e-5
+    args.max_position_embeddings = 512
+    args.expansion_factor = 2
+############# flash_lm
