@@ -228,6 +228,12 @@ class ChunkedLSAttention(nn.Module):
         return out
 
     def forward_(self, h, h_cache, key_pe, pos_embed_window, chunked_attn_mask=None):
+        d1 = h.size(0)
+        d2 = h_cache.size(0)
+        if d1 > d2:
+            h_cache = F.pad(h_cache, (0, 0, 0, 0, 0, d1 - d2))
+        else:
+            h_cache = h_cache[:d1]
         # h = bsz x seq_len x H
         # h_cache = bsz x cache_len x H
         bsz = h.size(0)
@@ -263,7 +269,6 @@ class ChunkedLSAttention(nn.Module):
         h_cache_win = h_cache[:, -self.window_len:]
         key_cache_win = self.proj_key(h_cache_win)
         val_cache_win = self.proj_val(h_cache_win)
-        # print(key_cache_win.shape, key_window_bp.shape)
         key_window = torch.cat([key_cache_win, key_window_bp], dim=1)
         val_window = torch.cat([val_cache_win, val_window_bp], dim=1)
 
