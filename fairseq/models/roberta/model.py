@@ -4876,14 +4876,22 @@ def roberta_base_architecture(args):
     args.chunk_rank = 1
     args.window_len = 512
 
+# @register_model_architecture("roberta_ls_attention", "roberta_ls_v2")
+# def roberta_base_architecture(args):
+#     base_architecture(args)
+#     args.causal = False
+#     # args.window_size = 128
+#     args.window_size = 64
+#     args.segment_size = None
+#     args.r = 128
 @register_model_architecture("roberta_ls_attention", "roberta_ls_v2")
 def roberta_base_architecture(args):
     base_architecture(args)
     args.causal = False
     # args.window_size = 128
     args.window_size = 64
-    args.segment_size = None
-    args.r = 128
+    args.segment_size = 16
+    args.r = 1
 ###### roberta_ls_attention
 
 ###### performer
