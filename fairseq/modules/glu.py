@@ -48,6 +48,7 @@ class GLU(nn.Module):
     def forward(self, x):
         o1 = self.l1(x)
         weight = self.act_fun(o1)
+        weight = self.dropout(weight)
         o2 = self.l2(x)
         output = weight * o2
         output = self.l3(output)
