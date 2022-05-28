@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class GLU(nn.Module):
-    def __init__(self, d1, d2, act_fun, fina_act="None"):
+    def __init__(self, d1, d2, act_fun, fina_act="None", dropout=0.0):
         super().__init__()
         # self.l1 = nn.Linear(d1, d2, bias=False)
         # self.l2 = nn.Linear(d1, d2, bias=False)
@@ -13,6 +13,8 @@ class GLU(nn.Module):
         self.l3 = nn.Linear(d2, d1)
         print("act_fun")
         self.act_fun = self.get_act_fun(act_fun)
+        print(f"dropout {dropout}")
+        self.dropout = nn.Dropout(p=dropout)
         print("final act_fun")
         self.fina_act = self.get_act_fun(fina_act)
 

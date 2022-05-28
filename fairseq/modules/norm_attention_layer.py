@@ -344,11 +344,13 @@ class NormAttentionDecoderLayer(nn.Module):
         self.use_glu = getattr(args, "use_glu", False)
         self.glu_act = getattr(args, "glu_act", False)
         self.fina_act = getattr(args, "fina_act", "None")
+        self.glu_dropout = getattr(args, "glu_dropout", 0.0)
         print("=============================")
         print("Decoder")
         print(f"self.use_glu {self.use_glu}")
         print(f"self.glu_act {self.glu_act}")
         print(f"self.fina_act {self.fina_act}")
+        print(f"self.glu_dropout {self.glu_dropout}")
         print("=============================")
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
@@ -375,7 +377,7 @@ class NormAttentionDecoderLayer(nn.Module):
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
             print(f"GLU multiple {p}")
-            self.glu = GLU(d1, d2, self.glu_act, self.fina_act)
+            self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
         else:
             self.fc1 = self.build_fc1(
                 self.embed_dim,
@@ -811,10 +813,13 @@ class NormAttentionEncoderLayer(nn.Module):
         self.use_glu = getattr(args, "use_glu", False)
         self.glu_act = getattr(args, "glu_act", False)
         self.fina_act = getattr(args, "fina_act", "None")
+        self.glu_dropout = getattr(args, "glu_dropout", 0.0)
         print("=============================")
+        print("Encoder")
         print(f"self.use_glu {self.use_glu}")
         print(f"self.glu_act {self.glu_act}")
         print(f"self.fina_act {self.fina_act}")
+        print(f"self.glu_dropout {self.glu_dropout}")
         print("=============================")
 
         if self.use_glu:
@@ -823,7 +828,7 @@ class NormAttentionEncoderLayer(nn.Module):
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
             print(f"GLU multiple {p}")
-            self.glu = GLU(d1, d2, self.glu_act, self.fina_act)
+            self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
         else:
             self.fc1 = self.build_fc1(
                 self.embed_dim,
