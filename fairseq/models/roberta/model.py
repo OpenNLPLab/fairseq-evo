@@ -4869,14 +4869,14 @@ def roberta_base_architecture(args):
 
 
 ###### roberta_ls_attention
-# @register_model_architecture("roberta_ls_attention", "roberta_ls")
-# def roberta_base_architecture(args):
-#     base_architecture(args)
-#     args.chunk_size = 16
-#     args.chunk_rank = 1
-#     args.window_len = 512
-
 @register_model_architecture("roberta_ls_attention", "roberta_ls")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.chunk_size = 16
+    args.chunk_rank = 1
+    args.window_len = 512
+
+@register_model_architecture("roberta_ls_attention", "roberta_ls_v2")
 def roberta_base_architecture(args):
     base_architecture(args)
     args.causal = False
