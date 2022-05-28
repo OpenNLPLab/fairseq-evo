@@ -20,27 +20,27 @@ class LSAttentionEncoderLayer(TransformerEncoderLayer):
         super().__init__(args)
 
     def build_self_attention(self, embed_dim, args):
-        # return LSAttentionNonCausal(
-        #     dim=embed_dim,
-        #     num_heads=args.encoder_attention_heads,
-        #     max_seq_len=getattr(args, "max_seq_len", 512),
-        #     dropout=args.attention_dropout,
-        #     num_landmarks=getattr(args, "num_landmarks", 32),
-        #     window_size=getattr(args, "window_size", 8),
-        # )
+        return LSAttentionNonCausal(
+            dim=embed_dim,
+            num_heads=args.encoder_attention_heads,
+            max_seq_len=getattr(args, "max_seq_len", 512),
+            dropout=args.attention_dropout,
+            num_landmarks=getattr(args, "num_landmarks", 32),
+            window_size=getattr(args, "window_size", 8),
+        )
         # return LSAttentionNonCausal(
         #     dim=embed_dim,
         #     num_heads=args.encoder_attention_heads,
         #     attn_drop=args.attention_dropout,
         # )
-        return LongShortAttention(
-            dim=embed_dim,
-            heads=args.encoder_attention_heads,
-            causal=getattr(args, "causal", False),
-            window_size=getattr(args, "window_size", 128),
-            segment_size=getattr(args, "segment_size", 16),
-            r=getattr(args, "r", 1),
-        )
+        # return LongShortAttention(
+        #     dim=embed_dim,
+        #     heads=args.encoder_attention_heads,
+        #     causal=getattr(args, "causal", False),
+        #     window_size=getattr(args, "window_size", 128),
+        #     segment_size=getattr(args, "segment_size", 16),
+        #     r=getattr(args, "r", 1),
+        # )
 
 ############# don't use
 class LSAttentionDecoderLayer(TransformerDecoderLayer):
@@ -52,22 +52,22 @@ class LSAttentionDecoderLayer(TransformerDecoderLayer):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
-        # return LSAttentionCausal(
-        #     d_model=embed_dim,
-        #     n_head=args.encoder_attention_heads,
-        #     chunk_size=getattr(args, "chunk_size", 16),
-        #     chunk_rank=getattr(args, "chunk_rank", 1),
-        #     window_len=getattr(args, "window_len", 512),
-        #     attn_drop=args.attention_dropout,
-        # )
-        return LongShortAttention(
-            dim=embed_dim,
-            heads=args.decoder_attention_heads,
-            causal=getattr(args, "causal", True),
-            window_size=getattr(args, "window_size", 128),
-            segment_size=getattr(args, "segment_size", 16),
-            r=getattr(args, "r", 1),
+        return LSAttentionCausal(
+            d_model=embed_dim,
+            n_head=args.encoder_attention_heads,
+            chunk_size=getattr(args, "chunk_size", 16),
+            chunk_rank=getattr(args, "chunk_rank", 1),
+            window_len=getattr(args, "window_len", 512),
+            attn_drop=args.attention_dropout,
         )
+        # return LongShortAttention(
+        #     dim=embed_dim,
+        #     heads=args.decoder_attention_heads,
+        #     causal=getattr(args, "causal", True),
+        #     window_size=getattr(args, "window_size", 128),
+        #     segment_size=getattr(args, "segment_size", 16),
+        #     r=getattr(args, "r", 1),
+        # )
 
     def build_encoder_attention(self, embed_dim, args):
         # return LSAttentionNonCausal(
@@ -75,19 +75,19 @@ class LSAttentionDecoderLayer(TransformerDecoderLayer):
         #     num_heads=args.encoder_attention_heads,
         #     attn_drop=args.attention_dropout,
         # )
-        # return LSAttentionNonCausal(
-        #     dim=embed_dim,
-        #     num_heads=args.encoder_attention_heads,
-        #     max_seq_len=getattr(args, "max_seq_len", 512),
-        #     dropout=args.attention_dropout,
-        #     num_landmarks=getattr(args, "num_landmarks", 32),
-        #     window_size=getattr(args, "window_size", 8),
-        # )
-        return LongShortAttention(
+        return LSAttentionNonCausal(
             dim=embed_dim,
-            heads=args.encoder_attention_heads,
-            causal=getattr(args, "causal", False),
-            window_size=getattr(args, "window_size", 128),
-            segment_size=getattr(args, "segment_size", 16),
-            r=getattr(args, "r", 1),
+            num_heads=args.encoder_attention_heads,
+            max_seq_len=getattr(args, "max_seq_len", 512),
+            dropout=args.attention_dropout,
+            num_landmarks=getattr(args, "num_landmarks", 32),
+            window_size=getattr(args, "window_size", 8),
         )
+        # return LongShortAttention(
+        #     dim=embed_dim,
+        #     heads=args.encoder_attention_heads,
+        #     causal=getattr(args, "causal", False),
+        #     window_size=getattr(args, "window_size", 128),
+        #     segment_size=getattr(args, "segment_size", 16),
+        #     r=getattr(args, "r", 1),
+        # )
