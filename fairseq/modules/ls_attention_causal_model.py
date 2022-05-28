@@ -263,6 +263,7 @@ class ChunkedLSAttention(nn.Module):
         h_cache_win = h_cache[:, -self.window_len:]
         key_cache_win = self.proj_key(h_cache_win)
         val_cache_win = self.proj_val(h_cache_win)
+        # print(key_cache_win.shape, key_window_bp.shape)
         key_window = torch.cat([key_cache_win, key_window_bp], dim=1)
         val_window = torch.cat([val_cache_win, val_window_bp], dim=1)
 
@@ -493,16 +494,19 @@ class TransformerLSModel(nn.Module):
             pos_emb = self.emb_dropout(pos_emb)
 
         h_cache_next = []
+        ### add
+        d = h.shape[0]
+        ### add
         for l, layer in enumerate(self.layers):
             cache_size = self.mem_len
             if cache_size > block_size:
                 h_cache_next_l = torch.cat(
-                    [h_cache[l][:, -cache_size + block_size :, :], h], dim=1
+                    [h_cache[l][:d, -cache_size + block_size :, :], h], dim=1
                 ).detach()
             else:
                 h_cache_next_l = h[:, -cache_size:, :].detach()
             h_cache_next.append(h_cache_next_l)
-            h = layer(h, h_cache[l], pos_chunks, pos_emb, dec_attn_mask, chunk_attn_mask)  # B x M x H
+            h = layer(h, h_cache[l][:d], pos_chunks, pos_emb, dec_attn_mask, chunk_attn_mask)  # B x M x H
 
         if self.emb_dropout is not None:
             h = self.emb_dropout(h)
@@ -513,6 +517,7 @@ class TransformerLSModel(nn.Module):
         if padded:
             out = out[:, :orig_seqlen]
 
+        # out = out.transpose(0, 1)
         return out, h_cache_next, dummy_loss
 
     def get_aux_loss(self):

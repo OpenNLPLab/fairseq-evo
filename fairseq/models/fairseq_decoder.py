@@ -77,7 +77,6 @@ class FairseqDecoder(nn.Module):
         sample: Optional[Dict[str, Tensor]] = None,
     ):
         """Get normalized probabilities (or log probs) from a net's output."""
-
         if hasattr(self, "adaptive_softmax") and self.adaptive_softmax is not None:
             if sample is not None:
                 assert "target" in sample
