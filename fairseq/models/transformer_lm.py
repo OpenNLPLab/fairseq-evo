@@ -6229,9 +6229,56 @@ def transformer_lm_big(args):
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
+
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_orpe_1d3")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_orpe_1d3")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    args.multiple = 2
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
 ################### norm attention + urpe
 
-################### norm attention + urpe
+################### norm attention + urpe + dropout
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_orpe_1d3_dropout02")
 def transformer_lm_big(args):
     base_lm_architecture(args)
@@ -6280,7 +6327,113 @@ def transformer_lm_big(args):
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
     args.glu_dropout = 0.2
-################### norm attention + urpe
+################### norm attention + urpe + dropout
+
+################### norm attention + urpe + no_abs
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_orpe_1d3_no_abs")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ###### no abs
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_orpe_1d3_no_abs")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.multiple = 2
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ###### no abs
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_orpe_1d3_no_abs")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ###### no abs
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_orpe_1d3_no_abs")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "layernorm"
+    args.norm_type = "layernorm"
+    args.multiple = 2
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ###### no abs
+    args.no_token_positional_embeddings = True
+################### norm attention + urpe + no_abs
 
 ### speed test
 # 删除mask, 不影响速度
