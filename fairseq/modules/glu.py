@@ -14,7 +14,9 @@ class GLU(nn.Module):
         print("act_fun")
         self.act_fun = self.get_act_fun(act_fun)
         print(f"dropout {dropout}")
-        self.dropout = nn.Dropout(p=dropout)
+        self.p = dropout
+        if self.p > 0.0:
+            self.dropout = nn.Dropout(p=dropout)
         print("final act_fun")
         self.fina_act = self.get_act_fun(fina_act)
 
@@ -48,7 +50,8 @@ class GLU(nn.Module):
     def forward(self, x):
         o1 = self.l1(x)
         weight = self.act_fun(o1)
-        weight = self.dropout(weight)
+        if self.p > 0.0:
+            weight = self.dropout(weight)
         o2 = self.l2(x)
         output = weight * o2
         output = self.l3(output)
