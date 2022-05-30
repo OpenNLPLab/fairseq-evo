@@ -115,9 +115,11 @@ class RobertaModel(FairseqEncoderModel):
         init_method = getattr(args, 'init_method', "default")
         print(f"init_method {init_method}")
         if init_method == "default":
-            print(init_method)
+            print("default init")
             self.apply(init_bert_params)
         else:
+            print("small init")
+            print(init_method)
             self.apply(small_init_weights)
 
         self.classification_heads = nn.ModuleDict()

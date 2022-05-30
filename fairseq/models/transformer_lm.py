@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import torch.nn as nn
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
@@ -1727,6 +1728,21 @@ class LKOrLanguageModel(TransformerLanguageModel):
         return cls(decoder)
 
 ################################################################
+def small_init_weights(module):
+    if isinstance(module, (nn.Linear)):
+        module.weight.data.normal_(mean=0.0, std=0.02)        
+
+    if isinstance(module, (nn.Embedding)):
+        # nn.init.uniform_(module.weight, a=-1e-4, b=1e-4) # SmallInit(Emb)
+        print("Embdding norm before")
+        print(torch.norm(module.weight.data))
+        module.weight.data.normal_(mean=0.0, std=1e-5)
+        print("Embdding norm after")
+        print(torch.norm(module.weight.data))
+
+    if isinstance(module, nn.Linear) and module.bias is not None:
+        module.bias.data.zero_()
+    
 # NormAttentionDecoder
 @register_model("norm_attention_lm", dataclass=TransformerLanguageModelConfig)
 class NormAttentionLanguageModel(TransformerLanguageModel):
@@ -1779,10 +1795,18 @@ class NormAttentionLanguageModel(TransformerLanguageModel):
             )
             assert args.decoder_input_dim == args.decoder_output_dim
 
+        init_method = getattr(args, 'init_method', "default")
+        print(f"init_method {init_method}")
+        if init_method != "default":
+            print("small init")
+            embed_tokens.apply(small_init_weights)
+
         decoder = NormAttentionDecoder(
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
+
+
 
 # NormMixAttentionDecoder
 @register_model("norm_mix_attention_lm", dataclass=TransformerLanguageModelConfig)
@@ -6434,6 +6458,126 @@ def transformer_lm_big(args):
     ###### no abs
     args.no_token_positional_embeddings = True
 ################### norm attention + urpe + no_abs
+
+################### norm attention + urpe + pure rms norm
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_small_init")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    args.init_method = "small_embdding"
+
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_small_init")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.multiple = 2
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    args.init_method = "small_embdding"
+
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_no_abs_small_init")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    args.init_method = "small_embdding"
+    ###### no abs
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_no_abs_small_init")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.multiple = 2
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    args.init_method = "small_embdding"
+    ###### no abs
+    args.no_token_positional_embeddings = True
+################### norm attention + urpe + pure rms norm
 
 ### speed test
 # 删除mask, 不影响速度
