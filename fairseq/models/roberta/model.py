@@ -81,6 +81,20 @@ from fairseq.models.transformer import PerformerEncoder
 
 logger = logging.getLogger(__name__)
 
+def small_init_weights(module):
+    if isinstance(module, (nn.Linear)):
+        module.weight.data.normal_(mean=0.0, std=0.02)        
+
+    if isinstance(module, (nn.Embedding)):
+        # nn.init.uniform_(module.weight, a=-1e-4, b=1e-4) # SmallInit(Emb)
+        print("Embdding norm before")
+        print(torch.norm(module.weight.data))
+        module.weight.data.normal_(mean=0.0, std=1e-5)
+        print("Embdding norm after")
+        print(torch.norm(module.weight.data))
+
+    if isinstance(module, nn.Linear) and module.bias is not None:
+        module.bias.data.zero_()
 
 @register_model("roberta")
 class RobertaModel(FairseqEncoderModel):
@@ -98,7 +112,13 @@ class RobertaModel(FairseqEncoderModel):
         self.args = args
 
         # We follow BERT's random weight initialization
-        self.apply(init_bert_params)
+        init_method = getattr(args, 'init_method', "default")
+        print(f"init_method {init_method}")
+        if init_method == "default":
+            print(init_method)
+            self.apply(init_bert_params)
+        else:
+            self.apply(small_init_weights)
 
         self.classification_heads = nn.ModuleDict()
 
@@ -1276,8 +1296,30 @@ class RobertaNormEncoder(RobertaEncoder):
 
     def build_encoder(self, args, dictionary, embed_tokens):
         encoder = NormAttentionEncoder(args, dictionary, embed_tokens)
+        # encoder.apply(init_bert_params)
+        init_method = getattr(args, 'init_method', "default")
         encoder.apply(init_bert_params)
+        # print(f"init_method {init_method}")
+        # if init_method == "small_embdding":
+        #     encoder.apply(self._init_weights)
+        # else:
+        #     encoder.apply(init_bert_params)
         return encoder
+    
+    def _init_weights(self, module):
+        print("small init")
+        if isinstance(module, (nn.Linear)):
+            module.weight.data.normal_(mean=0.0, std=0.02)        
+
+        if isinstance(module, (nn.Embedding)):
+            print("here")
+            # nn.init.uniform_(module.weight, a=-1e-4, b=1e-4) # SmallInit(Emb)
+            print(torch.norm(module.weight.data))
+            module.weight.data.normal_(mean=0.0, std=1e-5)
+            print(torch.norm(module.weight.data))
+
+        if isinstance(module, nn.Linear) and module.bias is not None:
+            module.bias.data.zero_()
 
 @register_model("roberta_norm_attention")
 class RobertaNormOrpeModel(RobertaModel):
@@ -1307,7 +1349,6 @@ class RobertaNormMixEncoder(RobertaEncoder):
     def build_encoder(self, args, dictionary, embed_tokens):
         encoder = NormMixAttentionEncoder(args, dictionary, embed_tokens)
         encoder.apply(init_bert_params)
-        return encoder
 
 @register_model("roberta_norm_mix_attention")
 class RobertaNormMixModel(RobertaModel):
@@ -5079,9 +5120,72 @@ def roberta_base_architecture(args):
     args.p_matrix = 1
     # add
     args.no_token_positional_embeddings = True
-
-
 ###### only rel
+
+###### small init + pure rms norm + urpe
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_small_init")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    #### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    args.init_method = "small_embdding"
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_small_init")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.multiple = 2
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    args.init_method = "small_embdding"
+###### small init + pure rms norm + urpe
+
+############## GLU
+
+
 
 
 ###### roberta_ls_attention

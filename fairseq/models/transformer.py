@@ -117,6 +117,8 @@ from fairseq.modules import (
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
+# norm layer
+from fairseq.modules import SimpleRMSNorm
 
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
@@ -466,7 +468,14 @@ class TransformerEncoder(FairseqEncoder):
         )
 
         if getattr(args, "layernorm_embedding", False):
-            self.layernorm_embedding = LayerNorm(embed_dim)
+            attn_type = getattr(args, 'embdding_layernorm', 'layernorm')
+            print("--------------------------------------")
+            print(f"Encoder embdding layernorm type {attn_type}")
+            print("--------------------------------------")
+            if attn_type == "simplermsnorm":
+                self.layernorm_embedding = SimpleRMSNorm(embed_dim)
+            else:
+                self.layernorm_embedding = LayerNorm(embed_dim)
         else:
             self.layernorm_embedding = None
 
@@ -509,7 +518,14 @@ class TransformerEncoder(FairseqEncoder):
         self.num_layers = len(self.layers)
 
         if args.encoder_normalize_before:
-            self.layer_norm = LayerNorm(embed_dim)
+            attn_type = getattr(args, 'final_layernorm', 'layernorm')
+            print("--------------------------------------")
+            print(f"Encoder final layernorm type {attn_type}")
+            print("--------------------------------------")
+            if attn_type == "simplermsnorm":
+                self.layer_norm = SimpleRMSNorm(embed_dim)
+            else:
+                self.layer_norm = LayerNorm(embed_dim)
         else:
             self.layer_norm = None
 
@@ -534,6 +550,9 @@ class TransformerEncoder(FairseqEncoder):
         # embed tokens and positions
         if token_embedding is None:
             token_embedding = self.embed_tokens(src_tokens)
+        # print(torch.norm(self.embed_tokens.weight.data))
+        # print(token_embedding)
+        # print(torch.norm(token_embedding))
         x = embed = self.embed_scale * token_embedding
         if self.embed_positions is not None:
             x = embed + self.embed_positions(src_tokens)
@@ -618,7 +637,6 @@ class TransformerEncoder(FairseqEncoder):
         has_pads = (src_tokens.device.type == "xla" or encoder_padding_mask.any())
 
         x, encoder_embedding = self.forward_embedding(src_tokens, token_embeddings)
-
         # account for padding while computing the representation
         if has_pads:
             x = x * (1 - encoder_padding_mask.unsqueeze(-1).type_as(x))
@@ -812,7 +830,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         )
 
         if getattr(args, "layernorm_embedding", False):
-            self.layernorm_embedding = LayerNorm(embed_dim)
+            attn_type = getattr(args, 'embdding_layernorm', 'layernorm')
+            print("--------------------------------------")
+            print(f"Encoder embdding layernorm type {attn_type}")
+            print("--------------------------------------")
+            if attn_type == "simplermsnorm":
+                self.layernorm_embedding = SimpleRMSNorm(embed_dim)
+            else:
+                self.layernorm_embedding = LayerNorm(embed_dim)
         else:
             self.layernorm_embedding = None
 
@@ -850,7 +875,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         if args.decoder_normalize_before and not getattr(
             args, "no_decoder_final_norm", False
         ):
-            self.layer_norm = LayerNorm(embed_dim)
+            attn_type = getattr(args, 'final_layernorm', 'layernorm')
+            print("--------------------------------------")
+            print(f"Decoder final layernorm type {attn_type}")
+            print("--------------------------------------")
+            if attn_type == "simplermsnorm":
+                self.layer_norm = SimpleRMSNorm(embed_dim)
+            else:
+                self.layer_norm = LayerNorm(embed_dim)
         else:
             self.layer_norm = None
 
