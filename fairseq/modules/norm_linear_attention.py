@@ -50,7 +50,7 @@ class NormLinearAttention(nn.Module):
         max_l=1024,
         has_out=False,
         causal=False,
-        weight_type=1,
+        weight_type=-1,
         c=1.0,
         v_act=False,
         use_dropout=False,
@@ -193,6 +193,16 @@ class NormLinearAttention(nn.Module):
             self.out_proj = quant_noise(
                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
             )
+        self.weight_type = weight_type
+        if self.weight_type == 1:
+            a0 = 1 - np.exp(-1)
+            a2 = 25 / 2 - 35 * np.exp(-1)
+            self.b0 = 3 * a2 / 2
+            self.b1 = a0 - a2 / 2
+        elif self.weight_type == 2:
+            # self.register_buffer("ratio", torch.sigmoid(torch.randn(1)))
+            self.r = 0.5
+            self.c = -2 * np.log(self.r)
 
         print(f"causal {self.causal}")
         print(f"has_out {self.has_out}")
@@ -204,6 +214,7 @@ class NormLinearAttention(nn.Module):
         print(f"use_orpe {self.use_orpe}")
         print(f"use_dropout {self.use_dropout}")
         print(f"kv_act {kv_act}")
+        print(f"self.weight_type {self.weight_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -364,6 +375,25 @@ class NormLinearAttention(nn.Module):
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
+
+        if self.weight_type == 1:
+            # print("linear laplace")
+            m = max(tgt_len, src_len)
+            index = torch.arange(1, m + 1).reshape(1, -1, 1).to(q)
+            q_index = index[:, :tgt_len, :] / m
+            k_index = index[:, :src_len, :] / m
+            q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
+            k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+        elif self.weight_type == 2:
+            # print("linear guassian")
+            m = max(tgt_len, src_len)
+            index = torch.arange(m).reshape(1, -1, 1).to(q)
+            q_index = index[:, :tgt_len, :] / m
+            k_index = index[:, :src_len, :] / m
+            q = (self.r ** (q_index ** 2)) * q
+            k = (self.r ** (k_index ** 2)) * k
+            q = torch.cat([q, self.c * q], dim=-1)
+            k = torch.cat([k, k], dim=-1)
 
         if self.causal:
             if (attn_mask == None):

@@ -435,7 +435,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 use_bound=getattr(args, "use_bound", False),
                 max_l=getattr(args, "max_l", 1024),
                 has_out=getattr(args, "has_out", False),
-                weight_type=getattr(args, "weight_type", 1),
+                weight_type=getattr(args, "weight_type", -1),
                 c=getattr(args, "c", 1.0),
                 v_act=getattr(args, "v_act", False),
                 use_dropout=getattr(args, "use_dropout", False),
@@ -502,7 +502,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 right_window=getattr(args, "right_window", 1),
                 group_type=getattr(args, "group_type", "chunk"),
                 use_softmax=getattr(args, "use_softmax", False),
-                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm")
+                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm"),
+                # weight
+                weight_type=getattr(args, "weight_type", -1),
             )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -528,7 +530,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 use_bound=getattr(args, "use_bound", False),
                 max_l=getattr(args, "max_l", 1024),
                 has_out=getattr(args, "has_out", False),
-                weight_type=getattr(args, "weight_type", 1),
+                weight_type=getattr(args, "weight_type", -1),
                 c=getattr(args, "c", 1.0),
                 v_act=getattr(args, "v_act", False),
                 use_dropout=getattr(args, "use_dropout", False),
@@ -595,7 +597,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 right_window=getattr(args, "right_window", 1),
                 group_type=getattr(args, "group_type", "chunk"),
                 use_softmax=getattr(args, "use_softmax", False),
-                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm")
+                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm"),
+                # weight
+                weight_type=getattr(args, "weight_type", -1),
             )
 
     def prepare_for_onnx_export_(self):
@@ -878,7 +882,7 @@ class NormAttentionEncoderLayer(nn.Module):
                 use_bound=getattr(args, "use_bound", False),
                 max_l=getattr(args, "max_l", 1024),
                 has_out=getattr(args, "has_out", False),
-                weight_type=getattr(args, "weight_type", 1),
+                weight_type=getattr(args, "weight_type", -1),
                 c=getattr(args, "c", 1.0),
                 v_act=getattr(args, "v_act", False),
                 use_dropout=getattr(args, "use_dropout", False),
@@ -943,7 +947,9 @@ class NormAttentionEncoderLayer(nn.Module):
                 right_window=getattr(args, "right_window", 1),
                 group_type=getattr(args, "group_type", "chunk"),
                 use_softmax=getattr(args, "use_softmax", False),
-                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm")
+                norm_type=getattr(args, "local_norm_type", "gatedrmsnorm"),
+                # weight
+                weight_type=getattr(args, "weight_type", -1),
             )
 
     def residual_connection(self, x, residual):

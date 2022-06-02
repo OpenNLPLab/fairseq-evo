@@ -60,7 +60,8 @@ class NormLocalAttention(nn.Module):
         max_l=1024,
         has_out=False,
         causal=False,
-        weight_type=1,
+        # use reweighting
+        weight_type=-1,
         c=1.0,
         v_act=False,
         use_dropout=False,
@@ -183,6 +184,16 @@ class NormLocalAttention(nn.Module):
         self.left_window = left_window
         self.right_window = right_window
         self.group_type = group_type
+        self.weight_type = weight_type
+        if self.weight_type == 1:
+            a0 = 1 - np.exp(-1)
+            a2 = 25 / 2 - 35 * np.exp(-1)
+            self.b0 = 3 * a2 / 2
+            self.b1 = a0 - a2 / 2
+        elif self.weight_type == 2:
+            # self.register_buffer("ratio", torch.sigmoid(torch.randn(1)))
+            self.r = 0.5
+            self.c = -2 * np.log(self.r)
 
         # chunk
         self.chunk_size = chunk_size
@@ -198,6 +209,7 @@ class NormLocalAttention(nn.Module):
         print(f"self.right_window {self.right_window}")
         print(f"self.group_type {self.group_type}")
         print(f"self.use_softmax {self.use_softmax}")
+        print(f"self.weight_type {self.weight_type}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -353,6 +365,31 @@ class NormLocalAttention(nn.Module):
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
+
+        # if self.weight_type == 1:
+        #     print("local laplace")
+        #     m = max(tgt_len, src_len)
+        #     index = torch.arange(m).reshape(-1, 1, 1).to(q)
+        #     q_index = index[:tgt_len, :, :] / m
+        #     k_index = index[:src_len, :, :] / m
+        #     print(q_index.shape, k_index.shape)
+        #     print(q.shape, k.shape)
+        #     q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
+        #     k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+        #     print(q.shape, k.shape)
+        # elif self.weight_type == 2:
+        #     print("local guassian")
+        #     index = torch.arange(m).reshape(-1, 1, 1).to(q)
+        #     q_index = index[:tgt_len, :, :] / m
+        #     k_index = index[:src_len, :, :] / m
+        #     print(q_index.shape, k_index.shape)
+        #     print(q.shape, k.shape)
+        #     q = (self.r ** (q_index ** 2)) * q
+        #     k = (self.r ** (k_index ** 2)) * k
+        #     print(q.shape, k.shape)
+        #     q = torch.cat([q, self.c * q])
+        #     k = torch.cat([k, k])
+        #     print(q.shape, k.shape)
 
         # pad至chunk_size整数倍
         tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
@@ -520,6 +557,25 @@ class NormLocalAttention(nn.Module):
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
+
+        if self.weight_type == 1:
+            # print("local laplace")
+            m = self.chunk_size
+            index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
+            q_index = index / m
+            k_index = index / m
+            q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
+            k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+        elif self.weight_type == 2:
+            # print("local guassian")
+            m = self.chunk_size
+            index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
+            q_index = index / m
+            k_index = index / m
+            q = (self.r ** (q_index ** 2)) * q
+            k = (self.r ** (k_index ** 2)) * k
+            q = torch.cat([q, self.c * q], dim=-1)
+            k = torch.cat([k, k], dim=-1)
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)
