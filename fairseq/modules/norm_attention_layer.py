@@ -469,7 +469,10 @@ class NormAttentionDecoderLayer(nn.Module):
                 theta_type=getattr(args, "decoder_theta_type", "a"),
                 theta_learned=getattr(args, "decoder_theta_learned", False), 
                 householder_learned=getattr(args, "decoder_householder_learned", False),
-                kv_act=getattr(args, "decoder_kv_act", "identity")
+                kv_act=getattr(args, "decoder_kv_act", "identity"),
+                # final dropout
+                use_final_dropout=getattr(args, "use_final_dropout", False),
+                final_dropout=getattr(args, "final_dropout", 0.0)
             )
         else:
             print("======================")
@@ -505,6 +508,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 norm_type=getattr(args, "local_norm_type", "gatedrmsnorm"),
                 # weight
                 weight_type=getattr(args, "weight_type", -1),
+                # final dropout
+                use_final_dropout=getattr(args, "use_final_dropout", False),
+                final_dropout=getattr(args, "final_dropout", 0.0)
             )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -564,7 +570,10 @@ class NormAttentionDecoderLayer(nn.Module):
                 theta_type=getattr(args, "encoder_theta_type", "a"),
                 theta_learned=getattr(args, "encoder_theta_learned", False), 
                 householder_learned=getattr(args, "encoder_householder_learned", False),
-                kv_act=getattr(args, "encoder_kv_act", "identity")
+                kv_act=getattr(args, "encoder_kv_act", "identity"),
+                # final dropout
+                use_final_dropout=getattr(args, "use_final_dropout", False),
+                final_dropout=getattr(args, "final_dropout", 0.0)
             )
         else:
             print("======================")
@@ -600,6 +609,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 norm_type=getattr(args, "local_norm_type", "gatedrmsnorm"),
                 # weight
                 weight_type=getattr(args, "weight_type", -1),
+                # final dropout
+                use_final_dropout=getattr(args, "use_final_dropout", False),
+                final_dropout=getattr(args, "final_dropout", 0.0)
             )
 
     def prepare_for_onnx_export_(self):
@@ -916,7 +928,10 @@ class NormAttentionEncoderLayer(nn.Module):
                 theta_type=getattr(args, "encoder_theta_type", "a"),
                 theta_learned=getattr(args, "encoder_theta_learned", False), 
                 householder_learned=getattr(args, "encoder_householder_learned", False),
-                kv_act=getattr(args, "encoder_kv_act", "identity")
+                kv_act=getattr(args, "encoder_kv_act", "identity"),
+                # final dropout
+                use_final_dropout=getattr(args, "use_final_dropout", False),
+                final_dropout=getattr(args, "final_dropout", 0.0)
             )
         else:
             print("======================")
@@ -950,6 +965,9 @@ class NormAttentionEncoderLayer(nn.Module):
                 norm_type=getattr(args, "local_norm_type", "gatedrmsnorm"),
                 # weight
                 weight_type=getattr(args, "weight_type", -1),
+                # final dropout
+                use_final_dropout=getattr(args, "use_final_dropout", False),
+                final_dropout=getattr(args, "final_dropout", 0.0)
             )
 
     def residual_connection(self, x, residual):

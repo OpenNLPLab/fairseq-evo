@@ -87,6 +87,9 @@ class NormLocalAttention(nn.Module):
         group_type="chunk",
         use_softmax=False,
         norm_type="gatedrmsnorm",
+        # final dropout
+        use_final_dropout=False,
+        final_dropout=0.0,
     ):
         # add
         self.index = index
@@ -132,6 +135,12 @@ class NormLocalAttention(nn.Module):
         self.dropout_module = FairseqDropout(
             dropout, module_name=self.__class__.__name__
         )
+
+        self.use_final_dropout = use_final_dropout
+        if use_final_dropout:
+            self.final_dropout_module = FairseqDropout(
+                final_dropout, module_name=self.__class__.__name__
+            )
 
         self.norm_type = norm_type
         if self.norm_type == "rmsnorm":
@@ -210,6 +219,8 @@ class NormLocalAttention(nn.Module):
         print(f"self.group_type {self.group_type}")
         print(f"self.use_softmax {self.use_softmax}")
         print(f"self.weight_type {self.weight_type}")
+        print(f"self.use_final_dropout {self.use_final_dropout}")
+        print(f"self.final_dropout {final_dropout}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -610,6 +621,9 @@ class NormLocalAttention(nn.Module):
             output = self.gated_rms_norm(output)
         # outprojection
         output = self.out_proj(output)
+        if self.use_final_dropout:
+            # print("local_use_final")
+            output = self.final_dropout_module(output)
 
         # output = output
         return output, prob

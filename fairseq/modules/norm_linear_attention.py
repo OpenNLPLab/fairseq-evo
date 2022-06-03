@@ -84,6 +84,9 @@ class NormLinearAttention(nn.Module):
         theta_learned=False, 
         householder_learned=False,
         kv_act='identity',
+        # final dropout
+        use_final_dropout=False,
+        final_dropout=0.0,
     ):
         # add
         self.index = index
@@ -167,6 +170,11 @@ class NormLinearAttention(nn.Module):
             self.dropout_module = FairseqDropout(
                 dropout, module_name=self.__class__.__name__
             )
+        self.use_final_dropout = use_final_dropout
+        if use_final_dropout:
+            self.final_dropout_module = FairseqDropout(
+                final_dropout, module_name=self.__class__.__name__
+            )
 
         # orpe
         self.core_matrix = core_matrix
@@ -215,6 +223,8 @@ class NormLinearAttention(nn.Module):
         print(f"use_dropout {self.use_dropout}")
         print(f"kv_act {kv_act}")
         print(f"self.weight_type {self.weight_type}")
+        print(f"self.use_final_dropout {self.use_final_dropout}")
+        print(f"self.final_dropout {final_dropout}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -418,6 +428,9 @@ class NormLinearAttention(nn.Module):
 
         # L, N, e1
         output = self.out_proj(output)
+        if self.use_final_dropout:
+            # print("linear_use_final")
+            output = self.final_dropout_module(output)
 
         return output, None
 
