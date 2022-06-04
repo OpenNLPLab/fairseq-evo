@@ -715,9 +715,9 @@ class NormLocalAttention(nn.Module):
         # n, l, c, d
 
         # act fun
-        eps = 1e-3
-        q = self.act(q) + eps
-        k = self.act(k) + eps
+        # eps = 1e-3
+        q = self.act(q)
+        k = self.act(k)
 
         if self.use_orpe:
             q = self.orpe(q)
@@ -743,9 +743,7 @@ class NormLocalAttention(nn.Module):
             k = torch.cat([k, k], dim=-1)
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
-        logits = torch.einsum("bgle,bgse->bgls", q, k)
-        dnorm = torch.sum(logits, dim=-1, keepdims=True)
-        prob = logits / dnorm
+        prob = torch.einsum("bgle,bgse->bgls", q, k)
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
