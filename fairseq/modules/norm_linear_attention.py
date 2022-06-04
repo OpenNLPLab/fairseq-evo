@@ -381,7 +381,6 @@ class NormLinearAttention(nn.Module):
         # (N * h, S, d)
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        
 
         q = self.act(q)
         k = self.act(k)
