@@ -253,6 +253,10 @@ class NormLinearAttention(nn.Module):
             return f
         elif act_fun == "silu":
             return F.silu
+        elif self.act_fun == "relu2":
+            def f(x):
+                return torch.square(torch.relu(x))
+            return f
         else:
             return lambda x: x
 
