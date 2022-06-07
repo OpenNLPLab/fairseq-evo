@@ -5883,3 +5883,17 @@ def roberta_base_architecture(args):
     args.approx_attn_dim = 64
     args.causal = False
 ###### performer
+
+
+##### for visual
+@register_model_architecture("roberta", "roberta_base_one_head")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    args.encoder_attention_heads = 1
+
+@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_one_head")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.encoder_attention_heads = 1
+##### for visual

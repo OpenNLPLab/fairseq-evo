@@ -41,6 +41,8 @@ class LinearKernelAttentionEncoderLayer(TransformerEncoderLayer):
             use_spe=getattr(args, "use_spe", False),
             use_permutate=getattr(args, "use_permutate", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            # index
+            index=args.index
         )
 
 class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
@@ -75,6 +77,8 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             use_spe=getattr(args, "use_spe", False),
             use_permutate=getattr(args, "use_permutate", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            # index
+            index=args.index
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -101,4 +105,6 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             use_spe=getattr(args, "use_spe", False),
             use_permutate=getattr(args, "use_permutate", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            # index
+            index=args.index
         )

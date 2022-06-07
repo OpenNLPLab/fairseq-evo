@@ -56,8 +56,11 @@ class LinearKernelAttention(nn.Module):
         use_spe=False,
         use_permutate=False,
         max_seq_len=512,
+        # index
+        index=0,
     ):
         super().__init__()
+        self.index = index
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -297,6 +300,23 @@ class LinearKernelAttention(nn.Module):
             v = rearrange(v, 'l n (h d) -> l (n h) d', h=num_heads)
             v = rearrange(v, 'l n d -> n l d')
         else:
+            #### for save
+            # q1, k1, v1 = map(lambda t: rearrange(t, 'n b (h d) -> b h n d', h=self.num_heads), [q, k, v])
+            # q1 = self.act(q1)
+            # k1 = self.act(k1)
+
+            # # b h n d
+            # attn_output_weights = torch.einsum('bhnd,bhmd->bhnm', q1, k1)
+            # denorm = torch.sum(attn_output_weights, dim=-1, keepdim=True)
+            # attn_output_weights = attn_output_weights / denorm
+
+            # data = attn_output_weights[0]
+            # if tgt_len == 512:
+            #     print(self.index)
+            #     print(data.shape)
+            #     np.save(f"./matrix/linear/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
+            #### for save
+
             # N * h, L, d
             q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
             # N * h, S, d

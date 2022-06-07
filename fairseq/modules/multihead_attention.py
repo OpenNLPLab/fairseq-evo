@@ -15,6 +15,7 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
+from einops import rearrange
 
 
 @with_incremental_state
@@ -173,7 +174,9 @@ class MultiheadAttention(nn.Module):
                 # treats bias in linear module as method.
                 and not torch.jit.is_scripting()
             ):
+                ### for save
                 # assert key is not None and value is not None
+                
                 # # query, key begin
                 # num_heads = self.num_heads
                 # tgt_len, bsz, embed_dim = query.size()
@@ -187,6 +190,7 @@ class MultiheadAttention(nn.Module):
                 # k = self.k_proj(key)
                 # # S, N, E
                 # v = self.v_proj(value)
+                # print(q.shape)
 
                 # # with open(f"q_{self.index}.npy", "ab+") as f:
                 # #     np.save(f, q.transpose(0, 1).cpu().detach().numpy())
@@ -195,18 +199,28 @@ class MultiheadAttention(nn.Module):
                 # #     np.save(f, k.transpose(0, 1).cpu().detach().numpy())
 
                 # # N * h, L, d
-                # q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
-                # # N * h, S, d
-                # k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-                # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+                # # q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
+                # # # N * h, S, d
+                # # k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+                # # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
+                # q, k, v = map(lambda t: rearrange(t, 'n b (h d) -> b h n d', h=self.num_heads), [q, k, v])
 
 
                 # scaling = float(head_dim) ** -0.5
                 # q = q * scaling
 
                 # # N * h, L, S
-                # attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+                # attn_output_weights = torch.einsum('bhnd,bhmd->bhnm', q, k)
+
+                # # N * h, L, S
+                # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+
+                # data = attn_output_weights[0]
+                # if tgt_len == 512:
+                #     print(data.shape)
+                #     np.save(f"./matrix/vanilla/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
+                ## for save
 
                 # # attn_mask
                 # if attn_mask is not None:
@@ -223,13 +237,7 @@ class MultiheadAttention(nn.Module):
 
                 # if attn_mask is not None:
                 #     attn_output_weights += attn_mask
-            
-                # # N * h, L, S
-                # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-
-                # print(attn_output_weights.cpu().detach().numpy()[0])
-                # with open(f"{self.index}.npy", "ab+") as f:
-                #     np.save(f, attn_output_weights.cpu().detach().numpy())
+        
 
                 # # dropout
                 # attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
