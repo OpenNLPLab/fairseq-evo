@@ -510,7 +510,8 @@ class NormAttentionDecoderLayer(nn.Module):
                 weight_type=getattr(args, "weight_type", -1),
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
-                final_dropout=getattr(args, "final_dropout", 0.0)
+                final_dropout=getattr(args, "final_dropout", 0.0),
+                index=args.index,
             )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -573,7 +574,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 kv_act=getattr(args, "encoder_kv_act", "identity"),
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
-                final_dropout=getattr(args, "final_dropout", 0.0)
+                final_dropout=getattr(args, "final_dropout", 0.0),
             )
         else:
             print("======================")
@@ -611,7 +612,8 @@ class NormAttentionDecoderLayer(nn.Module):
                 weight_type=getattr(args, "weight_type", -1),
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
-                final_dropout=getattr(args, "final_dropout", 0.0)
+                final_dropout=getattr(args, "final_dropout", 0.0),
+                index=args.index,
             )
 
     def prepare_for_onnx_export_(self):
@@ -967,7 +969,8 @@ class NormAttentionEncoderLayer(nn.Module):
                 weight_type=getattr(args, "weight_type", -1),
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
-                final_dropout=getattr(args, "final_dropout", 0.0)
+                final_dropout=getattr(args, "final_dropout", 0.0),
+                index=args.index,
             )
 
     def residual_connection(self, x, residual):

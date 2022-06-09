@@ -17,6 +17,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Orpe
 from fairseq.modules import OrpeV2
+from einops import rearrange
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -388,6 +389,22 @@ class NormLinearAttention(nn.Module):
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
+
+        #### for save
+        # q1, k1, v1 = map(lambda t: rearrange(t, '(b h) n d -> b h n d', h=self.num_heads), [q, k, v])
+
+        # # b h n d
+        # attn_output_weights = torch.einsum('bhnd,bhmd->bhnm', q1, k1)
+        # denorm = torch.sum(attn_output_weights, dim=-1, keepdim=True)
+        # attn_output_weights = attn_output_weights / denorm
+        # # print(attn_output_weights.shape)
+
+        # data = attn_output_weights[0]
+        # if tgt_len == 512:
+        #     print(self.index)
+        #     print(data.shape)
+        #     np.save(f"./matrix/lg/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
+        #### for save
 
         if self.weight_type == 1:
             # print("linear laplace")

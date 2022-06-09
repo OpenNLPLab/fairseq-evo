@@ -603,6 +603,28 @@ class NormLocalAttention(nn.Module):
             # logits *= scaling
             prob = F.softmax(logits, dim=-1)
 
+        #### for save
+        # if tgt_len == 512:
+        #     denorm = torch.sum(prob, dim=-1, keepdim=True)
+        #     # N * h, g, l, s
+        #     p1 = prob / denorm
+        #     p1 = rearrange(p1, '(n h) g l s -> n h g l s', h=self.num_heads)
+        #     n, h, g, l, s = p1.shape
+        #     print(p1.shape)
+        #     attn_output_weights = torch.zeros((n, h, l * g, s * g))
+        #     print(attn_output_weights.shape)
+        #     for i in range(g):
+        #         # print(attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l].shape)
+        #         # print(p1[:, :, i, ...].shape)
+        #         attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l] = p1[:, :, i, ...]
+            
+        #     print(attn_output_weights.shape)
+        #     data = attn_output_weights[0]
+        #     print(self.index)
+        #     print(data.shape)
+        #     np.save(f"./matrix/lg/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
+        #### for save
+
         if self.causal:
             attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
             prob = prob.masked_fill(attn_mask==0, 0)
