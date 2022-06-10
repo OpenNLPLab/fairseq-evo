@@ -317,19 +317,19 @@ class NormMixAttention(nn.Module):
     ) -> Tuple[Tensor, Optional[Tensor]]:
         # 并联
         if self.forward_type == 1:
-            print("a")
+            # print("a")
             o1, _ = self.forward_linear(query, key, value)
             o2, _ = self.forward_local(query, key, value)
             o = (o1 + o2) / 2
             return o, None
         elif self.forward_type == 2:
-            print("b")
+            # print("b")
             # 串联 linear + local
             o1, _ = self.forward_linear(query, key, value)
             o2, _ = self.forward_local(o1, key, value)
             return o2, _
         else:
-            print("c")
+            # print("c")
             # 串联 loal + linear
             o1, _ = self.forward_local(query, key, value)
             o2, _ = self.forward_linear(o1, key, value)
