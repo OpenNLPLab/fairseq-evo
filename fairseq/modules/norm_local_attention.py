@@ -605,10 +605,12 @@ class NormLocalAttention(nn.Module):
 
         #### for save
         # if tgt_len == 512:
-        #     denorm = torch.sum(prob, dim=-1, keepdim=True)
+        #     eps = 1e-4
+        #     denorm = torch.clamp(torch.sum(prob, dim=-1, keepdim=True), min=eps)
         #     # N * h, g, l, s
         #     p1 = prob / denorm
         #     p1 = rearrange(p1, '(n h) g l s -> n h g l s', h=self.num_heads)
+        #     print(torch.isnan(p1).int().sum())
         #     n, h, g, l, s = p1.shape
         #     print(p1.shape)
         #     attn_output_weights = torch.zeros((n, h, l * g, s * g))
