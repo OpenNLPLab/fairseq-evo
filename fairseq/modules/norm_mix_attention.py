@@ -85,7 +85,8 @@ class NormMixAttention(nn.Module):
         householder_learned=False,
         # chunk_size
         chunk_size=32,
-
+        # forward形式, 1为并联, 2为local + linear, 3为linear + local
+        forward_type=1
     ):
         # add
         self.index = index
@@ -192,11 +193,13 @@ class NormMixAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_orpe:
-            self.orpe = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.orpe1 = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.orpe2 = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         self.linear_act = self.get_act_fun(self.linear_act_fun)
         self.local_act = self.get_act_fun(self.local_act_fun)
+        self.forward_type = forward_type
 
         print(f"causal {self.causal}")
         print(f"has_out {self.has_out}")
@@ -208,6 +211,7 @@ class NormMixAttention(nn.Module):
         print(f"init_type {self.init_type}")
         print(f"use_orpe {self.use_orpe}")
         print(f"chunk_size {self.chunk_size}")
+        print(f"self.forward_type {self.forward_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -312,16 +316,26 @@ class NormMixAttention(nn.Module):
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
         # 并联
-        # o1, _ = self.forward_linear(query, key, value)
-        # o2, _ = self.forward_local(query, key, value)
-        # o = (o1 + o2) / 2
-        # return o, None
+        if self.forward_type == 1:
+            print("a")
+            o1, _ = self.forward_linear(query, key, value)
+            o2, _ = self.forward_local(query, key, value)
+            o = (o1 + o2) / 2
+            return o, None
+        elif self.forward_type == 2:
+            print("b")
+            # 串联 linear + local
+            o1, _ = self.forward_linear(query, key, value)
+            o2, _ = self.forward_local(o1, key, value)
+            return o2, _
+        else:
+            print("c")
+            # 串联 loal + linear
+            o1, _ = self.forward_local(query, key, value)
+            o2, _ = self.forward_linear(o1, key, value)
+            return o2, _
 
-        # 串联
-        o1, _ = self.forward_linear(query, key, value)
-        o2, _ = self.forward_linear(o1, key, value)
-
-        return o2, _
+        
 
     def forward_linear(
         self,
@@ -402,8 +416,8 @@ class NormMixAttention(nn.Module):
         k = self.linear_act(k)
 
         if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
+            q = self.orpe1(q)
+            k = self.orpe1(k)
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
@@ -490,9 +504,6 @@ class NormMixAttention(nn.Module):
         # scale
         q *= scaling
 
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
 
         # pad至chunk_size整数倍
         tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
@@ -512,6 +523,10 @@ class NormMixAttention(nn.Module):
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
         # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+
+        if self.use_orpe:
+            q = self.orpe2(q)
+            k = self.orpe2(k)
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)

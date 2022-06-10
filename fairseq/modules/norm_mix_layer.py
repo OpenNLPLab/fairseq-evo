@@ -71,7 +71,8 @@ class NormMixAttentionEncoderLayer(TransformerEncoderLayer):
             theta_learned=getattr(args, "encoder_theta_learned", False), 
             householder_learned=getattr(args, "encoder_householder_learned", False),
             # add
-            chunk_size=getattr(args, "chunk_size", 32)
+            chunk_size=getattr(args, "chunk_size", 32),
+            forward_type=getattr(args, "forward_type", 1),
         )
 
 class NormMixAttentionDecoderLayer(TransformerDecoderLayer):
@@ -136,7 +137,8 @@ class NormMixAttentionDecoderLayer(TransformerDecoderLayer):
             theta_learned=getattr(args, "decoder_theta_learned", False), 
             householder_learned=getattr(args, "decoder_householder_learned", False),
             # add
-            chunk_size=getattr(args, "chunk_size", 32)
+            chunk_size=getattr(args, "chunk_size", 32),
+            forward_type=getattr(args, "forward_type", 1),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -194,5 +196,6 @@ class NormMixAttentionDecoderLayer(TransformerDecoderLayer):
             theta_learned=getattr(args, "encoder_theta_learned", False), 
             householder_learned=getattr(args, "encoder_householder_learned", False),
             # add
-            chunk_size=getattr(args, "chunk_size", 32)
+            chunk_size=getattr(args, "chunk_size", 32),
+            forward_type=getattr(args, "forward_type", 1),
         )

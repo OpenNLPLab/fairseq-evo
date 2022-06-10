@@ -5995,4 +5995,174 @@ def roberta_base_architecture(args):
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    ###### softmax
+    args.use_softmax = True
+
+# mix 并联
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_parallel")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    #### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    ### type
+    args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
+    args.forward_type = 1
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_linear_local")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    #### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    ### type
+    args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
+    args.forward_type = 2
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_local_linear")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    #### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    ### type
+    args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
+    args.forward_type = 3
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_25_75")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    l = int(args.encoder_layers * 0.25)
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_75_25")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    l = int(args.encoder_layers * 0.75)
+    args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.encoder_use_orpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
 ##### local global visual
