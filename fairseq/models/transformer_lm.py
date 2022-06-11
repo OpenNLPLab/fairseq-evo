@@ -7273,9 +7273,10 @@ def transformer_lm_flash(args):
     args.eps = 1e-5
     args.max_position_embeddings = 512
     args.expansion_factor = 2
+    args.decoder_attention_types = []
 
 @register_model_architecture("flash_linear_lm", "flash_linear_wiki")
-def transformer_lm_flash(args):
+def transformer_lm_flash_linear(args):
     transformer_lm_big(args)
     args.decoder_layers = 10
     args.s = 128
@@ -7285,6 +7286,34 @@ def transformer_lm_flash(args):
     args.max_position_embeddings = 512
     args.expansion_factor = 2
     args.chunk_size = 64
+    args.decoder_attention_types = []
+
+@register_model_architecture("flash_lm", "flash_wiki_one_head")
+def transformer_lm_flash(args):
+    transformer_lm_big(args)
+    args.decoder_layers = 10
+    args.s = 128
+    # args.s = 512
+    args.norm_type = "scale_norm"
+    args.eps = 1e-5
+    args.max_position_embeddings = 512
+    args.expansion_factor = 2
+    args.decoder_attention_types = []
+    args.decoder_attention_heads = 1
+
+@register_model_architecture("flash_linear_lm", "flash_linear_wiki_one_head")
+def transformer_lm_flash_linear(args):
+    transformer_lm_big(args)
+    args.decoder_layers = 10
+    args.s = 128
+    # args.s = 512
+    args.norm_type = "scale_norm"
+    args.eps = 1e-5
+    args.max_position_embeddings = 512
+    args.expansion_factor = 2
+    args.chunk_size = 64
+    args.decoder_attention_types = []
+    args.decoder_attention_heads = 1
 ############# flash_lm
 
 ############# softmax + 1 + elu
