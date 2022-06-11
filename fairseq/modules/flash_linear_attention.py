@@ -209,8 +209,14 @@ class FlashLinearAttention(nn.Module):
           the embedding dimension.
         '''
         tgt_len, bsz, embed_dim = query.size()
-        num_chunks = tgt_len // self.chunk_size
         causal_flag = False
+        # pad
+        d = tgt_len
+        len_pad = (self.chunk_size - d % self.chunk_size) % self.chunk_size
+        query = F.pad(query, (0, 0, 0, 0, 0, len_pad))
+        pad_tgt_len = query.shape[0]
+        num_chunks = pad_tgt_len // self.chunk_size
+        # pad
         # bsz, tgt_len, embed_dim
         query = query.transpose(0, 1)
 
@@ -266,13 +272,14 @@ class FlashLinearAttention(nn.Module):
         x = u * (linear + quadratic)
         # reshape
         # bsz, chunk_num, chunk_size, e -> sz, tgt_len, e
-        x = x.contiguous().reshape(bsz, tgt_len, -1)
+        x = x.contiguous().reshape(bsz, pad_tgt_len, -1)
         x = self.o(x)
 
         # bsz, tgt_len, s
         output = x + shortcut
         # tgt_len, bsz, s
         output = output.contiguous().transpose(0, 1)
+        output = output[:tgt_len, ...]
 
         return output, None
 
