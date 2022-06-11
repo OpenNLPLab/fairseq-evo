@@ -7286,3 +7286,34 @@ def transformer_lm_flash(args):
     args.expansion_factor = 2
     args.chunk_size = 64
 ############# flash_lm
+
+############# softmax + 1 + elu
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_softmax_1+elu")
+def transformer_lm_big(args):
+    base_lm_architecture(args)
+    ### add
+    args.linear_act_fun = "1+elu"
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_use_orpe = False
+    args.group_type = "chunk"
+    args.decoder_chunk_size = 64
+    args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.attn_type = "simplermsnorm"
+    ###### orpe
+    args.decoder_use_orpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    #### pure layernorm 
+    args.embdding_layernorm = "simplermsnorm"
+    args.final_layernorm = "simplermsnorm"
+    ###### softmax
+    args.use_softmax = True
+############# softmax + 1 + elu
