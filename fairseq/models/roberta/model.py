@@ -6024,7 +6024,7 @@ def roberta_base_architecture(args):
     args.use_softmax = True
 
 # mix 并联
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_parallel")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_orpe_1d3_parallel")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6047,14 +6047,11 @@ def roberta_base_architecture(args):
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
-    #### pure layernorm 
-    args.embdding_layernorm = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
     ### type
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
     args.forward_type = 1
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_linear_local")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_orpe_1d3_linear_local")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6077,14 +6074,11 @@ def roberta_base_architecture(args):
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
-    #### pure layernorm 
-    args.embdding_layernorm = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
     ### type
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
     args.forward_type = 2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_local_linear")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_orpe_1d3_local_linear")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6107,9 +6101,6 @@ def roberta_base_architecture(args):
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
-    #### pure layernorm 
-    args.embdding_layernorm = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
     ### type
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
     args.forward_type = 3

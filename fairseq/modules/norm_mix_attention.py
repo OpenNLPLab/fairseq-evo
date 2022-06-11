@@ -13,6 +13,7 @@ from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
 from fairseq.modules import GatedRMSNorm
+from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Orpe
 from fairseq.modules import OrpeV2
@@ -146,18 +147,25 @@ class NormMixAttention(nn.Module):
             dropout, module_name=self.__class__.__name__
         )
 
-        self.gated_rms_norm = GatedRMSNorm(d)
+        # self.gated_rms_norm = GatedRMSNorm(d)
 
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
         if self.attention_use_layer_norm:
             if self.norm_type == "rmsnorm":
                 self.layer_norm = RMSNorm(d)
+                self.gated_rms_norm = RMSNorm(d)
             elif self.norm_type == "gatedrmsnorm":
                 print("here! gatedrmsnorm")
                 self.layer_norm = GatedRMSNorm(d)
+                self.gated_rms_norm = GatedRMSNorm(d)
+            elif self.norm_type == "simplermsnorm":
+                print("here! simple rmsnorm")
+                self.layer_norm = SimpleRMSNorm(d)
+                self.gated_rms_norm = SimpleRMSNorm(d)
             else:
                 self.layer_norm = nn.LayerNorm(d)
+                self.gated_rms_norm = nn.LayerNorm(d)
 
         self.i = 0
         self.model_update_freq = model_update_freq
