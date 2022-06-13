@@ -403,7 +403,8 @@ class NormLinearAttention(nn.Module):
         # if tgt_len == 512:
         #     print(self.index)
         #     print(data.shape)
-        #     np.save(f"./matrix/lg/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
+        #     print(torch.sum(attn_output_weights, dim=-1))
+        #     np.save(f"./matrix/lg_softmax/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
         #### for save
 
         if self.weight_type == 1:

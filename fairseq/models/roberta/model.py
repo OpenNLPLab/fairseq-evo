@@ -78,6 +78,8 @@ from fairseq.models.transformer import NormMixAttentionEncoder
 from fairseq.models.transformer import LSAttentionEncoder
 # performer
 from fairseq.models.transformer import PerformerEncoder
+# normlinear
+from fairseq.models.transformer import LinearVanillaAttentionEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -1430,6 +1432,38 @@ class RobertaPerformerModel(RobertaModel):
 
         encoder = RobertaPerformerEncoder(args, task.source_dictionary)
         return cls(args, encoder)
+############# PerformerEncoder
+
+############# LinearVanillaEncoder
+class RobertaLinearVanillaEncoder(RobertaEncoder):
+    """RoBERTa encoder."""
+
+    def __init__(self, args, dictionary):
+        super().__init__(args, dictionary)
+
+    def build_encoder(self, args, dictionary, embed_tokens):
+        encoder = LinearVanillaAttentionEncoder(args, dictionary, embed_tokens)
+        encoder.apply(init_bert_params)
+        return encoder
+
+@register_model("roberta_linear_vanilla")
+class RobertaLinearVanillaModel(RobertaModel):
+    def __init__(self, args, encoder):
+        super().__init__(args, encoder)
+
+    @classmethod
+    def build_model(cls, args, task):
+        """Build a new model instance."""
+
+        # make sure all arguments are present
+        base_architecture(args)
+
+        if not hasattr(args, "max_positions"):
+            args.max_positions = args.tokens_per_sample
+
+        encoder = RobertaLinearVanillaEncoder(args, task.source_dictionary)
+        return cls(args, encoder)
+############# PerformerEncoder
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
@@ -6571,3 +6605,31 @@ def roberta_base_architecture(args):
     ###### softmax
     args.use_softmax = True
 ########### softmax + 1 + elu
+
+########### performer / 1 + elu / cosformer
+@register_model_architecture("roberta_linear_vanilla", "roberta_performer_vanilla")
+def roberta_base_architecture_performer_vanilla(args):
+    base_architecture(args)
+    args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [-1 for _ in range(args.encoder_layers // 2)]
+    args.approx_attn_dim = 64
+    args.causal = False
+
+@register_model_architecture("roberta_linear_vanilla", "roberta_vanilla_performer")
+def roberta_base_architecture_vanilla_performer(args):
+    base_architecture(args)
+    args.encoder_attention_types = [-1 for _ in range(args.encoder_layers // 2)] + [2 for _ in range(args.encoder_layers // 2)] 
+    args.approx_attn_dim = 64
+    args.causal = False
+
+@register_model_architecture("roberta_linear_vanilla", "roberta_1+elu_vanilla")
+def roberta_base_architecture_1elu_vanilla(args):
+    base_architecture(args)
+    args.encoder_attention_types = [3 for _ in range(args.encoder_layers // 2)] + [-1 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+
+@register_model_architecture("roberta_linear_vanilla", "roberta_vanilla_1+elu")
+def roberta_base_architecture_vanilla_1elu(args):
+    base_architecture(args)
+    args.encoder_attention_types = [-1 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+########### performer / 1 + elu / cosformer

@@ -187,6 +187,8 @@ from .ls_attention_non_causal import LSAttentionNonCausal
 from .ls_attention_layer import LSAttentionEncoderLayer, LSAttentionDecoderLayer
 from .ls_attention_causal_model import TransformerLSModel
 
+from .linear_vanilla_attention_layer import LinearVanillaEncoderLayer
+
 __all__ = [
     "AdaptiveInput",
     "AdaptiveSoftmax",

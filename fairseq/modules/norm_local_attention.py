@@ -598,30 +598,6 @@ class NormLocalAttention(nn.Module):
         # logits = rearrange(logits, 'b g h l s -> b g l h s')
         # logits = rearrange(logits, 'b g l h s -> b (g l) (h s)')
 
-        #### for save
-        # if tgt_len == 512:
-        #     eps = 1e-4
-        #     denorm = torch.clamp(torch.sum(prob, dim=-1, keepdim=True), min=eps)
-        #     # N * h, g, l, s
-        #     p1 = prob / denorm
-        #     p1 = rearrange(p1, '(n h) g l s -> n h g l s', h=self.num_heads)
-        #     print(torch.isnan(p1).int().sum())
-        #     n, h, g, l, s = p1.shape
-        #     print(p1.shape)
-        #     attn_output_weights = torch.zeros((n, h, l * g, s * g))
-        #     print(attn_output_weights.shape)
-        #     for i in range(g):
-        #         # print(attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l].shape)
-        #         # print(p1[:, :, i, ...].shape)
-        #         attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l] = p1[:, :, i, ...]
-            
-        #     print(attn_output_weights.shape)
-        #     data = attn_output_weights[0]
-        #     print(self.index)
-        #     print(data.shape)
-        #     np.save(f"./matrix/lg/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
-        #### for save
-
         if self.causal:
             attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
             if not self.use_softmax:
@@ -636,6 +612,33 @@ class NormLocalAttention(nn.Module):
         else:
             # logits *= scaling
             prob = F.softmax(logits, dim=-1)
+
+        #### for save
+        # if tgt_len == 512:
+        #     eps = 1e-4
+        #     denorm = torch.clamp(torch.sum(prob, dim=-1, keepdim=True), min=eps)
+        #     # N * h, g, l, s
+        #     p1 = prob / denorm
+        #     p1 = rearrange(p1, '(n h) g l s -> n h g l s', h=self.num_heads)
+        #     print(p1[0][0][0].sum(dim=-1))
+        #     print(torch.isnan(p1).int().sum())
+        #     n, h, g, l, s = p1.shape
+        #     print(p1.shape)
+        #     attn_output_weights = rearrange(p1, 'n h g l s -> n h (g l) s')
+        #     print(attn_output_weights[0][0][0].sum(dim=-1))
+        #     # attn_output_weights = torch.zeros((n, h, l * g, s * g))
+        #     print(attn_output_weights.shape)
+        #     # for i in range(g):
+        #     #     # print(attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l].shape)
+        #     #     # print(p1[:, :, i, ...].shape)
+        #     #     attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l] = p1[:, :, i, ...]
+            
+        #     print(attn_output_weights.shape)
+        #     data = attn_output_weights[0]
+        #     print(self.index)
+        #     print(data.shape)
+        #     np.save(f"./matrix/lg_softmax/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
+        #### for save
         
         weights = self.dropout_module(prob)
 
