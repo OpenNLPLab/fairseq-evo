@@ -377,6 +377,7 @@ class NormLocalAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
+
         if self.use_orpe:
             q = self.orpe(q)
             k = self.orpe(k)
