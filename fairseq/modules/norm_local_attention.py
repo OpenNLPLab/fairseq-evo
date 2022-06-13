@@ -597,11 +597,6 @@ class NormLocalAttention(nn.Module):
         # logits = torch.einsum("bgle,bhse->bghls", q, k)
         # logits = rearrange(logits, 'b g h l s -> b g l h s')
         # logits = rearrange(logits, 'b g l h s -> b (g l) (h s)')
-        if not self.use_softmax:
-            prob = self.act(logits)
-        else:
-            # logits *= scaling
-            prob = F.softmax(logits, dim=-1)
 
         #### for save
         # if tgt_len == 512:
@@ -629,10 +624,18 @@ class NormLocalAttention(nn.Module):
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
-            prob = prob.masked_fill(attn_mask==0, 0)
+            if not self.use_softmax:
+                logits = logits.masked_fill(attn_mask==0, 0)
+            else:
+                logits = logits.masked_fill(attn_mask==0, -1e8)
             # attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
             # prob = prob.masked_fill(attn_mask[:self.chunk_size, :self.chunk_size]==float("-inf"), 0)
             # print(prob[0][0][:9, :9])
+        if not self.use_softmax:
+            prob = self.act(logits)
+        else:
+            # logits *= scaling
+            prob = F.softmax(logits, dim=-1)
         
         weights = self.dropout_module(prob)
 
