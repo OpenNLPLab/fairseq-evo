@@ -6765,6 +6765,16 @@ def roberta_base_architecture_window_relu_elu(args):
     args.attn_type = "simplermsnorm"
 #### local relu + other linear
 
-
-
 ########### performer / 1 + elu / cosformer
+
+#### norm(1 + elu)
+@register_model_architecture("roberta_norm_attention", "roberta_norm_1+elu")
+def roberta_base_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.norm_type = "simplermsnorm"
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+#### norm(1 + elu)
