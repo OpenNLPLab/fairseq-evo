@@ -300,13 +300,14 @@ class LinearKernelAttention(nn.Module):
             v = rearrange(v, 'l n (h d) -> l (n h) d', h=num_heads)
             v = rearrange(v, 'l n d -> n l d')
         else:
-            #### for save
+            # ### for save
             # q1, k1, v1 = map(lambda t: rearrange(t, 'n b (h d) -> b h n d', h=self.num_heads), [q, k, v])
             # q1 = self.act(q1)
             # k1 = self.act(k1)
 
             # # b h n d
             # attn_output_weights = torch.einsum('bhnd,bhmd->bhnm', q1, k1)
+            # print(torch.mean((attn_output_weights > 1.0).double()))
             # denorm = torch.sum(attn_output_weights, dim=-1, keepdim=True)
             # attn_output_weights = attn_output_weights / denorm
 
@@ -315,7 +316,7 @@ class LinearKernelAttention(nn.Module):
             #     print(self.index)
             #     print(data.shape)
             #     np.save(f"./matrix/linear/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
-            #### for save
+            # ### for save
 
             # N * h, L, d
             q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
