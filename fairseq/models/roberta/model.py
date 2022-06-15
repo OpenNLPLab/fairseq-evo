@@ -6668,6 +6668,8 @@ def roberta_base_architecture_local_cos(args):
     args.attn_type = "simplermsnorm"
     ###### softmax
     args.use_softmax = True
+    ###### cosformer
+    args.use_relu = True
 
 @register_model_architecture("roberta_linear_vanilla", "roberta_local_softmax_1+elu")
 def roberta_base_architecture_local_1elu(args):
@@ -6735,6 +6737,8 @@ def roberta_base_architecture_local_cos(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
+    ###### cosformer
+    args.use_relu = True
 
 @register_model_architecture("roberta_linear_vanilla", "roberta_local_relu_1+elu")
 def roberta_base_architecture_local_1elu(args):

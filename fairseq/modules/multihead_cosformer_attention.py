@@ -522,8 +522,11 @@ class MultiheadCosformerAttention(nn.Module):
         self.weight_index = self.get_alpha_beta(self.max_l)
         self.add_zero_attn = add_zero_attn
 
-        print(num_heads)
+        print("========================")
+        print("cosformer")
         print(self.resi)
+        print(f"self.use_relu {self.use_relu}")
+        print("========================")
 
         if self.has_out:
             self.out_proj = quant_noise(
