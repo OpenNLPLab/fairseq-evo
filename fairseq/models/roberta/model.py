@@ -6633,6 +6633,20 @@ def roberta_base_architecture_vanilla_1elu(args):
     args.encoder_attention_types = [-1 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
     args.kernel_type = "1+elu"
 
+@register_model_architecture("roberta_linear_vanilla", "roberta_1+elu_vanilla_no_orpe")
+def roberta_base_architecture_1elu_vanilla(args):
+    base_architecture(args)
+    args.encoder_attention_types = [3 for _ in range(args.encoder_layers // 2)] + [-1 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+    args.use_orpe = False
+
+@register_model_architecture("roberta_linear_vanilla", "roberta_vanilla_1+elu_no_orpe")
+def roberta_base_architecture_vanilla_1elu(args):
+    base_architecture(args)
+    args.encoder_attention_types = [-1 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+    args.use_orpe = False
+
 #### local softmax + other linear
 @register_model_architecture("roberta_linear_vanilla", "roberta_local_softmax_cosformer")
 def roberta_base_architecture_local_cos(args):
