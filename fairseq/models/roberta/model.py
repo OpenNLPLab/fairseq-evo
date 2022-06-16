@@ -6693,6 +6693,28 @@ def roberta_base_architecture_local_1elu(args):
     ###### softmax
     args.use_softmax = True
 
+@register_model_architecture("roberta_linear_vanilla", "roberta_local_softmax_performer")
+def roberta_base_architecture_local_1elu(args):
+    base_architecture(args)
+    args.encoder_attention_types = [5 for _ in range(args.encoder_layers // 2)] + [2 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+    ### add
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    ###### softmax
+    args.use_softmax = True
+
 @register_model_architecture("roberta_norm_attention", "roberta_window_softmax_1+elu")
 def roberta_base_architecture_window_norm_1elu(args):
     base_architecture(args)
@@ -6744,6 +6766,26 @@ def roberta_base_architecture_local_cos(args):
 def roberta_base_architecture_local_1elu(args):
     base_architecture(args)
     args.encoder_attention_types = [5 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+    ### add
+    args.local_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_orpe = False
+    args.group_type = "chunk"
+    args.encoder_chunk_size = 64
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    ### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+
+@register_model_architecture("roberta_linear_vanilla", "roberta_local_relu_performer")
+def roberta_base_architecture_local_1elu(args):
+    base_architecture(args)
+    args.encoder_attention_types = [5 for _ in range(args.encoder_layers // 2)] + [2 for _ in range(args.encoder_layers // 2)]
     args.kernel_type = "1+elu"
     ### add
     args.local_act_fun = "relu"
