@@ -6883,4 +6883,15 @@ def roberta_base_architecture(args):
     args.has_out = True
     args.norm_type = "simplermsnorm"
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_no_norm_1+elu")
+def roberta_no_norm_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.norm_type = "simplermsnorm"
+    args.attention_use_layer_norm = False
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
 #### norm(1 + elu)

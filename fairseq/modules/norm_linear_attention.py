@@ -442,7 +442,8 @@ class NormLinearAttention(nn.Module):
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # B, N, e2
-        output = self.layer_norm(output)
+        if self.attention_use_layer_norm:
+            output = self.layer_norm(output)
 
         if self.use_dropout:
             output = self.dropout_module(output)
