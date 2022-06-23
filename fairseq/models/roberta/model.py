@@ -3168,6 +3168,14 @@ def roberta_base_architecture(args):
     args.use_orpe = False
     args.kernel_type = "1+elu"
 
+@register_model_architecture("roberta_linear_orpe", "roberta_elu")
+def roberta_base_elu_architecture(args):
+    base_architecture(args)
+    ### add
+    args.causal = False
+    args.use_orpe = False
+    args.kernel_type = "elu"
+
 ### 单位阵
 @register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_1")
 def roberta_base_architecture(args):
@@ -6879,6 +6887,16 @@ def roberta_base_architecture(args):
     base_architecture(args)
     ### add
     args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.norm_type = "simplermsnorm"
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_elu")
+def roberta_base_elu_architecture(args):
+    base_architecture(args)
+    ### add
+    args.linear_act_fun = "elu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.norm_type = "simplermsnorm"

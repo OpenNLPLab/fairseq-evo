@@ -174,6 +174,8 @@ class LinearKernelAttention(nn.Module):
             return f
         elif self.kernel_type == "relu":
             return F.relu
+        elif self.kernel_type == "elu":
+            return F.elu
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
