@@ -37,45 +37,51 @@ from .unfold import unfold1d
 from .transformer_layer import TransformerDecoderLayer, TransformerEncoderLayer
 from .vggblock import VGGBlock
 
+########## positional encoding
+from .positional_encoding import rope
+from .positional_encoding import RpeVanilla
+from .positional_encoding import SineSPE, ConvSPE, SPEFilter
+from .positional_encoding import T5RPE
+from .positional_encoding import Urpe
+from .positional_encoding import UrpeV2
+########## positional encoding
 
-# rfa
-# from .multihead_rfa_attention import MultiheadRfaAttention
-# from .multihead_rfa_causal_attention import (
-#     # rfa
-#     MultiheadRfaCausalAttention,
-#     # rfa debug
-#     MultiheadRfaCausalAttentionDebug,
-# )
-# from .transformer_rfa_layer import (
-#     # rfa
-#     TransformerRfaEncoderLayer,
-#     TransformerRfaDecoderLayer,
-#     # rfa debug
-#     TransformerRfaDecoderDebugLayer,
-# )
+########## norm
+from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
+########## norm
+
+########## ffn
+from .ffn import GLU
+########## ffn
+
+########## xattention
+##### linearkernel
+from .x_attention import LinearKernelAttention
+from .x_attention import LinearKernelAttentionEncoderLayer, LinearKernelAttentionDecoderLayer
+##### performer
+from .x_attention import PerformerAttention
+from .x_attention import PerformerEncoderLayer, PerformerDecoderLayer
+##### flash
+from .x_attention import FlashQuadAttention
+from .x_attention import FlashQuadEncoderLayer, FlashQuadDecoderLayer
+from .x_attention import FlashLinearAttention
+from .x_attention import FlashLinearEncoderLayer, FlashLinearDecoderLayer
+##### mha plus
+from .x_attention import MultiheadAttentionPlus
+from .x_attention import TransformerEncoderLayerPlus, TransformerDecoderLayerPlus
+##### long short attention
+from .x_attention import LSCausalAttention
+from .x_attention import LSNonCausalAttention
+from .x_attention import LSAttentionEncoderLayer
+from .x_attention import TransformerLSModel
+##### ReLA
+from .x_attention import ReLAttention
+from .x_attention import ReLAEncoderLayer, ReLADecoderLayer
+########## xattention
+
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
-# # linear
-# from .linear_transformer_attention import MultiheadLinearAttention
-# from .linear_transformer_layer import LinearTransformerEncoderLayer, LinearTransformerDecoderLayer
-# # reformer
-# from .reformer_attention import ReformerAttention_
-# # lsh
-# from .lsh_attention import LSHAttention
-# from .reformer_layer import ReformerEncoderLayer, ReformerDecoderLayer
-# # Longformer
-# from .multihead_longformer_attention import LongformerSelfAttention
-# from .transformer_longformer_layer import (
-#     TransformerLongformerEncoderLayer, 
-#     TransformerLongformerDecoderLayer,
-# )
-# taylor
-from .multihead_taylor_attention import MultiheadTaylorAttention
-from .transformer_taylor_layer import (
-    TransformerTaylorDecoderLayer,
-    TransformerTaylorEncoderLayer,
-)
 # sparse relu
 from .multihead_sparse_relu_attention import MultiheadSparseReluAttention
 from .transformer_sparse_relu_layer import (
@@ -83,12 +89,6 @@ from .transformer_sparse_relu_layer import (
     TransformerSparseReluDecoderLayer,
 )
 
-# multi splu
-from .multihead_splu_attention import MultiheadSpluAttention
-from .transformer_splu_layer import (
-    TransformerSpluEncoderLayer,
-    TransformerSpluDecoderLayer,
-)
 # from .multihead_cos_attention import MultiheadCosAttention
 # from .transformer_cos_layer import (
 #     TransformerCosEncoderLayer,
@@ -100,11 +100,7 @@ from .transformer_cosformer_layer import (
     CosformerEncoderLayer,
     CosformerDecoderLayer,
 )
-# orpe
-from .orpe import Orpe
-from .orpe_v2 import OrpeV2
-from .t5_rpe import T5RPE
-from .rpe_aw import RpAwe
+
 
 # debug
 from .multihead_cosformer_attention_ import MultiheadCosformerAttention_
@@ -114,8 +110,7 @@ from .transformer_cosformer_layer_ import (
 )
 
 # glu
-from .glu import GLU
-from .spe import ConvSPE, SineSPE, SPEFilter
+# from .glu import GLU
 
 # norm rfa
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
@@ -124,49 +119,15 @@ from .spe import ConvSPE, SineSPE, SPEFilter
 #from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
 #from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
 # performer
-from .multihead_performer_attention import MultiheadPerformerAttention
-from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
+# from .multihead_performer_attention import PerformerAttention
+# from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
 # transformer merge
 from .multihead_merge_attention import MultiheadMergeAttention
 from .transformer_merge_layer import TransformerMergeDecoderLayer, TransformerMergeEncoderLayer
 # simple attention
 from .multihead_simple_attention import MultiheadSimpleAttention
-from .transformer_simple_layer import TransformerSimpleEncoderLayer, TransformerSimpleDecoderLayer
-# attention with head weight
-from .multihead_attention_ import MultiheadAttention_
-from .transformer_layer_ import TransformerDecoderLayer_, TransformerEncoderLayer_
-# simformer
-from .simformer_layer import SimformerDecoderLayer, SimformerEncoderLayer, FFN
-# pcc
-from .pcc import PccModule
-from .pcc_layer import PccEncoderLayer, PccDecoderLayer
-# weight
-from .multihead_weight_attention import MultiheadWeightAttention
-from .transformer_weight_layer import WeightFormerEncoderLayer, WeightFormerDecoderLayer
-# weight with diff head
-from .multihead_weight_attention_diff import MultiheadWeightAttention_diff
-from .transformer_weight_layer_diff import WeightFormerEncoderLayer_diff, WeightFormerDecoderLayer_diff
-# GAU
-from .flash_attention import FlashAttention
-from .flash_linear_attention import FlashLinearAttention
-from .flash_layer import FlashEncoderLayer, FlashDecoderLayer
-from .flash_linear_layer import FlashLinearEncoderLayer, FlashLinearDecoderLayer
-# rms norm
-from .rms_norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
-from .relu_sparse_attention import ReLAttention
-from .relu_sparse_layer import ReLAEncoderLayer, ReLADecoderLayer
-# men
-from .mem_attention import MemAttention
-from .mem_layer import MemEncoderLayer, MemDecoderLayer
-from .mem_layer import MemGauEncoderLayer, MemGauDecoderLayer
-# Gmu, gau + memory
-from .mem_gau_attention import GmuAttention
-from .mem_gau_layer import GmuEncoderLayer, GmuDecoderLayer
-# rope
-from .rope import rope
-# linearkernel with orpe
-from .linear_kernel_attention import LinearKernelAttention
-from .linear_kernel_attention_layer import LinearKernelAttentionEncoderLayer, LinearKernelAttentionDecoderLayer
+
+
 
 # norm mix
 from .norm_mix_attention import NormMixAttention
@@ -180,12 +141,12 @@ from .norm_attention_layer import NormAttentionDecoderLayer, NormAttentionEncode
 
 
 # another version
-from .ls_attention import LongShortAttention
+# from .ls_attention import LongShortAttention
 # long short attention
-from .ls_attention_causal import LSAttentionCausal
-from .ls_attention_non_causal import LSAttentionNonCausal
-from .ls_attention_layer import LSAttentionEncoderLayer, LSAttentionDecoderLayer
-from .ls_attention_causal_model import TransformerLSModel
+# from .ls_attention_causal import LSCausalAttention
+# from .ls_attention_non_causal import LSAttentionNonCausal
+# from .ls_attention_layer import LSAttentionEncoderLayer, LSAttentionDecoderLayer
+# from .ls_attention_causal_model import TransformerLSModel
 
 from .linear_vanilla_attention_layer import LinearVanillaEncoderLayer
 
@@ -227,70 +188,4 @@ __all__ = [
     "TransposeLast",
     "VGGBlock",
     "unfold1d",
-    # rfa
-    "MultiheadRfaCausalAttention",
-    "MultiheadRfaAttention",
-    "TransformerRfaEncoderLayer", 
-    "TransformerRfaDecoderLayer",
-    # debug
-    "MultiheadRfaCausalAttentionDebug",
-    "TransformerRfaDecoderDebugLayer",
-    # performer
-    "MultiheadPerformerAttention",
-    "PerformerEncoderLayer",
-    "PerformerDecoderLayer",
-    # sparse attention
-    "SparseMultiheadAttention",
-    "SparseTransformerEncoderLayer",
-    "SparseTransformerDecoderLayer",
-    # linear attention
-    "MultiheadLinearAttention",
-    "LinearTransformerEncoderLayer", 
-    "LinearTransformerDecoderLayer",
-    # reformer
-    "ReformerAttention_",
-    "ReformerEncoderLayer", 
-    "ReformerDecoderLayer",
-    "LSHAttention",
-     # longformer
-    'LongformerSelfAttention',
-    'TransformerLongformerEncoderLayer',
-    'TransformerLongformerDecoderLayer',
-    # merge attention
-    "MultiheadMergeAttention",
-    "TransformerMergeDecoderLayer",
-    "TransformerMergeEncoderLayer",
-    # simple attention'
-    "MultiheadSimpleAttention",
-    "TransformerSimpleEncoderLayer", 
-    "TransformerSimpleDecoderLayer",
-    # attention with weight
-    "MultiheadAttention_",
-    "TransformerDecoderLayer_", 
-    "TransformerEncoderLayer_",
-    # simformer
-    "SimformerDecoderLayer", 
-    "SimformerEncoderLayer",
-    "FFN",
-    # cos
-    "MultiheadCosAttention",
-    "TransformerCosEncoderLayer",
-    "TransformerCosDecoderLayer",
-    # pcc
-    "PccModule",
-    "PccEncoderLayer", 
-    "PccDecoderLayer",
-    # weight
-    "MultiheadWeightAttention",
-    "WeightFormerEncoderLayer", 
-    "WeightFormerDecoderLayer",
-    # flash
-    "FlashAttention",
-    "FlashEncoderLayer",
-    "FlashDecoderLayer",
-    # men
-    "MemAttention",
-    "MemEncoderLayer",
-    "MemDecoderLayer",
-    # gmu
 ]

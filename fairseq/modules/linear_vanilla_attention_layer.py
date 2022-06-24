@@ -14,14 +14,14 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 # merge attention
 from fairseq.modules import NormLocalAttention, NormLinearAttention
-from fairseq.modules import MultiheadCosformerAttention, MultiheadPerformerAttention, LinearKernelAttention
+from fairseq.modules import MultiheadCosformerAttention, PerformerAttention, LinearKernelAttention
 from fairseq.modules import GLU
 # norm layer
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
-from fairseq.modules import Orpe
-from fairseq.modules import OrpeV2
+from fairseq.modules import Urpe
+from fairseq.modules import UrpeV2
 
 class LinearVanillaEncoderLayer(nn.Module):
     def __init__(self, args):
@@ -125,7 +125,7 @@ class LinearVanillaEncoderLayer(nn.Module):
             print("===========")
             print("performer")
             print("===========")
-            return MultiheadPerformerAttention(
+            return PerformerAttention(
                 embed_dim,
                 args.encoder_attention_heads,
                 dropout=args.attention_dropout,
@@ -149,7 +149,7 @@ class LinearVanillaEncoderLayer(nn.Module):
                 qn_block_size=self.quant_noise_block_size,
                 # add
                 causal=getattr(args, "causal", False),
-                use_orpe=getattr(args, "use_orpe", True),
+                use_urpe=getattr(args, "use_urpe", True),
                 kernel_type=getattr(args, "kernel_type", "1+elu"),
                 core_matrix=getattr(args, "core_matrix", 1),
                 p_matrix=getattr(args, "p_matrix", 1),
@@ -210,7 +210,7 @@ class LinearVanillaEncoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", False),
+                use_urpe=getattr(args, "encoder_use_urpe", False),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -238,7 +238,7 @@ class LinearVanillaEncoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", False),
+                use_urpe=getattr(args, "encoder_use_urpe", False),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),

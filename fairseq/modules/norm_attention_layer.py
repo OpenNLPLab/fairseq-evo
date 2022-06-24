@@ -20,8 +20,8 @@ from fairseq.modules import GLU
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
-from fairseq.modules import Orpe
-from fairseq.modules import OrpeV2
+from fairseq.modules import Urpe
+from fairseq.modules import UrpeV2
 
 # class NormAttentionEncoderLayer(TransformerEncoderLayer):
 #     def __init__(self, args):
@@ -74,7 +74,7 @@ from fairseq.modules import OrpeV2
 #                 negative_slope=getattr(args, "negative_slope", 0.1),
 #                 # add
 #                 causal=getattr(args, "encoder_causal", False),
-#                 use_orpe=getattr(args, "encoder_use_orpe", True),
+#                 use_urpe=getattr(args, "encoder_use_urpe", True),
 #                 core_matrix=getattr(args, "encoder_core_matrix", 1),
 #                 p_matrix=getattr(args, "encoder_p_matrix", 1),
 #                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -99,7 +99,7 @@ from fairseq.modules import OrpeV2
 #                 negative_slope=getattr(args, "negative_slope", 0.1),
 #                 # add
 #                 causal=getattr(args, "encoder_causal", False),
-#                 use_orpe=getattr(args, "encoder_use_orpe", True),
+#                 use_urpe=getattr(args, "encoder_use_urpe", True),
 #                 core_matrix=getattr(args, "encoder_core_matrix", 1),
 #                 p_matrix=getattr(args, "encoder_p_matrix", 1),
 #                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -172,7 +172,7 @@ from fairseq.modules import OrpeV2
 #                 negative_slope=getattr(args, "negative_slope", 0.1),
 #                 # add
 #                 causal=getattr(args, "decoder_causal", True),
-#                 use_orpe=getattr(args, "decoder_use_orpe", True),
+#                 use_urpe=getattr(args, "decoder_use_urpe", True),
 #                 core_matrix=getattr(args, "decoder_core_matrix", 1),
 #                 p_matrix=getattr(args, "decoder_p_matrix", 1),
 #                 max_positions=getattr(args, "decoder_max_positions", 512),
@@ -199,7 +199,7 @@ from fairseq.modules import OrpeV2
 #                 negative_slope=getattr(args, "negative_slope", 0.1),
 #                 # add
 #                 causal=getattr(args, "decoder_causal", True),
-#                 use_orpe=getattr(args, "decoder_use_orpe", True),
+#                 use_urpe=getattr(args, "decoder_use_urpe", True),
 #                 core_matrix=getattr(args, "decoder_core_matrix", 1),
 #                 p_matrix=getattr(args, "decoder_p_matrix", 1),
 #                 max_positions=getattr(args, "decoder_max_positions", 512),
@@ -265,7 +265,7 @@ from fairseq.modules import OrpeV2
 #                 negative_slope=getattr(args, "negative_slope", 0.1),
 #                 # add
 #                 causal=getattr(args, "encoder_causal", False),
-#                 use_orpe=getattr(args, "encoder_use_orpe", True),
+#                 use_urpe=getattr(args, "encoder_use_urpe", True),
 #                 core_matrix=getattr(args, "encoder_core_matrix", 1),
 #                 p_matrix=getattr(args, "encoder_p_matrix", 1),
 #                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -292,7 +292,7 @@ from fairseq.modules import OrpeV2
 #                 negative_slope=getattr(args, "negative_slope", 0.1),
 #                 # add
 #                 causal=getattr(args, "encoder_causal", False),
-#                 use_orpe=getattr(args, "encoder_use_orpe", True),
+#                 use_urpe=getattr(args, "encoder_use_urpe", True),
 #                 core_matrix=getattr(args, "encoder_core_matrix", 1),
 #                 p_matrix=getattr(args, "encoder_p_matrix", 1),
 #                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -463,7 +463,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "decoder_causal", True),
-                use_orpe=getattr(args, "decoder_use_orpe", False),
+                use_urpe=getattr(args, "decoder_use_urpe", False),
                 core_matrix=getattr(args, "decoder_core_matrix", 1),
                 p_matrix=getattr(args, "decoder_p_matrix", 1),
                 max_positions=getattr(args, "decoder_max_positions", 512),
@@ -493,7 +493,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "decoder_causal", True),
-                use_orpe=getattr(args, "decoder_use_orpe", False),
+                use_urpe=getattr(args, "decoder_use_urpe", False),
                 core_matrix=getattr(args, "decoder_core_matrix", 1),
                 p_matrix=getattr(args, "decoder_p_matrix", 1),
                 max_positions=getattr(args, "decoder_max_positions", 512),
@@ -560,7 +560,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "decoder_causal", True),
-                use_orpe=getattr(args, "decoder_use_orpe", True),
+                use_urpe=getattr(args, "decoder_use_urpe", True),
                 core_matrix=getattr(args, "decoder_core_matrix", 1),
                 p_matrix=getattr(args, "decoder_p_matrix", 1),
                 max_positions=getattr(args, "decoder_max_positions", 512),
@@ -622,7 +622,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", False),
+                use_urpe=getattr(args, "encoder_use_urpe", False),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -652,7 +652,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", False),
+                use_urpe=getattr(args, "encoder_use_urpe", False),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -720,7 +720,7 @@ class NormAttentionDecoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", True),
+                use_urpe=getattr(args, "encoder_use_urpe", True),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -1039,7 +1039,7 @@ class NormAttentionEncoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", False),
+                use_urpe=getattr(args, "encoder_use_urpe", False),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -1067,7 +1067,7 @@ class NormAttentionEncoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", False),
+                use_urpe=getattr(args, "encoder_use_urpe", False),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),
@@ -1132,7 +1132,7 @@ class NormAttentionEncoderLayer(nn.Module):
                 negative_slope=getattr(args, "negative_slope", 0.1),
                 # add
                 causal=getattr(args, "encoder_causal", False),
-                use_orpe=getattr(args, "encoder_use_orpe", True),
+                use_urpe=getattr(args, "encoder_use_urpe", True),
                 core_matrix=getattr(args, "encoder_core_matrix", 1),
                 p_matrix=getattr(args, "encoder_p_matrix", 1),
                 max_positions=getattr(args, "encoder_max_positions", 512),

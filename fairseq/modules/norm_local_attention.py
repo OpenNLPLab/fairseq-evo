@@ -17,8 +17,8 @@ import sys
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
-from fairseq.modules import Orpe
-from fairseq.modules import OrpeV2
+from fairseq.modules import Urpe
+from fairseq.modules import UrpeV2
 from einops import rearrange
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
@@ -72,8 +72,8 @@ class NormLocalAttention(nn.Module):
         seq_p=0.3,
         act_fun="relu",
         negative_slope=0.1,
-        # orpe
-        use_orpe=False,
+        # urpe
+        use_urpe=False,
         core_matrix=1, 
         p_matrix=1, 
         max_positions=512,
@@ -175,18 +175,18 @@ class NormLocalAttention(nn.Module):
         self.act = self.get_act_fun()
         self.use_softmax = use_softmax
 
-        # orpe add
+        # urpe add
         self.core_matrix = core_matrix
         self.p_matrix = p_matrix
         self.max_positions = max_positions
         self.causal = causal
-        self.use_orpe = use_orpe
+        self.use_urpe = use_urpe
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
-        if self.use_orpe:
+        if self.use_urpe:
             print("=====================================")
-            self.orpe = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 
         self.causal = causal
@@ -207,7 +207,7 @@ class NormLocalAttention(nn.Module):
         # chunk
         self.chunk_size = chunk_size
         print("use relu sparse")
-        print(f"use orpe {self.use_orpe}")
+        print(f"use urpe {self.use_urpe}")
         print(f"num_heads {self.num_heads}")
         print(f"add_bias_kv {add_bias_kv}")
         print(f"act_fun {self.act_fun}")
@@ -378,9 +378,9 @@ class NormLocalAttention(nn.Module):
         v = self.v_proj(value)
 
 
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
 
         # if self.weight_type == 1:
         #     print("local laplace")
@@ -570,9 +570,9 @@ class NormLocalAttention(nn.Module):
         v = self.transform(v)
         # n, l, c, d
 
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
 
         if self.weight_type == 1:
             # print("local laplace")
@@ -750,9 +750,9 @@ class NormLocalAttention(nn.Module):
         q = self.act(q)
         k = self.act(k)
 
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
 
         if self.weight_type == 1:
             # print("local laplace")

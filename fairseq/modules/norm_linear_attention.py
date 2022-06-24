@@ -15,8 +15,8 @@ import sys
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
-from fairseq.modules import Orpe
-from fairseq.modules import OrpeV2
+from fairseq.modules import Urpe
+from fairseq.modules import UrpeV2
 from einops import rearrange
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
@@ -76,8 +76,8 @@ class NormLinearAttention(nn.Module):
         rope_type="a",
         use_v=False,
         negative_slope=0.1,
-        # orpe
-        use_orpe=False,
+        # urpe
+        use_urpe=False,
         core_matrix=1, 
         p_matrix=1, 
         max_positions=512,
@@ -177,17 +177,17 @@ class NormLinearAttention(nn.Module):
                 final_dropout, module_name=self.__class__.__name__
             )
 
-        # orpe
+        # urpe
         self.core_matrix = core_matrix
         self.p_matrix = p_matrix
         self.max_positions = max_positions
-        self.use_orpe = use_orpe
+        self.use_urpe = use_urpe
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
-        if self.use_orpe:
+        if self.use_urpe:
             print("=====================================")
-            self.orpe = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 
         print("=========================")
@@ -220,7 +220,7 @@ class NormLinearAttention(nn.Module):
         print(f"act_fun_type: {act_fun}")
         print(f"norm_type {self.norm_type}")
         print(f"init_type {self.init_type}")
-        print(f"use_orpe {self.use_orpe}")
+        print(f"use_urpe {self.use_urpe}")
         print(f"use_dropout {self.use_dropout}")
         print(f"kv_act {kv_act}")
         print(f"self.weight_type {self.weight_type}")
@@ -386,9 +386,9 @@ class NormLinearAttention(nn.Module):
         q = self.act(q)
         k = self.act(k)
 
-        if self.use_orpe:
-            q = self.orpe(q)
-            k = self.orpe(k)
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
 
         #### for save
         # q1, k1, v1 = map(lambda t: rearrange(t, '(b h) n d -> b h n d', h=self.num_heads), [q, k, v])

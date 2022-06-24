@@ -27,57 +27,33 @@ from fairseq.modules.transformer_sentence_encoder import init_bert_params
 from .hub_interface import RobertaHubInterface
 
 # reformer
-from fairseq.models.transformer import ReformerEncoder, TransformerMergeEncoder
-# simple
-from fairseq.models.transformer import TransformerSimpleEncoder
+# from fairseq.models.transformer import ReformerEncoder, TransformerMergeEncoder
 # head
-from fairseq.models.transformer import TransformerHeadEncoder
-# simformer
-from fairseq.models.simformer import SimformerEncoder
-# mix
-from fairseq.models.simformer import TransformerMixEncoder
-# taylor
-from fairseq.models.transformer import TransformerTaylorEncoder
+from fairseq.models.transformer import TransformerEncoderPlus
 # sparse relu
 from fairseq.models.transformer import TransformerSparseReluEncoderLayer
-# splu
-from fairseq.models.transformer import TransformerSpluEncoder
 # cosformer
 from fairseq.models.transformer import CosformerEncoder
 # head
-from fairseq.models.transformer import TransformerHeadEncoder
+from fairseq.models.transformer import TransformerEncoderPlus
 # cosformer
 from fairseq.models.transformer import CosformerEncoder_
 # pcc
-from fairseq.models.transformer import PccEncoder
+# from fairseq.models.transformer import PccEncoder
 # cos
 # from fairseq.models.transformer import TransformerCosEncoder
-# weight
-from fairseq.models.transformer import WeightFormerEncoder
-# weight diff head
-from fairseq.models.transformer import WeightFormerEncoder_diff
-# GAU
-from fairseq.models.transformer import FlashEncoder
-# Flash Linear
-from fairseq.models.transformer import FlashLinearEncoder
-# mem
-from fairseq.models.transformer import MemEncoder
-# memgau
-from fairseq.models.transformer import MemGauEncoder
 # ReLA
 from fairseq.models.transformer import ReLAEncoder
-# Gmu
-from fairseq.models.transformer import GmuEncoder
-# linear kernel with orpe
+# linear kernel with urpe
 from fairseq.models.transformer import LinearKernelAttentionEncoder
 # norm Attention
 from fairseq.models.transformer import NormAttentionEncoder
 # norm mix attention
 from fairseq.models.transformer import NormMixAttentionEncoder
 # ls attention
-from fairseq.models.transformer import LSAttentionEncoder
+# from fairseq.models.transformer import LSAttentionEncoder
 # performer
-from fairseq.models.transformer import PerformerEncoder
+# from fairseq.models.transformer import PerformerEncoder
 # normlinear
 from fairseq.models.transformer import LinearVanillaAttentionEncoder
 
@@ -644,174 +620,10 @@ class RobertaMergeModel(RobertaModel):
         encoder = RobertaMergeEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
-# simple
-class RobertaSimpleEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
 
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = TransformerSimpleEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
 
-@register_model("roberta_simple")
-class RobertaSimpleModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
 
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaSimpleEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-# head
-class RobertaHeadEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = TransformerHeadEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_head")
-class RobertaHeadModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaHeadEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-# simformer
-class RobertaSimformerEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = SimformerEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_simformer")
-class RobertaSimformerModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaSimformerEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-# mix
-class RobertaMixEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = TransformerMixEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_mix")
-class RobertaMixModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaMixEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-# taylor
-class RobertaTaylorEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = TransformerTaylorEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_taylor")
-class RobertaTaylorModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaTaylorEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-    # # for fine tune
-    # def forward(
-    #     self,
-    #     src_tokens,
-    #     features_only=False,
-    #     return_all_hiddens=False,
-    #     classification_head_name=None,
-    #     **kwargs,
-    # ):
-    #     if classification_head_name is not None:
-    #         features_only = True
-
-    #     with torch.no_grad():
-    #         x, extra = self.encoder(src_tokens, features_only, return_all_hiddens, **kwargs)
-
-    #     if classification_head_name is not None:
-    #         x = self.classification_heads[classification_head_name](x)
-    #     return x, extra
 
 # sparse relu
 class RobertaSparseReluEncoder(RobertaEncoder):
@@ -841,36 +653,6 @@ class RobertaSparseReluModel(RobertaModel):
             args.max_positions = args.tokens_per_sample
 
         encoder = RobertaSparseReluEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-# multi splu
-class RobertaSpluEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = TransformerSpluEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_multi_sparse_relu")
-class RobertaSpluModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaSpluEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
 # sparse relu
@@ -971,7 +753,7 @@ class RobertaNormalizeEncoder(RobertaEncoder):
         super().__init__(args, dictionary)
 
     def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = TransformerHeadEncoder(args, dictionary, embed_tokens)
+        encoder = TransformerEncoderPlus(args, dictionary, embed_tokens)
         encoder.apply(init_bert_params)
         return encoder
 
@@ -1023,273 +805,77 @@ class RobertaPccModel(RobertaModel):
         encoder = RobertaPccEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
-# weight
-class RobertaWeightEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = WeightFormerEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_weight")
-class RobertaWeightModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaWeightEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
 
 # weight diff
-class RobertaWeightEncoder_diff(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = WeightFormerEncoder_diff(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_weight_diff")
-class RobertaWeightModel_diff(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaWeightEncoder_diff(args, task.source_dictionary)
-        return cls(args, encoder)
 
 ### Flash
-class RobertaFlashEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
+# class RobertaFlashEncoder(RobertaEncoder):
+#     """RoBERTa encoder."""
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
+#     def __init__(self, args, dictionary):
+#         super().__init__(args, dictionary)
 
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = FlashEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
+#     def build_encoder(self, args, dictionary, embed_tokens):
+#         encoder = FlashEncoder(args, dictionary, embed_tokens)
+#         encoder.apply(init_bert_params)
+#         return encoder
 
-@register_model("roberta_flash")
-class RobertaFlashModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
+# @register_model("roberta_flash")
+# class RobertaFlashModel(RobertaModel):
+#     def __init__(self, args, encoder):
+#         super().__init__(args, encoder)
 
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
+#     @classmethod
+#     def build_model(cls, args, task):
+#         """Build a new model instance."""
 
-        # make sure all arguments are present
-        base_architecture(args)
+#         # make sure all arguments are present
+#         base_architecture(args)
 
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
+#         if not hasattr(args, "max_positions"):
+#             args.max_positions = args.tokens_per_sample
 
-        encoder = RobertaFlashEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
+#         encoder = RobertaFlashEncoder(args, task.source_dictionary)
+#         return cls(args, encoder)
 
 # Flash Linear
-class RobertaFlashLinearEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = FlashLinearEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_flash_linear")
-class RobertaFlashLinearModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaFlashLinearEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
 #### 
 
-class RobertaMemEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
 
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = MemEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
 
-@register_model("roberta_mem")
-class RobertaMemModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
 
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
 
-        # make sure all arguments are present
-        base_architecture(args)
+############# Linear Urpe
+# class RobertaLinearUrpeEncoder(RobertaEncoder):
+#     """RoBERTa encoder."""
 
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
+#     def __init__(self, args, dictionary):
+#         super().__init__(args, dictionary)
 
-        encoder = RobertaMemEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
+#     def build_encoder(self, args, dictionary, embed_tokens):
+#         encoder = LinearKernelAttentionEncoder(args, dictionary, embed_tokens)
+#         encoder.apply(init_bert_params)
+#         return encoder
 
-class RobertaMemGauEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
+# @register_model("roberta_linear_urpe")
+# class RobertaLinearUrpeModel(RobertaModel):
+#     def __init__(self, args, encoder):
+#         super().__init__(args, encoder)
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
+#     @classmethod
+#     def build_model(cls, args, task):
+#         """Build a new model instance."""
 
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = MemGauEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
+#         # make sure all arguments are present
+#         base_architecture(args)
 
-@register_model("roberta_mem_gau")
-class RobertaMemModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
+#         if not hasattr(args, "max_positions"):
+#             args.max_positions = args.tokens_per_sample
 
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaMemGauEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-class RobertaReLAEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = ReLAEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_rela")
-class RobertaReLAModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaReLAEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-############# Gmu
-class RobertaGmuEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = GmuEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_gmu")
-class RobertaGmuModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaGmuEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-
-############# Linear Orpe
-class RobertaLinearOrpeEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
-
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = LinearKernelAttentionEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_linear_orpe")
-class RobertaLinearOrpeModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaLinearOrpeEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
+#         encoder = RobertaLinearUrpeEncoder(args, task.source_dictionary)
+#         return cls(args, encoder)
 
 ############# NormAttentionEncoder
 class RobertaNormEncoder(RobertaEncoder):
@@ -1326,7 +912,7 @@ class RobertaNormEncoder(RobertaEncoder):
             module.bias.data.zero_()
 
 @register_model("roberta_norm_attention")
-class RobertaNormOrpeModel(RobertaModel):
+class RobertaNormUrpeModel(RobertaModel):
     def __init__(self, args, encoder):
         super().__init__(args, encoder)
 
@@ -1372,66 +958,37 @@ class RobertaNormMixModel(RobertaModel):
         encoder = RobertaNormMixEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
-############# LSAttentionEncoder
-class RobertaLSEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
-
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = LSAttentionEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
-
-@register_model("roberta_ls_attention")
-class RobertaLSModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        # make sure all arguments are present
-        base_architecture(args)
-
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaLSEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
-############# LSAttentionEncoder
 
 ############# PerformerEncoder
-class RobertaPerformerEncoder(RobertaEncoder):
-    """RoBERTa encoder."""
+# class RobertaPerformerEncoder(RobertaEncoder):
+#     """RoBERTa encoder."""
 
-    def __init__(self, args, dictionary):
-        super().__init__(args, dictionary)
+#     def __init__(self, args, dictionary):
+#         super().__init__(args, dictionary)
 
-    def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = PerformerEncoder(args, dictionary, embed_tokens)
-        encoder.apply(init_bert_params)
-        return encoder
+#     def build_encoder(self, args, dictionary, embed_tokens):
+#         encoder = PerformerEncoder(args, dictionary, embed_tokens)
+#         encoder.apply(init_bert_params)
+#         return encoder
 
-@register_model("roberta_performer")
-class RobertaPerformerModel(RobertaModel):
-    def __init__(self, args, encoder):
-        super().__init__(args, encoder)
+# @register_model("roberta_performer")
+# class RobertaPerformerModel(RobertaModel):
+#     def __init__(self, args, encoder):
+#         super().__init__(args, encoder)
 
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
+#     @classmethod
+#     def build_model(cls, args, task):
+#         """Build a new model instance."""
 
-        # make sure all arguments are present
-        base_architecture(args)
+#         # make sure all arguments are present
+#         base_architecture(args)
 
-        if not hasattr(args, "max_positions"):
-            args.max_positions = args.tokens_per_sample
+#         if not hasattr(args, "max_positions"):
+#             args.max_positions = args.tokens_per_sample
 
-        encoder = RobertaPerformerEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
+#         encoder = RobertaPerformerEncoder(args, task.source_dictionary)
+#         return cls(args, encoder)
 ############# PerformerEncoder
 
 ############# LinearVanillaEncoder
@@ -1580,274 +1137,10 @@ def roberta_merge_architecture(args):
     args.dim_scale = getattr(args, "dim_scale", 4)
     base_architecture(args)
 
-# simple
-@register_model_architecture("roberta_simple", "roberta_simple_base")
-def roberta_simple_architecture(args):
-    base_architecture(args)
-
-# head
-@register_model_architecture("roberta_head", "roberta_head_base")
-def roberta_head_architecture(args):
-    base_architecture(args)
-
-# ada qk
-@register_model_architecture("roberta_head", "roberta_ada_base")
-def roberta_head_architecture(args):
-    base_architecture(args)
-    args.is_ada_q = getattr(args, "is_ada_q", True)
-    args.is_ada_k = getattr(args, "is_ada_k", True)
-    args.do_scale = getattr(args, "do_scale", True),
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.lambda_ = getattr(args, "lambda_", 0.99)
-    args.use_q = getattr(args, "use_q", True)
-    args.use_k = getattr(args, "use_k", True)
-    args.has_out = getattr(args, "has_out", True)
-
-# ada q
-@register_model_architecture("roberta_head", "roberta_ada_q_base")
-def roberta_head_architecture(args):
-    base_architecture(args)
-    args.is_ada_q = getattr(args, "is_ada_q", True)
-    args.is_ada_k = getattr(args, "is_ada_k", False)
-    args.do_scale = getattr(args, "do_scale", True),
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.lambda_ = getattr(args, "lambda_", 0.99)
-    args.use_q = getattr(args, "use_q", True)
-    args.use_k = getattr(args, "use_k", False)
-    args.has_out = getattr(args, "has_out", True)
-
-# multi relu weight 
-@register_model_architecture("roberta_head", "roberta_multi_relu_weight_base")
-def roberta_head_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.do_scale = getattr(args, "do_scale", False)
-    args.use_linear = getattr(args, "use_linear", True)
-    args.alpha_beta = getattr(args, "alpha_beta", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.has_out = getattr(args, "has_out", True)
-
-# simformer
-@register_model_architecture("roberta_simformer", "roberta_simformer_base")
-def roberta_simformer_architecture(args):
-    base_architecture(args)
-
-# mix
-@register_model_architecture("roberta_mix", "roberta_mix_base")
-def roberta_mix_architecture(args):
-    base_architecture(args)
-
-# dp_bf
-@register_model_architecture("roberta_merge", "roberta_dp_bf")
-def roberta_mix_architecture(args):
-    # args.is_base = getattr(args, "is_base", True)
-    # args.is_ada_q = getattr(args, "is_ada_q", False)
-    # args.is_ada_k = getattr(args, "is_ada_k", False)
-    # args.lambda_ = getattr(args, "lambda_", 0.99)
-    # args.up_fq = getattr(args, "up_fq", 16)
-    args.dropout_before = getattr(args, "dropout_before", True)
-    base_architecture(args)
-
-# ada q
-@register_model_architecture("roberta_merge", "roberta_ada_q")
-def roberta_mix_architecture(args):
-    args.is_ada_q = getattr(args, "is_ada_q", True)
-    args.is_ada_k = getattr(args, "is_ada_k", False)
-    args.lambda_ = getattr(args, "lambda_", 0.99)
-    args.use_q = getattr(args, "use_q", True),
-    args.use_k = getattr(args, "use_k", False),
-    base_architecture(args)
-
-# with o
-@register_model_architecture("roberta_merge", "roberta_with_o")
-def roberta_mix_architecture(args):
-    args.has_out = getattr(args, "has_out", True)
-    base_architecture(args)
-
-# taylor
-@register_model_architecture("roberta_taylor", "roberta_taylor_base")
-def roberta_taylor_architecture(args):
-    base_architecture(args)
-
-# taylor low
-@register_model_architecture("roberta_taylor", "roberta_taylor_low_base")
-def roberta_taylor_architecture(args):
-    args.low_d = getattr(args, "low_d", True)
-    base_architecture(args)
-
-# taylor out
-@register_model_architecture("roberta_taylor", "roberta_taylor_out_base")
-def roberta_taylor_architecture(args):
-    args.has_out = getattr(args, "has_out", True)
-    base_architecture(args)
-
-# taylor no scale
-@register_model_architecture("roberta_taylor", "roberta_taylor_no_scale_base")
-def roberta_taylor_architecture(args):
-    args.do_scale = getattr(args, "do_scale", False)
-    base_architecture(args)
-
-# taylor no scale ada
-@register_model_architecture("roberta_taylor", "roberta_taylor_no_scale_ada_base")
-def roberta_taylor_architecture(args):
-    args.is_ada_q = getattr(args, "is_ada_q", True)
-    args.use_q = getattr(args, "use_q", True)
-    args.do_scale = getattr(args, "do_scale", False)
-    base_architecture(args)
-
-# taylor scale ada
-@register_model_architecture("roberta_taylor", "roberta_taylor_scale_ada_base")
-def roberta_taylor_architecture(args):
-    args.is_ada_q = getattr(args, "is_ada_q", True)
-    args.use_q = getattr(args, "use_q", True)
-    base_architecture(args)
-
-# linear
-@register_model_architecture("roberta_taylor", "roberta_taylor_linear_base")
-def roberta_taylor_architecture(args):
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear relu
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear relu alpha beta
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_weight_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.alpha_beta = getattr(args, "alpha_beta", True)
-    base_architecture(args)
 
 
-# linear relu pos lear
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_no_lear_pos_base")
-def roberta_taylor_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.encoder_learned_pos = False
-
-# linear relu right
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_right_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.has_right_weight = getattr(args, "has_right_weight", True)
-    args.do_softmax = getattr(args, "do_softmax", False)
-    base_architecture(args)
-
-# linear relu right
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_right_sf_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.has_right_weight = getattr(args, "has_right_weight", True)
-    args.do_softmax = getattr(args, "do_softmax", True)
-    base_architecture(args)
-
-# linear relu right not share sf
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_right_not_share_sf_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.has_right_weight = getattr(args, "has_right_weight", False)
-    args.do_softmax = getattr(args, "do_softmax", True)
-    args.has_right_weight_not_share = getattr(args, "has_right_weight_not_share", True)
-    base_architecture(args)
 
 
-# linear relu res
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_res_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.has_res = getattr(args, "has_res", True)
-    base_architecture(args)
-
-
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_sparse_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.sparse = getattr(args, "sparse", True),
-    args.d1 = getattr(args, "d1", 32)
-    # args.d1 = getattr(args, "d1", 1)
-    args.d2 = getattr(args, "d2", 8)
-    # args.d2 = getattr(args, "d2", 1)
-    base_architecture(args)
-    # args.encoder_layers = getattr(args, "encoder_layers", 1)
-
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_large")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear elu
-@register_model_architecture("roberta_taylor", "roberta_linear_elu_base")
-def roberta_taylor_architecture(args):
-    args.use_elu = getattr(args, "use_elu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear
-@register_model_architecture("roberta_taylor", "roberta_linear_elu_p1_base")
-def roberta_taylor_architecture(args):
-    args.use_linear = getattr(args, "use_linear", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear no scale
-@register_model_architecture("roberta_taylor", "roberta_linear_elu_p1_no_scale_base")
-def roberta_taylor_architecture(args):
-    args.do_scale = getattr(args, "do_scale", False)
-    args.use_linear = getattr(args, "use_linear", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear leak
-@register_model_architecture("roberta_taylor", "roberta_linear_leak_base")
-def roberta_taylor_architecture(args):
-    args.use_leak = getattr(args, "use_leak", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear square
-@register_model_architecture("roberta_taylor", "roberta_linear_square_base")
-def roberta_taylor_architecture(args):
-    args.use_square = getattr(args, "use_square", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    base_architecture(args)
-
-# linear square
-@register_model_architecture("roberta_taylor", "roberta_sigmoid_base")
-def roberta_taylor_architecture(args):
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.use_sigmoid = getattr(args, "use_sigmoid", True)
-    args.do_scale = getattr(args, "do_scale", False)
-    base_architecture(args)
-
-# linear leak
-@register_model_architecture("roberta_taylor", "roberta_leak_l2_base")
-def roberta_taylor_architecture(args):
-    args.use_leak = getattr(args, "use_leak", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.use_l2 = getattr(args, "use_l2", True)
-    base_architecture(args)
-
-# relu high
-@register_model_architecture("roberta_taylor", "roberta_linear_relu_high_base")
-def roberta_taylor_architecture(args):
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.dim_scale = getattr(args, "dim_scale", 4)
-    base_architecture(args)
 
 # sparse relu
 @register_model_architecture("roberta_sparse_relu", "roberta_splu_base")
@@ -1865,16 +1158,6 @@ def roberta_taylor_architecture(args):
     args.d_global = getattr(args, "d_global", 32)
     args.with_global = getattr(args, "with_global", True)
     args.num = getattr(args, "num", 2)
-    base_architecture(args)
-
-# multi splu
-@register_model_architecture("roberta_multi_sparse_relu", "roberta_multi_splu_base")
-def roberta_taylor_architecture(args):
-    args.n_groups = getattr(args, "n_groups", 4)
-    args.step = getattr(args, "step", 4)
-    args.d_global = getattr(args, "d_global", 32)
-    args.num = getattr(args, "num", 2)
-    args.max_n = getattr(args, "max_n", 512)
     base_architecture(args)
 
 # cos
@@ -1925,1575 +1208,20 @@ def roberta_cosformer_architecture(args):
     base_architecture(args)
     args.causal = False
 
-#### multi
-# leaky
-@register_model_architecture("roberta_head", "roberta_multi_leaky_base")
-def roberta_taylor_architecture(args):
-    args.dropout = getattr(args, "dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.2)
-    args.encoder_layers = getattr(args, "encoder_layers", 16)
-    args.use_leak = getattr(args, "use_leak", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.do_scale = getattr(args, "do_scale", False)
-    args.use_linear = getattr(args, "use_linear", True)
-    base_architecture(args)
+
 
 # normalize
 @register_model_architecture("roberta_normalize", "roberta_normalize_base")
 def roberta_cosformer_architecture(args):
     base_architecture(args)
 
-# weight former
-@register_model_architecture("roberta_weight", "roberta_weight1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
 
-@register_model_architecture("roberta_weight", "roberta_weight1_prenorm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    print(f"pre_norm {args.encoder_normalize_before}")
 
-@register_model_architecture("roberta_weight", "roberta_weight1_wol")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.use_layernorm = False
-    print(f"here {args.use_layernorm}")
 
-# bound
-@register_model_architecture("roberta_weight", "roberta_weight1_bound")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = False
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.use_bound = True
 
-@register_model_architecture("roberta_weight", "roberta_weight1_sqrt_bound")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = False
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.use_bound = True
 
-@register_model_architecture("roberta_weight", "roberta_weight1_layer_norm")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = True
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.use_layer_norm = True
 
-@register_model_architecture("roberta_weight", "roberta_weight0_layer_norm")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = True
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = 0
-    args.has_out = True
-    args.encoder_attention_heads = 12
-    args.use_layer_norm = True
 
-@register_model_architecture("roberta_weight", "roberta_weight0_layer_norm_seq_drop")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = True
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = 0
-    args.has_out = True
-    args.encoder_attention_heads = 12
-    args.qk_layer_norm = True
-    args.seq_dropout = True
-    args.seq_p = 0.3
-
-@register_model_architecture("roberta_weight", "roberta_weight0_seq_drop")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = True
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = 0
-    args.has_out = True
-    args.encoder_attention_heads = 12
-    args.seq_dropout = True
-    args.seq_p = 0.3
-
-@register_model_architecture("roberta_weight", "roberta_weight0_qk_layer_norm_multi")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = False
-    args.use_bound = True
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = 0
-    args.has_out = True
-    args.encoder_attention_heads = 12
-    args.qk_layer_norm = True
-
-# dropout
-@register_model_architecture("roberta_weight", "roberta_weight1_dropout")
-def roberta_weight1_wol_architecture(args):
-    base_architecture(args)
-    args.use_relu = True
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.use_dropout = True
-    args.p = 0.5
-    args.encoder_attention_heads = 1
-
-# v激活
-@register_model_architecture("roberta_weight", "roberta_weight1_actv_v1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.v_act = True
-
-@register_model_architecture("roberta_weight", "roberta_weight1_actv_v2")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 1)
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.v_act = True
-
-@register_model_architecture("roberta_weight", "roberta_weight2")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 2)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-
-@register_model_architecture("roberta_weight", "roberta_weight2_0_5")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 2)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.c = 0.5
-
-@register_model_architecture("roberta_weight", "roberta_weight3")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 3)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-
-@register_model_architecture("roberta_weight", "roberta_weight4")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 4)
-    args.has_out = False
-    args.encoder_attention_heads = 1
-
-@register_model_architecture("roberta_weight_diff", "roberta_weight3_diff")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.weight_type = getattr(args, "weight_type", 3)
-    args.has_out = False
-    args.all_heads = [128, 96, 64, 48, 24, 16, 12, 8, 4, 3, 2, 1]
-    # args.encoder_attention_heads = 1
-    # args.encoder_layers = 2
-    # args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
-
-@register_model_architecture("roberta_flash", "roberta_flash_v1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_layers = 24
-
-@register_model_architecture("roberta_flash_linear", "roberta_flash_linear_v1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_layers = 24
-    args.chunk_size = 64
-
-@register_model_architecture("roberta_mem", "roberta_mem_v1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_v2")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_v3")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_v4")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.encoder_layers = 24
-    args.use_forward = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_v5")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.use_forward = False
-    args.encoder_ffn_embed_dim = 1536
-    args.use_anotherforward = True
-    
-@register_model_architecture("roberta_mem", "roberta_mem_v6")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.use_forward = False
-    args.encoder_ffn_embed_dim = 1536
-    args.use_anotherforward = True
-    args.encoder_layers = 17
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_gelu_nolayer_norm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.attention_use_layer_norm = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_gelu_multi_head")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_no_grad")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    # args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_grad = False
-    args.model_update_freq = args.update_freq[0]
-    print("-------------------")
-    print(args.model_update_freq)
-    print("-------------------")
-
-# test
-@register_model_architecture("roberta_mem", "roberta_mem_use_q")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_grad = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_v2_test")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-
-# 1 / 3参数
-@register_model_architecture("roberta_mem_gau", "roberta_mem_gau_v1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.encoder_layers = 24
-
-@register_model_architecture("roberta_mem_gau", "roberta_mem_gau_v2")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.encoder_embed_dim
-    args.encoder_layers = 12
-    args.encoder_embed_dim = int(2 ** 0.5 * args.encoder_embed_dim)
-
-# @register_model_architecture("roberta_mem_gau", "roberta_mem_gau_v1")
-# def roberta_cosformer_architecture(args):
-#     base_architecture(args)
-#     args.use_relu = getattr(args, "use_relu", True)
-#     args.max_l = getattr(args, "max_l", 512)
-#     args.causal = False
-#     args.has_out = False
-#     args.encoder_attention_heads = 1
-#     args.encoder_normalize_before = True
-#     args.use_gelu = True
-#     args.encoder_layers = 72
-
-@register_model_architecture("roberta_rela", "roberta_rela_v1")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-
-@register_model_architecture("roberta_rela", "roberta_rela_relu2")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "relu2"
-
-@register_model_architecture("roberta_rela", "roberta_rela_1+elu")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "1+elu"
-
-@register_model_architecture("roberta_rela", "roberta_rela_leak")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "leak"
-
-@register_model_architecture("roberta_rela", "roberta_rela_1+relu")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "1+relu"
-
-@register_model_architecture("roberta_rela", "roberta_rela_2+elu")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "2+elu"
-
-@register_model_architecture("roberta_rela", "roberta_rela_elu")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "elu"
-
-@register_model_architecture("roberta_rela", "roberta_rela_noact")
-def roberta_rela_architecture(args):
-    base_architecture(args)
-    args.act_fun = "noact"
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_gelu_init")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    args.act_fun = "gelu"
-    args.init_type = "gelu"
-    args.norm_type = "layernorm"
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_gelu_init_outnogelu")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    # add
-    args.act_fun = "gelu"
-    args.init_type = "gelu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_gelu_init_rms_norm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ####
-    args.act_fun = "gelu"
-    args.init_type = "gelu"
-    args.norm_type = "rmsnorm"
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_seqdrop")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    args.seq_dropout = True
-    args.seq_p = 0.3
-
-@register_model_architecture("roberta_gmu", "roberta_gmu_v1")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_layers = 24
-    args.norm_type = "rms_norm"
-    args.act_fun = "silu"
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-
-### base model
-@register_model_architecture("roberta_head", "roberta_cos")
-def roberta_base_architecture(args):
-    base_architecture(args)
-
-@register_model_architecture("roberta_head", "roberta_cos_type2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = 2
-
-@register_model_architecture("roberta_head", "roberta_rope")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_rope = True
-
-### 单位阵
-@register_model_architecture("roberta_head", "roberta_orpe_1_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 1
-
-@register_model_architecture("roberta_head", "roberta_orpe_1b_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 1
-    args.theta_type = "b"
-
-@register_model_architecture("roberta_head", "roberta_orpe_1c_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 1
-    args.theta_type = "c"
-
-@register_model_architecture("roberta_head", "roberta_orpe_1d_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 1
-    args.theta_learned = True
-    
-
-@register_model_architecture("roberta_head", "roberta_orpe_2_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 2
-    args.p_matrix = 1
-
-@register_model_architecture("roberta_head", "roberta_orpe_3_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 3
-    args.p_matrix = 1
-### 单位阵
-
-### Odd_Even
-@register_model_architecture("roberta_head", "roberta_orpe_1_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 5
-
-@register_model_architecture("roberta_head", "roberta_orpe_1d_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 5
-    args.theta_learned = True
-
-@register_model_architecture("roberta_head", "roberta_orpe_2_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 2
-    args.p_matrix = 5
-
-@register_model_architecture("roberta_head", "roberta_orpe_3_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 3
-    args.p_matrix = 5
-### Odd_Even
-
-### DCT
-@register_model_architecture("roberta_head", "roberta_orpe_1_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 2
-
-@register_model_architecture("roberta_head", "roberta_orpe_1b_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 2
-    args.theta_type = "b"
-
-@register_model_architecture("roberta_head", "roberta_orpe_1c_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 2
-    args.theta_type = "c"
-
-@register_model_architecture("roberta_head", "roberta_orpe_1d_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 2
-    args.theta_learned = True
-
-@register_model_architecture("roberta_head", "roberta_orpe_2_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 2
-    args.p_matrix = 2
-
-@register_model_architecture("roberta_head", "roberta_orpe_3_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 3
-    args.p_matrix = 2
-### DCT
-
-### Householder
-@register_model_architecture("roberta_head", "roberta_orpe_1_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 3
-
-@register_model_architecture("roberta_head", "roberta_orpe_1d_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.theta_learned = True
-
-@register_model_architecture("roberta_head", "roberta_orpe_2_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 2
-    args.p_matrix = 3
-
-@register_model_architecture("roberta_head", "roberta_orpe_3_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 3
-    args.p_matrix = 3
-### Householder
-
-### Householder learned
-@register_model_architecture("roberta_head", "roberta_orpe_1_3a")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.householder_learned = True
-
-@register_model_architecture("roberta_head", "roberta_orpe_1d_3a")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.theta_learned = True
-    args.p_matrix = 3
-    args.householder_learned = True
-### Householder learned
-
-###### Fourier
-@register_model_architecture("roberta_head", "roberta_orpe_4_4")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 4
-    args.p_matrix = 4
-
-@register_model_architecture("roberta_head", "roberta_orpe_4d_4")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 4
-    args.p_matrix = 4
-    args.theta_learned = True
-
-###### Fourier
-
-###### abl
-@register_model_architecture("roberta_head", "roberta_spe")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = False
-    args.use_spe = True
-
-@register_model_architecture("roberta_head", "roberta_per")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = False
-    args.use_spe = False
-    args.use_permutate = True
-
-@register_model_architecture("roberta_head", "roberta_t5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = False
-    args.use_spe = False
-    args.causal = False
-    args.use_t5 = True
-
-@register_model_architecture("roberta_head", "roberta_rpaw")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = False
-    args.use_spe = False
-    args.causal = False
-    args.use_t5 = False
-    args.use_rpaw = True
-###### abl
-
-
-
-### base model
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_rms_norm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "rmsnorm"
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_6head")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 6
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_lambda0")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.lambda_ = 0
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_lambda05")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.lambda_ = 0.5
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_usek")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.mem_use_q = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_sigmoid")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "sigmoid"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_exp")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "exp"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_actt_postnorm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.encoder_normalize_before = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope_prenorm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope_use_v")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.use_v = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_leak_out_no_act")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "leak"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_leak_out_no_act_0.01")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "leak"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.negative_slope = 0.01
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope_use_v_multi_head")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.use_v = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope_c")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.rope_type = "c"
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope_no_abs_pos")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.no_token_positional_embeddings = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_rope_multi_head")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_elu_out_no_act_gatednorm")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "elu"
-    args.norm_type = "gatedrmsnorm"
-    args.out_use_act = False
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_relu_out_no_act_rope")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "relu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("roberta_mem", "roberta_mem_hasout_1+elu_out_no_act_rope")
-def roberta_cosformer_architecture(args):
-    base_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    # args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.mem_use_gelu = True
-    args.has_out = True
-    ## add
-    args.act_fun = "1+elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-### linear orpe
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = False
-    args.kernel_type = "1+elu"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_elu")
-def roberta_base_elu_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = False
-    args.kernel_type = "elu"
-
-### 单位阵
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 1
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1b_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 1
-    args.theta_type = "b"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1c_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 1
-    args.theta_type = "c"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 1
-    args.theta_learned = True
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 2
-    args.p_matrix = 1
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_3_1")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 3
-    args.p_matrix = 1
-### 单位阵
-
-### rope
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_rope")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = False
-    args.kernel_type = "1+elu"
-    args.use_rope = True
-### rope
-
-### Odd Even
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 5
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 5
-    args.theta_learned = True
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 2
-    args.p_matrix = 5
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_3_5")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 3
-    args.p_matrix = 5
-### Odd Even
-
-### DCT
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 2
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1b_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 2
-    args.theta_type = "b"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1c_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 2
-    args.theta_type = "c"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 2
-    args.theta_learned = True
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 2
-    args.p_matrix = 2
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_3_2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 3
-    args.p_matrix = 2
-### DCT
-
-### Householder
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 3
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1b_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.theta_type = "b"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1c_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.theta_type = "c"
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.theta_learned = True
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_2_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 2
-    args.p_matrix = 3
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_3_3")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 3
-    args.p_matrix = 3
-### Householder
-
-### Householder learned
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_3a")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.householder_learned = True
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_3a")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.theta_learned = True
-    args.p_matrix = 3
-    args.householder_learned = True
-### Householder learned
-
-###### Fourier
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_4_4")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 4
-    args.p_matrix = 4
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_4d_4")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 4
-    args.p_matrix = 4
-    args.theta_learned = True
-
-###### Fourier
-
-###### abl
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_spe")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = False
-    args.kernel_type = "1+elu"
-    args.use_spe = True
-
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_per")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = False
-    args.kernel_type = "1+elu"
-    args.use_spe = False
-    args.use_permutate = True
-###### abl
 
 
 ############# NormAttentionEncoder
@@ -3511,7 +1239,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
 
@@ -3524,7 +1252,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
 
@@ -3539,7 +1267,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 32
     args.left_window = 1
@@ -3555,7 +1283,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.left_window = 1
@@ -3571,7 +1299,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.left_window = 1
@@ -3587,7 +1315,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.left_window = 1
@@ -3604,7 +1332,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
@@ -3618,7 +1346,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
@@ -3632,7 +1360,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
@@ -3646,7 +1374,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)] 
@@ -3661,7 +1389,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3675,7 +1403,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3689,7 +1417,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3703,7 +1431,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3717,7 +1445,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3731,7 +1459,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3745,7 +1473,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3759,7 +1487,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -3774,7 +1502,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.25)
@@ -3789,7 +1517,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -3804,7 +1532,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.75)
@@ -3819,7 +1547,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.25)
@@ -3834,7 +1562,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.5)
@@ -3849,7 +1577,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.75)
@@ -3865,7 +1593,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 128
     l = int(args.encoder_layers * 0.5)
@@ -3880,7 +1608,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 256
     l = int(args.encoder_layers * 0.5)
@@ -3888,7 +1616,7 @@ def roberta_base_architecture(args):
 ##### window size
 ######## type 2
 
-######## Orpe
+######## Urpe
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_w32_h12_13")
 def roberta_base_architecture(args):
     base_architecture(args)
@@ -3898,13 +1626,13 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 32
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -3918,13 +1646,13 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -3938,13 +1666,13 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 128
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -3958,19 +1686,19 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 256
     l = int(args.encoder_layers * 0.5)
     args.encoder_attention_types = [2 for _ in range(l)] + [1 for _ in range(args.encoder_layers - l)]
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
 
-######## Orpe
+######## Urpe
 
 ######## Pure Linear 百
 @register_model_architecture("roberta_norm_attention", "roberta_norm_type_11")
@@ -3995,7 +1723,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.25)
@@ -4010,7 +1738,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -4025,7 +1753,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.75)
@@ -4042,7 +1770,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -4057,7 +1785,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -4073,7 +1801,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -4091,7 +1819,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     args.use_dropout = True
@@ -4111,7 +1839,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4126,7 +1854,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4141,7 +1869,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 8
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4157,7 +1885,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4173,7 +1901,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4192,7 +1920,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = [16, 16, 32, 32, 64, 64] + [64] * 6
     l = int(args.encoder_layers * 0.5)
@@ -4269,7 +1997,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -4287,7 +2015,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
@@ -4304,7 +2032,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
@@ -4322,7 +2050,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4341,7 +2069,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4356,7 +2084,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4375,7 +2103,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4393,7 +2121,7 @@ def roberta_base_architecture(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -4413,7 +2141,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4433,7 +2161,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4453,7 +2181,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4472,7 +2200,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4493,7 +2221,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4513,7 +2241,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4527,7 +2255,7 @@ def roberta_base_architecture(args):
 #### layer norm rms
 
 #### GLU + ORPE
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_no_orpe")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_no_urpe")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4536,7 +2264,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4546,10 +2274,10 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = False
+    ###### urpe
+    args.encoder_use_urpe = False
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4558,7 +2286,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4568,13 +2296,13 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_ln_rms_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_ln_rms_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4583,7 +2311,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4594,13 +2322,13 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4609,7 +2337,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4618,13 +2346,13 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4633,7 +2361,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4643,8 +2371,8 @@ def roberta_base_architecture(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -4660,7 +2388,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4681,7 +2409,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4702,7 +2430,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4722,7 +2450,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4743,7 +2471,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4763,7 +2491,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4784,7 +2512,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4804,7 +2532,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4818,7 +2546,7 @@ def roberta_base_architecture(args):
 #### GLU + FINAL ACT
 
 #### GLU + ORPE + DROPOUT
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_dropout02")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_dropout02")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4827,7 +2555,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4837,14 +2565,14 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     args.glu_dropout = 0.2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_ln_rms_orpe_1d3_dropout02")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_ln_rms_urpe_1d3_dropout02")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4853,7 +2581,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4864,14 +2592,14 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     args.glu_dropout = 0.2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_orpe_1d3_dropout02")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_urpe_1d3_dropout02")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4880,7 +2608,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4889,14 +2617,14 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     args.glu_dropout = 0.2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_orpe_1d3_dropout02")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_urpe_1d3_dropout02")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4905,7 +2633,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4915,8 +2643,8 @@ def roberta_base_architecture(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -4924,7 +2652,7 @@ def roberta_base_architecture(args):
 #### GLU + ORPE + DROPOUT
 
 #### GLU + ORPE + NO ABS
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_no_abs")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_no_abs")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4933,7 +2661,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4943,15 +2671,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_ln_rms_orpe_1d3_no_abs")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_small_ln_rms_urpe_1d3_no_abs")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4960,7 +2688,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4971,15 +2699,15 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_orpe_1d3_no_abs")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_urpe_1d3_no_abs")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -4988,7 +2716,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -4997,15 +2725,15 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_orpe_1d3_no_abs")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_layernorm_small_urpe_1d3_no_abs")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5014,7 +2742,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5024,8 +2752,8 @@ def roberta_base_architecture(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5044,7 +2772,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -5060,7 +2788,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
@@ -5074,7 +2802,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
@@ -5088,7 +2816,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -5104,7 +2832,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, 'max_l', 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = 'chunk'
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.5)
@@ -5124,7 +2852,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 1
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.encoder_chunk_size = 32
 
 @register_model_architecture("roberta_norm_mix_attention", "roberta_norm_mix_type_2")
@@ -5136,60 +2864,21 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.encoder_chunk_size = 64
 
 ###### only rel
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1d_3_no_abs")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.theta_learned = True
-    # add
-    args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_head", "roberta_orpe_1d_3_no_abs")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 3
-    args.theta_learned = True
-    # add
-    args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_1_1_no_abs")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.causal = False
-    args.use_orpe = True
-    args.kernel_type = "1+elu"
-    args.core_matrix = 1
-    args.p_matrix = 1
-    # add
-    args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_head", "roberta_orpe_1_1_no_abs")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.weight_type = -1
-    args.use_orpe = True
-    args.core_matrix = 1
-    args.p_matrix = 1
-    # add
-    args.no_token_positional_embeddings = True
+
+
+
+
 ###### only rel
 
 ###### small init + pure rms norm + urpe
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_small_init")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_small_init")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5198,7 +2887,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5208,8 +2897,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5218,7 +2907,7 @@ def roberta_base_architecture(args):
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_small_init")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_small_init")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5227,7 +2916,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5238,8 +2927,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5248,7 +2937,7 @@ def roberta_base_architecture(args):
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_small_init_no_abs")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_small_init_no_abs")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5257,7 +2946,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5267,8 +2956,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5279,7 +2968,7 @@ def roberta_base_architecture(args):
     # add
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_small_init_no_abs")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_small_init_no_abs")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5288,7 +2977,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5299,8 +2988,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5313,7 +3002,7 @@ def roberta_base_architecture(args):
 ###### small init + pure rms norm + urpe
 
 ###### pure rms norm + urpe + GEGLU
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_geglu")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_geglu")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5322,7 +3011,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5332,8 +3021,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "gelu"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5341,7 +3030,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_geglu")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_geglu")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5350,7 +3039,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5361,8 +3050,8 @@ def roberta_base_architecture(args):
     args.glu_act = "gelu"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5370,7 +3059,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_geglu_small_init")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_geglu_small_init")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5379,7 +3068,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5389,8 +3078,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "gelu"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5399,7 +3088,7 @@ def roberta_base_architecture(args):
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_geglu_small_init")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_geglu_small_init")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5408,7 +3097,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5419,8 +3108,8 @@ def roberta_base_architecture(args):
     args.glu_act = "gelu"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5432,7 +3121,7 @@ def roberta_base_architecture(args):
 ###### pure rms norm + urpe + GEGLU
 
 ###### pure rms norm + urpe + weight
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5441,7 +3130,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5451,8 +3140,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5460,7 +3149,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5469,7 +3158,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5480,8 +3169,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5489,7 +3178,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_laplace")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_laplace")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5498,7 +3187,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5508,8 +3197,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5519,7 +3208,7 @@ def roberta_base_architecture(args):
     #### weight
     args.weight_type = 1
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_laplace")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_laplace")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5528,7 +3217,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5539,8 +3228,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5550,7 +3239,7 @@ def roberta_base_architecture(args):
     #### weight
     args.weight_type = 1
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_gaussian")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_gaussian")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5559,7 +3248,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5569,8 +3258,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5580,7 +3269,7 @@ def roberta_base_architecture(args):
     #### weight
     args.weight_type = 2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_gaussian")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_gaussian")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5589,7 +3278,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5600,8 +3289,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5613,7 +3302,7 @@ def roberta_base_architecture(args):
 ###### pure rms norm + urpe + weight
 
 ###### final dropout
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_final_dropout")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_final_dropout")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5622,7 +3311,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5632,8 +3321,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5644,7 +3333,7 @@ def roberta_base_architecture(args):
     args.use_final_dropout = True
     args.final_dropout = 0.1
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_final_dropout")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_final_dropout")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5653,7 +3342,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5664,8 +3353,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5678,7 +3367,7 @@ def roberta_base_architecture(args):
 ###### final dropout
 
 ###### relu2
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_relu2")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_relu2")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5687,7 +3376,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5697,8 +3386,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5706,7 +3395,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_relu2")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_relu2")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5715,7 +3404,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5726,8 +3415,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5737,7 +3426,7 @@ def roberta_base_architecture(args):
 ###### relu2
 
 ###### linear chunk
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_linear_chunk")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_linear_chunk")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5746,7 +3435,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5756,8 +3445,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5765,7 +3454,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_linear_chunk")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_linear_chunk")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5774,7 +3463,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5785,8 +3474,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5794,7 +3483,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_linear_chunk_32")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_linear_chunk_32")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5803,7 +3492,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5813,8 +3502,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5822,7 +3511,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_linear_chunk_32")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_linear_chunk_32")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5831,7 +3520,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5842,8 +3531,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5851,7 +3540,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_orpe_1d3_linear_chunk_16")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_pure_rms_urpe_1d3_linear_chunk_16")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5860,7 +3549,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.encoder_chunk_size = 16
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5870,8 +3559,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5879,7 +3568,7 @@ def roberta_base_architecture(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_orpe_1d3_linear_chunk_16")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_small_pure_rms_urpe_1d3_linear_chunk_16")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5888,7 +3577,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.encoder_chunk_size = 16
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -5899,8 +3588,8 @@ def roberta_base_architecture(args):
     args.glu_act = "swish"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -5914,38 +3603,12 @@ def roberta_base_architecture(args):
 
 
 
-###### roberta_ls_attention
-@register_model_architecture("roberta_ls_attention", "roberta_ls")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.chunk_size = 16
-    args.chunk_rank = 1
-    args.window_len = 512
-
-# @register_model_architecture("roberta_ls_attention", "roberta_ls_v2")
+###### performer
+# @register_model_architecture("roberta_performer", "roberta_performer")
 # def roberta_base_architecture(args):
 #     base_architecture(args)
+#     args.approx_attn_dim = 64
 #     args.causal = False
-#     # args.window_size = 128
-#     args.window_size = 64
-#     args.segment_size = None
-#     args.r = 128
-@register_model_architecture("roberta_ls_attention", "roberta_ls_v2")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.causal = False
-    # args.window_size = 128
-    args.window_size = 64
-    args.segment_size = 16
-    args.r = 1
-###### roberta_ls_attention
-
-###### performer
-@register_model_architecture("roberta_performer", "roberta_performer")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    args.approx_attn_dim = 64
-    args.causal = False
 ###### performer
 
 
@@ -5955,16 +3618,12 @@ def roberta_base_architecture(args):
     base_architecture(args)
     args.encoder_attention_heads = 1
 
-@register_model_architecture("roberta_linear_orpe", "roberta_1+elu_one_head")
-def roberta_base_architecture(args):
-    base_architecture(args)
-    ### add
-    args.encoder_attention_heads = 1
+
 ##### for visual
 
 ##### local global visual
 #### GLU + ORPE
-@register_model_architecture("roberta_norm_attention", "roberta_ffn_all_rms_layer_ln_rms_orpe_1d3")
+@register_model_architecture("roberta_norm_attention", "roberta_ffn_all_rms_layer_ln_rms_urpe_1d3")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5973,19 +3632,19 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_pure_chunk")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_pure_chunk")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -5994,7 +3653,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
@@ -6004,13 +3663,13 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_pure_linear")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_pure_linear")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6019,7 +3678,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
@@ -6029,13 +3688,13 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_linear_chunk")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_linear_chunk")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6044,7 +3703,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers // 2)] + [2 for _ in range(args.encoder_layers // 2)]
@@ -6054,13 +3713,13 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6069,7 +3728,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6079,8 +3738,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6088,7 +3747,7 @@ def roberta_base_architecture(args):
     args.use_softmax = True
 
 # mix 并联
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_parallel")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_parallel")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6097,7 +3756,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6106,8 +3765,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6115,7 +3774,7 @@ def roberta_base_architecture(args):
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
     args.forward_type = 1
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_linear_local")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_linear_local")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6124,7 +3783,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6133,8 +3792,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6142,7 +3801,7 @@ def roberta_base_architecture(args):
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
     args.forward_type = 2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_local_linear")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_local_linear")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6151,7 +3810,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6160,8 +3819,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6169,7 +3828,7 @@ def roberta_base_architecture(args):
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers)]
     args.forward_type = 3
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_25_75")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_25_75")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6178,7 +3837,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.25)
@@ -6189,13 +3848,13 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_75_25")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_75_25")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6204,7 +3863,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.75)
@@ -6215,15 +3874,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 # mix 并联
 
 # chunk size
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_chunk32")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_chunk32")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6232,7 +3891,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6242,13 +3901,13 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_chunk128")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_chunk128")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6257,7 +3916,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 128
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6267,15 +3926,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
 # chunk size
 
 ########### softmax + 1 + elu
-@register_model_architecture("roberta_norm_attention", "roberta_ffn_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu")
+@register_model_architecture("roberta_norm_attention", "roberta_ffn_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6284,14 +3943,14 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6299,7 +3958,7 @@ def roberta_base_architecture(args):
     args.use_softmax = True
 
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_pure_chunk")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_pure_chunk")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6308,7 +3967,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers)]
@@ -6318,15 +3977,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_pure_linear")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_pure_linear")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6335,7 +3994,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
@@ -6345,15 +4004,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_linear_chunk")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_linear_chunk")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6362,7 +4021,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers // 2)] + [2 for _ in range(args.encoder_layers // 2)]
@@ -6372,8 +4031,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6381,7 +4040,7 @@ def roberta_base_architecture(args):
     args.use_softmax = True
 
 # mix 并联
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_parallel")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_parallel")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6390,7 +4049,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6399,8 +4058,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6410,7 +4069,7 @@ def roberta_base_architecture(args):
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_linear_local")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_linear_local")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6419,7 +4078,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6428,8 +4087,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6439,7 +4098,7 @@ def roberta_base_architecture(args):
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_local_linear")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_local_linear")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6448,7 +4107,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6457,8 +4116,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    #### orpe
-    args.encoder_use_orpe = True
+    #### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6468,7 +4127,7 @@ def roberta_base_architecture(args):
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_25_75")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_25_75")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6477,7 +4136,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.25)
@@ -6488,15 +4147,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_75_25")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_75_25")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6505,7 +4164,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     l = int(args.encoder_layers * 0.75)
@@ -6516,8 +4175,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6526,7 +4185,7 @@ def roberta_base_architecture(args):
 # mix 并联
 
 ##### local global new version
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_no_orpe_softmax_1+elu")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_no_urpe_softmax_1+elu")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6535,7 +4194,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6545,12 +4204,12 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = False
+    ###### urpe
+    args.encoder_use_urpe = False
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6559,7 +4218,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6569,15 +4228,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_small")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_small")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6586,7 +4245,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6596,8 +4255,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6605,7 +4264,7 @@ def roberta_base_architecture(args):
     args.use_softmax = True
     args.multiple = 2
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_chunk32")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_chunk32")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6614,7 +4273,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 32
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6624,15 +4283,15 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
     ###### softmax
     args.use_softmax = True
 
-@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_orpe_1d3_softmax_1+elu_chunk128")
+@register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu_chunk128")
 def roberta_base_architecture(args):
     base_architecture(args)
     ### add
@@ -6641,7 +4300,7 @@ def roberta_base_architecture(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 128
     args.encoder_attention_types = [2 for _ in range(args.encoder_layers // 2)] + [1 for _ in range(args.encoder_layers // 2)]
@@ -6651,8 +4310,8 @@ def roberta_base_architecture(args):
     args.use_glu = True
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.encoder_use_orpe = True
+    ###### urpe
+    args.encoder_use_urpe = True
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
@@ -6687,19 +4346,19 @@ def roberta_base_architecture_vanilla_1elu(args):
     args.encoder_attention_types = [-1 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
     args.kernel_type = "1+elu"
 
-@register_model_architecture("roberta_linear_vanilla", "roberta_1+elu_vanilla_no_orpe")
+@register_model_architecture("roberta_linear_vanilla", "roberta_1+elu_vanilla_no_urpe")
 def roberta_base_architecture_1elu_vanilla(args):
     base_architecture(args)
     args.encoder_attention_types = [3 for _ in range(args.encoder_layers // 2)] + [-1 for _ in range(args.encoder_layers // 2)]
     args.kernel_type = "1+elu"
-    args.use_orpe = False
+    args.use_urpe = False
 
-@register_model_architecture("roberta_linear_vanilla", "roberta_vanilla_1+elu_no_orpe")
+@register_model_architecture("roberta_linear_vanilla", "roberta_vanilla_1+elu_no_urpe")
 def roberta_base_architecture_vanilla_1elu(args):
     base_architecture(args)
     args.encoder_attention_types = [-1 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
     args.kernel_type = "1+elu"
-    args.use_orpe = False
+    args.use_urpe = False
 
 #### local softmax + other linear
 @register_model_architecture("roberta_linear_vanilla", "roberta_local_softmax_cosformer")
@@ -6711,7 +4370,7 @@ def roberta_base_architecture_local_cos(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6735,7 +4394,7 @@ def roberta_base_architecture_local_1elu(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6757,7 +4416,7 @@ def roberta_base_architecture_local_1elu(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6778,7 +4437,7 @@ def roberta_base_architecture_window_norm_1elu(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.left_window = 1
@@ -6804,7 +4463,7 @@ def roberta_base_architecture_local_cos(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6826,7 +4485,7 @@ def roberta_base_architecture_local_1elu(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6846,7 +4505,7 @@ def roberta_base_architecture_local_1elu(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "chunk"
     args.encoder_chunk_size = 64
     args.local_norm_type = "simplermsnorm"
@@ -6865,7 +4524,7 @@ def roberta_base_architecture_window_relu_elu(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.encoder_attention_heads = 12
-    args.encoder_use_orpe = False
+    args.encoder_use_urpe = False
     args.group_type = "window"
     args.encoder_chunk_size = 64
     args.left_window = 1

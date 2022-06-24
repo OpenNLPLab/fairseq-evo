@@ -15,8 +15,8 @@ import sys
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import RMSNorm
-from fairseq.modules import Orpe
-from fairseq.modules import OrpeV2
+from fairseq.modules import Urpe
+from fairseq.modules import UrpeV2
 # from fast_transformers.causal_product import causal_dot_product
 # N, L, H, E, batch, length, head, dim
 
@@ -76,8 +76,8 @@ class NormMixAttention(nn.Module):
         rope_type="a",
         use_v=False,
         negative_slope=0.1,
-        # orpe
-        use_orpe=False,
+        # urpe
+        use_urpe=False,
         core_matrix=1, 
         p_matrix=1, 
         max_positions=512,
@@ -193,17 +193,17 @@ class NormMixAttention(nn.Module):
         self.negative_slope = negative_slope
         self.chunk_size = chunk_size
 
-        # orpe
+        # urpe
         self.core_matrix = core_matrix
         self.p_matrix = p_matrix
         self.max_positions = max_positions
-        self.use_orpe = use_orpe
+        self.use_urpe = use_urpe
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
-        if self.use_orpe:
-            self.orpe1 = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            self.orpe2 = OrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.orpe = Orpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+        if self.use_urpe:
+            self.urpe1 = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe2 = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         self.linear_act = self.get_act_fun(self.linear_act_fun)
         self.local_act = self.get_act_fun(self.local_act_fun)
@@ -217,7 +217,7 @@ class NormMixAttention(nn.Module):
         print(f"local_act_fun: {self.local_act_fun}")
         print(f"norm_type {self.norm_type}")
         print(f"init_type {self.init_type}")
-        print(f"use_orpe {self.use_orpe}")
+        print(f"use_urpe {self.use_urpe}")
         print(f"chunk_size {self.chunk_size}")
         print(f"self.forward_type {self.forward_type}")
 
@@ -423,9 +423,9 @@ class NormMixAttention(nn.Module):
         q = self.linear_act(q)
         k = self.linear_act(k)
 
-        if self.use_orpe:
-            q = self.orpe1(q)
-            k = self.orpe1(k)
+        if self.use_urpe:
+            q = self.urpe1(q)
+            k = self.urpe1(k)
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
@@ -532,9 +532,9 @@ class NormMixAttention(nn.Module):
         # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
 
-        if self.use_orpe:
-            q = self.orpe2(q)
-            k = self.orpe2(k)
+        if self.use_urpe:
+            q = self.urpe2(q)
+            k = self.urpe2(k)
 
         # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)

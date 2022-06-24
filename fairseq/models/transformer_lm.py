@@ -36,11 +36,8 @@ from fairseq.models.transformer import (
     # transformer merge
     TransformerMergeDecoder,
     # transformer simple
-    TransformerSimpleDecoder,
     # head
-    TransformerHeadDecoder,
-    # taylor
-    TransformerTaylorDecoder,
+    TransformerDecoderPlus,
     # splu
     TransformerSparseReluDecoder,
     # cosformer
@@ -48,28 +45,28 @@ from fairseq.models.transformer import (
     CosformerSoftmaxDecoder,
     CosformerDecoder_,
     # Mem
-    MemDecoder,
-    MemGauDecoder,
+    # MemDecoder,
+    # MemGauDecoder,
     # rela
     ReLADecoder,
     # Flash
-    FlashDecoder,
+    FlashQuadDecoder,
     FlashLinearDecoder,
     # gmu 
-    GmuDecoder,
-    # linear kernel with orpe
+    # GmuDecoder,
+    # linear kernel with urpe
     LinearKernelAttentionDecoder,
     # norm attention
     NormAttentionDecoder,
     # norm mix attention
     NormMixAttentionDecoder,
     # ls attention
-    LSAttentionDecoder,
+    # LSAttentionDecoder,
 )
 from fairseq.modules import TransformerLSModel
 
 # simple transformer
-from fairseq.models.simformer import SimformerEncoder, SimformerDecoder  
+# from fairseq.models.simformer import SimformerEncoder, SimformerDecoder  
 
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
@@ -751,120 +748,6 @@ class TransformerMergeLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
-# add for transformer splu
-@register_model("transformer_splu_lm", dataclass=TransformerLanguageModelConfig)
-class TransformerSpluLanguageModel(TransformerLanguageModel):
-    def __init__(self, decoder):
-        super(TransformerSpluLanguageModel, self).__init__(decoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        if args.decoder_layers_to_keep:
-            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
-
-        if getattr(args, "max_target_positions", None) is None:
-            args.max_target_positions = getattr(
-                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
-            )
-
-        if args.character_embeddings:
-            embed_tokens = CharacterTokenEmbedder(
-                task.source_dictionary,
-                eval(args.character_filters),
-                args.character_embedding_dim,
-                args.decoder_embed_dim,
-                args.char_embedder_highway_layers,
-            )
-        elif args.adaptive_input:
-            embed_tokens = AdaptiveInput(
-                len(task.source_dictionary),
-                task.source_dictionary.pad(),
-                args.decoder_input_dim,
-                args.adaptive_input_factor,
-                args.decoder_embed_dim,
-                options.eval_str_list(args.adaptive_input_cutoff, type=int),
-                args.quant_noise_pq,
-                args.quant_noise_pq_block_size,
-            )
-        else:
-            embed_tokens = cls.build_embedding(
-                args, task.source_dictionary, args.decoder_input_dim
-            )
-
-        if args.tie_adaptive_weights:
-            assert args.adaptive_input
-            assert args.adaptive_input_factor == args.adaptive_softmax_factor
-            assert (
-                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
-            ), "{} != {}".format(
-                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
-            )
-            assert args.decoder_input_dim == args.decoder_output_dim
-
-        decoder = TransformerSparseReluDecoder(
-            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
-        )
-        return cls(decoder)
-
-# add for transformer simple
-@register_model("transformer_simple_lm", dataclass=TransformerLanguageModelConfig)
-class TransformerSimpleLanguageModel(TransformerLanguageModel):
-    def __init__(self, decoder):
-        super(TransformerSimpleLanguageModel, self).__init__(decoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        if args.decoder_layers_to_keep:
-            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
-
-        if getattr(args, "max_target_positions", None) is None:
-            args.max_target_positions = getattr(
-                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
-            )
-
-        if args.character_embeddings:
-            embed_tokens = CharacterTokenEmbedder(
-                task.source_dictionary,
-                eval(args.character_filters),
-                args.character_embedding_dim,
-                args.decoder_embed_dim,
-                args.char_embedder_highway_layers,
-            )
-        elif args.adaptive_input:
-            embed_tokens = AdaptiveInput(
-                len(task.source_dictionary),
-                task.source_dictionary.pad(),
-                args.decoder_input_dim,
-                args.adaptive_input_factor,
-                args.decoder_embed_dim,
-                options.eval_str_list(args.adaptive_input_cutoff, type=int),
-                args.quant_noise_pq,
-                args.quant_noise_pq_block_size,
-            )
-        else:
-            embed_tokens = cls.build_embedding(
-                args, task.source_dictionary, args.decoder_input_dim
-            )
-
-        if args.tie_adaptive_weights:
-            assert args.adaptive_input
-            assert args.adaptive_input_factor == args.adaptive_softmax_factor
-            assert (
-                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
-            ), "{} != {}".format(
-                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
-            )
-            assert args.decoder_input_dim == args.decoder_output_dim
-
-        decoder = TransformerSimpleDecoder(
-            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
-        )
-        return cls(decoder)
-
 # add for head
 @register_model("transformer_head_lm", dataclass=TransformerLanguageModelConfig)
 class TransformerHeadLanguageModel(TransformerLanguageModel):
@@ -917,124 +800,11 @@ class TransformerHeadLanguageModel(TransformerLanguageModel):
             )
             assert args.decoder_input_dim == args.decoder_output_dim
 
-        decoder = TransformerHeadDecoder(
+        decoder = TransformerDecoderPlus(
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
 
-# add for simformer
-@register_model("simformer_lm", dataclass=TransformerLanguageModelConfig)
-class SimformerLanguageModel(TransformerLanguageModel):
-    def __init__(self, decoder):
-        super(SimformerLanguageModel, self).__init__(decoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        if args.decoder_layers_to_keep:
-            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
-
-        if getattr(args, "max_target_positions", None) is None:
-            args.max_target_positions = getattr(
-                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
-            )
-
-        if args.character_embeddings:
-            embed_tokens = CharacterTokenEmbedder(
-                task.source_dictionary,
-                eval(args.character_filters),
-                args.character_embedding_dim,
-                args.decoder_embed_dim,
-                args.char_embedder_highway_layers,
-            )
-        elif args.adaptive_input:
-            embed_tokens = AdaptiveInput(
-                len(task.source_dictionary),
-                task.source_dictionary.pad(),
-                args.decoder_input_dim,
-                args.adaptive_input_factor,
-                args.decoder_embed_dim,
-                options.eval_str_list(args.adaptive_input_cutoff, type=int),
-                args.quant_noise_pq,
-                args.quant_noise_pq_block_size,
-            )
-        else:
-            embed_tokens = cls.build_embedding(
-                args, task.source_dictionary, args.decoder_input_dim
-            )
-
-        if args.tie_adaptive_weights:
-            assert args.adaptive_input
-            assert args.adaptive_input_factor == args.adaptive_softmax_factor
-            assert (
-                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
-            ), "{} != {}".format(
-                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
-            )
-            assert args.decoder_input_dim == args.decoder_output_dim
-
-        decoder = SimformerDecoder(
-            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
-        )
-        return cls(decoder)
-
-# add for transformer taylor
-@register_model("transformer_taylor_lm", dataclass=TransformerLanguageModelConfig)
-class TransformerTaylorLanguageModel(TransformerLanguageModel):
-    def __init__(self, decoder):
-        super(TransformerTaylorLanguageModel, self).__init__(decoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        if args.decoder_layers_to_keep:
-            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
-
-        if getattr(args, "max_target_positions", None) is None:
-            args.max_target_positions = getattr(
-                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
-            )
-
-        if args.character_embeddings:
-            embed_tokens = CharacterTokenEmbedder(
-                task.source_dictionary,
-                eval(args.character_filters),
-                args.character_embedding_dim,
-                args.decoder_embed_dim,
-                args.char_embedder_highway_layers,
-            )
-        elif args.adaptive_input:
-            embed_tokens = AdaptiveInput(
-                len(task.source_dictionary),
-                task.source_dictionary.pad(),
-                args.decoder_input_dim,
-                args.adaptive_input_factor,
-                args.decoder_embed_dim,
-                options.eval_str_list(args.adaptive_input_cutoff, type=int),
-                args.quant_noise_pq,
-                args.quant_noise_pq_block_size,
-            )
-        else:
-            embed_tokens = cls.build_embedding(
-                args, task.source_dictionary, args.decoder_input_dim
-            )
-
-        if args.tie_adaptive_weights:
-            assert args.adaptive_input
-            assert args.adaptive_input_factor == args.adaptive_softmax_factor
-            assert (
-                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
-            ), "{} != {}".format(
-                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
-            )
-            assert args.decoder_input_dim == args.decoder_output_dim
-
-        decoder = TransformerTaylorDecoder(
-            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
-        )
-        return cls(decoder)
 
 def base_lm_architecture(args):
     # backward compatibility for older model checkpoints
@@ -1329,117 +1099,6 @@ class CosformerSoftmaxLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
-@register_model("mem_lm", dataclass=TransformerLanguageModelConfig)
-class MemLanguageModel(TransformerLanguageModel):
-    def __init__(self, decoder):
-        super(MemLanguageModel, self).__init__(decoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        if args.decoder_layers_to_keep:
-            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
-
-        if getattr(args, "max_target_positions", None) is None:
-            args.max_target_positions = getattr(
-                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
-            )
-
-        if args.character_embeddings:
-            embed_tokens = CharacterTokenEmbedder(
-                task.source_dictionary,
-                eval(args.character_filters),
-                args.character_embedding_dim,
-                args.decoder_embed_dim,
-                args.char_embedder_highway_layers,
-            )
-        elif args.adaptive_input:
-            embed_tokens = AdaptiveInput(
-                len(task.source_dictionary),
-                task.source_dictionary.pad(),
-                args.decoder_input_dim,
-                args.adaptive_input_factor,
-                args.decoder_embed_dim,
-                options.eval_str_list(args.adaptive_input_cutoff, type=int),
-                args.quant_noise_pq,
-                args.quant_noise_pq_block_size,
-            )
-        else:
-            embed_tokens = cls.build_embedding(
-                args, task.source_dictionary, args.decoder_input_dim
-            )
-
-        if args.tie_adaptive_weights:
-            assert args.adaptive_input
-            assert args.adaptive_input_factor == args.adaptive_softmax_factor
-            assert (
-                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
-            ), "{} != {}".format(
-                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
-            )
-            assert args.decoder_input_dim == args.decoder_output_dim
-
-        decoder = MemDecoder(
-            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
-        )
-        return cls(decoder)
-
-@register_model("mem_gau_lm", dataclass=TransformerLanguageModelConfig)
-class MemGauLanguageModel(TransformerLanguageModel):
-    def __init__(self, decoder):
-        super(MemGauLanguageModel, self).__init__(decoder)
-
-    @classmethod
-    def build_model(cls, args, task):
-        """Build a new model instance."""
-
-        if args.decoder_layers_to_keep:
-            args.decoder_layers = len(args.decoder_layers_to_keep.split(","))
-
-        if getattr(args, "max_target_positions", None) is None:
-            args.max_target_positions = getattr(
-                args, "tokens_per_sample", DEFAULT_MAX_TARGET_POSITIONS
-            )
-
-        if args.character_embeddings:
-            embed_tokens = CharacterTokenEmbedder(
-                task.source_dictionary,
-                eval(args.character_filters),
-                args.character_embedding_dim,
-                args.decoder_embed_dim,
-                args.char_embedder_highway_layers,
-            )
-        elif args.adaptive_input:
-            embed_tokens = AdaptiveInput(
-                len(task.source_dictionary),
-                task.source_dictionary.pad(),
-                args.decoder_input_dim,
-                args.adaptive_input_factor,
-                args.decoder_embed_dim,
-                options.eval_str_list(args.adaptive_input_cutoff, type=int),
-                args.quant_noise_pq,
-                args.quant_noise_pq_block_size,
-            )
-        else:
-            embed_tokens = cls.build_embedding(
-                args, task.source_dictionary, args.decoder_input_dim
-            )
-
-        if args.tie_adaptive_weights:
-            assert args.adaptive_input
-            assert args.adaptive_input_factor == args.adaptive_softmax_factor
-            assert (
-                args.adaptive_softmax_cutoff == args.adaptive_input_cutoff
-            ), "{} != {}".format(
-                args.adaptive_softmax_cutoff, args.adaptive_input_cutoff
-            )
-            assert args.decoder_input_dim == args.decoder_output_dim
-
-        decoder = MemGauDecoder(
-            args, task.target_dictionary, embed_tokens, no_encoder_attn=True
-        )
-        return cls(decoder)
 
 @register_model("rela_lm", dataclass=TransformerLanguageModelConfig)
 class ReLALanguageModel(TransformerLanguageModel):
@@ -1549,7 +1208,7 @@ class FlashLanguageModel(TransformerLanguageModel):
             )
             assert args.decoder_input_dim == args.decoder_output_dim
 
-        decoder = FlashDecoder(
+        decoder = FlashQuadDecoder(
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
@@ -1670,8 +1329,8 @@ class GmuLanguageModel(TransformerLanguageModel):
         return cls(decoder)
 
 ################################################################
-# LinearKernelAttentionDecoder with orpe
-@register_model("linear_orpe_lm", dataclass=TransformerLanguageModelConfig)
+# LinearKernelAttentionDecoder with urpe
+@register_model("linear_urpe_lm", dataclass=TransformerLanguageModelConfig)
 class LKOrLanguageModel(TransformerLanguageModel):
     def __init__(self, decoder):
         super(LKOrLanguageModel, self).__init__(decoder)
@@ -2626,43 +2285,6 @@ def transformer_merge_lm_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
 
-# transformer simple
-@register_model_architecture("transformer_simple_lm", "transformer_simple_lm_small_wiki103")
-def transformer_simple_lm_small_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 1)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-
-@register_model_architecture("transformer_simple_lm", "transformer_simple_lm_wiki103")
-def transformer_simple_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-
 # head
 @register_model_architecture("transformer_head_lm", "transformer_head_lm_small_wiki103")
 def transformer_head_lm_small_wiki103(args):
@@ -2751,195 +2373,7 @@ def transformer_head_lm_small_wiki103(args):
     args.max_l = getattr(args, "max_l", 3072)
     args.has_out = getattr(args, "has_out", True)
 
-# simformer
-@register_model_architecture("simformer_lm", "simformer_lm_small_wiki103")
-def simformer_lm_small_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 1)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
 
-@register_model_architecture("simformer_lm", "simformer_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-
-# simformer
-@register_model_architecture("transformer_taylor_lm", "transformer_taylor_lm_small_wiki103")
-def simformer_lm_small_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 1)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-
-@register_model_architecture("transformer_taylor_lm", "transformer_taylor_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-
-@register_model_architecture("transformer_taylor_lm", "transformer_linear_abs_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    transformer_lm_big(args)
-
-# linear relu
-@register_model_architecture("transformer_taylor_lm", "transformer_linear_relu_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    transformer_lm_big(args)
-
-# linear relu weight
-@register_model_architecture("transformer_taylor_lm", "transformer_linear_relu_weight_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.alpha_beta = getattr(args, "alpha_beta", True)
-    # change
-    # args.max_l = getattr(args, "max_l", 3072)
-    args.max_l = getattr(args, "max_l", 512)
-    transformer_lm_big(args)
-
-# splu
-@register_model_architecture("transformer_splu_lm", "transformer_splu_lm_small_wiki103")
-def transformer_merge_lm_small_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 1)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.n_groups = getattr(args, "n_groups", 4)
-    args.step = getattr(args, "step", 4)
-    args.d_global = getattr(args, "d_global", 32)
-    args.with_global = getattr(args, "with_global", True)
-    transformer_lm_big(args)
-
-@register_model_architecture("transformer_splu_lm", "transformer_splu_lm_wiki103")
-def transformer_merge_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.n_groups = getattr(args, "n_groups", 4)
-    args.step = getattr(args, "step", 4)
-    args.d_global = getattr(args, "d_global", 32)
-    args.with_global = getattr(args, "with_global", True)
-    args.num = getattr(args, "num", 2)
-    transformer_lm_big(args)
 
 @register_model_architecture("transformer_lm", "transformer_lm_single_wiki103")
 def transformer_lm_baevski_wiki103(args):
@@ -2959,55 +2393,6 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
 
-# linear
-@register_model_architecture("transformer_taylor_lm", "transformer_linear_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.use_linear = getattr(args, "use_linear", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.do_scale = getattr(args, "do_scale", False)
-    # change
-    transformer_lm_big(args)
-
-# cosformer512
-@register_model_architecture("transformer_taylor_lm", "cosformer1024_lm_wiki103")
-def simformer_lm_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    # add
-    args.use_relu = getattr(args, "use_relu", True)
-    args.norm_taylor = getattr(args, "norm_taylor", False)
-    args.alpha_beta = getattr(args, "alpha_beta", True)
-    # change
-    # args.max_l = getattr(args, "max_l", 3072)
-    args.max_l = getattr(args, "max_l", 1024)
-    transformer_lm_big(args)
 
 # cosformer512
 @register_model_architecture("cosformer_lm", "cosformer_lm_wiki103")
@@ -3355,115 +2740,6 @@ def cosformer_lm_gpt2_big(args):
     args.has_out = True
 
 
-@register_model_architecture("mem_lm", "mem_wiki_ada")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_single_head_has_out")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-
-@register_model_architecture("mem_gau_lm", "mem_gau_wiki_ada_single_head_has_out")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    # args.decoder_layers = 36
-    # args.decoder_layers = 40
-    args.decoder_layers = 32
-
-@register_model_architecture("mem_gau_lm", "mem_gau_wiki_ada_single_head_has_out_v2")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    d = int(2 ** 0.5 * args.decoder_embed_dim)
-    args.decoder_embed_dim = d
-    args.decoder_output_dim = d
-    args.decoder_input_dim = d
 
 ### rela
 @register_model_architecture("rela_lm", "rela_wiki_ada_v1")
@@ -3677,179 +2953,6 @@ def transformer_lm_baevski_wiki103(args):
     args.expansion_factor = 2
     args.chunk_size = 64
 
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_gelu_init")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "gelu"
-    args.init_type = "gelu"
-    args.norm_type = "layernorm"
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_gelu_init_outnogelu")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "gelu"
-    args.init_type = "gelu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_gelu_init_rms_norm")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "gelu"
-    args.init_type = "gelu"
-    args.norm_type = "rmsnorm"
-
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_single_head_has_out_dropout")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    args.seq_dropout = True
-    args.seq_p = 0.3
-
-
-# gmu
-@register_model_architecture("gmu_lm", "gmu_wiki_ada_v1")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.decoder_layers = 32
-    args.eps = 1e-5
-    args.expansion_factor = 2
-    args.norm_type = "rms_norm"
-    args.act_fun = "silu"
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
 
 ### base model
 @register_model_architecture("transformer_head_lm", "transformer_lm_cos")
@@ -3910,7 +3013,7 @@ def transformer_lm_baevski_wiki103(args):
     args.use_rope = True
 
 ### 单位阵
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_1")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_1")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -3928,11 +3031,11 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1b_1")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1b_1")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -3950,12 +3053,12 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_type = "b"
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_1")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1d_1")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -3973,12 +3076,12 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_learned = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_1")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_2_1")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -3996,11 +3099,11 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 2
     args.p_matrix = 1
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_1")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_3_1")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4018,13 +3121,13 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 1
 ### 单位阵
 
 ### Odd Even
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_5")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_5")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4042,14 +3145,14 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 5
 ### Odd Even
 
 
 ### DCT
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_2")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_2")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4067,11 +3170,11 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 2
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1b_2")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1b_2")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4089,12 +3192,12 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 2
     args.theta_type = "b"
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_2")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_2_2")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4112,11 +3215,11 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 2
     args.p_matrix = 2
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_2")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_3_2")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4134,13 +3237,13 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 2
 ### DCT
 
 ### Householder
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_3")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_3")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4158,11 +3261,11 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 3
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_3")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_2_3")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4180,11 +3283,11 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 2
     args.p_matrix = 3
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_3")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_3_3")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4202,13 +3305,13 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 3
 ### Householder
 
 ### Householder learned
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_3a")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_3a")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4226,7 +3329,7 @@ def transformer_lm_baevski_wiki103(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 3
     args.householder_learned = True
@@ -4234,622 +3337,8 @@ def transformer_lm_baevski_wiki103(args):
 
 ### base model
 
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_rms_norm")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "rmsnorm"
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_4head")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 4
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_leak_out_no_act")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "leak"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_leak_out_no_act_0.01")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "leak"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.negative_slope = 0.01
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_lambda0")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.lambda_ = 0
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_lambda05")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.lambda_ = 0.5
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_usek")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.mem_use_q = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_sigmoid")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "sigmoid"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_exp")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "exp"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_postnorm")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.decoder_normalize_before = False
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_rope")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_rope_use_v")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.use_v = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_rope_use_v_multi_head")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.use_v = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_rope_c")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.rope_type = "c"
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_rope_no_abs_pos")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-    args.no_token_positional_embeddings = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_rope_multi_head")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    # args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_1+elu_out_no_act_rope")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "1+elu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_relu_out_no_act_rope")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "relu"
-    args.norm_type = "layernorm"
-    args.out_use_act = False
-    args.use_rope = True
-
-@register_model_architecture("mem_lm", "mem_wiki_ada_has_out_elu_out_no_act_gatednorm")
-def transformer_lm_baevski_wiki103(args):
-    args.decoder_layers = getattr(args, "decoder_layers", 16)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
-    args.dropout = getattr(args, "dropout", 0.3)
-    args.adaptive_input = getattr(args, "adaptive_input", True)
-    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
-    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
-    args.adaptive_softmax_cutoff = getattr(
-        args, "adaptive_softmax_cutoff", "20000,60000"
-    )
-    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
-    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
-    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
-    transformer_lm_big(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.encoder_attention_heads = 1
-    args.encoder_normalize_before = True
-    args.use_gelu = True
-    args.decoder_attention_heads = 1
-    ### add
-    args.act_fun = "elu"
-    args.norm_type = "gatedrmsnorm"
-    args.out_use_act = False
-
-### linear orpe
-@register_model_architecture("linear_orpe_lm", "1+elu_wiki")
+### linear urpe
+@register_model_architecture("linear_urpe_lm", "1+elu_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4876,11 +3365,11 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = False
+    args.use_urpe = False
     args.kernel_type = "1+elu"
 
 ### 单位阵
-@register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_1_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4907,12 +3396,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1b_1_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1b_1_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4939,13 +3428,13 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_type = "b"
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_1_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_1_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -4972,13 +3461,13 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_1_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_1_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5005,12 +3494,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 1
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_1_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_1_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5037,7 +3526,7 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 1
@@ -5045,7 +3534,7 @@ def transformer_lm_baevski_wiki103(args):
 ### 单位阵
 
 ### Rope
-@register_model_architecture("linear_orpe_lm", "1+elu_rope_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_rope_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5072,11 +3561,11 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_rope = True
     args.kernel_type = "1+elu"
 
-@register_model_architecture("linear_orpe_lm", "relu_rope_wiki")
+@register_model_architecture("linear_urpe_lm", "relu_rope_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5103,13 +3592,13 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_rope = True
     args.kernel_type = "relu"
 ### Rope
 
 ### Odd Even
-@register_model_architecture("linear_orpe_lm", "1+elu_1_5_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_5_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5136,12 +3625,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 5
 
-@register_model_architecture("linear_orpe_lm", "relu_1_5_wiki")
+@register_model_architecture("linear_urpe_lm", "relu_1_5_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5168,14 +3657,14 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "relu"
     args.core_matrix = 1
     args.p_matrix = 5
 ### Odd Even
 
 ### DCT
-@register_model_architecture("linear_orpe_lm", "1+elu_1_2_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_2_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5202,12 +3691,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 2
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1b_2_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1b_2_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5234,13 +3723,13 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 2
     args.theta_type = "b"
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_2_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_2_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5267,12 +3756,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 2
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_2_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_2_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5299,14 +3788,14 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 2
 ### DCT
 
 ### Householder
-@register_model_architecture("linear_orpe_lm", "1+elu_1_3_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_3_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5333,12 +3822,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_3_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_3_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5365,12 +3854,12 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_3_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_3_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5397,14 +3886,14 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 3
 ### Householder
 
 ### Householder learned
-@register_model_architecture("linear_orpe_lm", "1+elu_1_3a_wiki")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_3a_wiki")
 def transformer_lm_baevski_wiki103(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
@@ -5431,7 +3920,7 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_heads = 1
     ### add
     args.causal = True
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 3
@@ -5468,7 +3957,7 @@ def transformer_lm_baevski_wiki103(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.decoder_attention_heads = 1
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.decoder_chunk_size = 32
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
 
@@ -5498,12 +3987,12 @@ def transformer_lm_baevski_wiki103(args):
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.decoder_attention_heads = 1
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.decoder_chunk_size = 32
 
 ######################### small model
-### linear orpe
-# @register_model_architecture("linear_orpe_lm", "1+elu_wiki_base")
+### linear urpe
+# @register_model_architecture("linear_urpe_lm", "1+elu_wiki_base")
 # def transformer_lm_baevski_wiki103(args):
 #     base_lm_architecture(args)
 #     args.use_relu = getattr(args, "use_relu", True)
@@ -5516,11 +4005,11 @@ def transformer_lm_baevski_wiki103(args):
 #     args.decoder_attention_heads = 1
 #     ### add
 #     args.causal = True
-#     args.use_orpe = False
+#     args.use_urpe = False
 #     args.kernel_type = "1+elu"
 
 # ### 单位阵
-# @register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki_base")
+# @register_model_architecture("linear_urpe_lm", "1+elu_1_1_wiki_base")
 # def transformer_lm_baevski_wiki103(args):
 #     base_lm_architecture(args)
 #     args.max_l = getattr(args, "max_l", 512)
@@ -5532,80 +4021,80 @@ def transformer_lm_baevski_wiki103(args):
 #     # args.decoder_attention_heads = 1
 #     ### add
 #     args.causal = True
-#     args.use_orpe = True
+#     args.use_urpe = True
 #     args.kernel_type = "1+elu"
 #     args.core_matrix = 1
 #     args.p_matrix = 1
 # ### 单位阵
 
-@register_model_architecture("linear_orpe_lm", "1+elu_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.causal = True
-    args.use_orpe = False
+    args.use_urpe = False
     args.kernel_type = "1+elu"
 
 ###### Identity
-@register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1b_1_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1b_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_type = "b"
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1c_1_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1c_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_type = "c"
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_1_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_1_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 1
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_1_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_1_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 1
@@ -5614,43 +4103,43 @@ def transformer_lm_baevski_wiki103(args):
 
 
 ###### DCT
-@register_model_architecture("linear_orpe_lm", "1+elu_1_2_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_2_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 2
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_2_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_2_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 2
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_2_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_2_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 2
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_2_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_2_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 2
@@ -5659,53 +4148,53 @@ def transformer_lm_baevski_wiki103(args):
 
 
 ###### Householder
-@register_model_architecture("linear_orpe_lm", "1+elu_1_3_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_3_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_3_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_3_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 3
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_3_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_3_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_3_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_3_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 3
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_3a_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_3a_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.theta_learned = True
@@ -5714,22 +4203,22 @@ def transformer_lm_baevski_wiki103(args):
 ###### Householder
 
 ###### Fourier
-@register_model_architecture("linear_orpe_lm", "1+elu_4_4_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_4_4_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 4
     args.p_matrix = 4
 
-@register_model_architecture("linear_orpe_lm", "1+elu_4d_4_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_4d_4_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 4
     args.p_matrix = 4
@@ -5737,43 +4226,43 @@ def transformer_lm_baevski_wiki103(args):
 ###### Fourier
 
 ###### Odd Even
-@register_model_architecture("linear_orpe_lm", "1+elu_1_5_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_5_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 5
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_5_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_5_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 5
     args.theta_learned = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_2_5_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_2_5_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 2
     args.p_matrix = 5
 
-@register_model_architecture("linear_orpe_lm", "1+elu_3_5_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_3_5_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 3
     args.p_matrix = 5
@@ -5781,131 +4270,131 @@ def transformer_lm_baevski_wiki103(args):
 ###### Odd Even
 
 ###### abl
-@register_model_architecture("linear_orpe_lm", "1+elu_spe_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_spe_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_spe = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_per_wiki_base")
+@register_model_architecture("linear_urpe_lm", "1+elu_per_wiki_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_spe = False
     args.use_permutate = True
 ###### abl
 
-################################ transformer orpe
+################################ transformer urpe
 @register_model_architecture("transformer_lm", "transformer_lm_base")
 def transformer_lm_big(args):
     base_lm_architecture(args)
 
 ### 单位阵
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1b_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1b_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_type = "b"
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1c_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1c_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_type = "c"
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1d_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
     args.theta_learned = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_2_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 2
     args.p_matrix = 1
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_1_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_3_1_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 1
 ### 单位阵
 
 ###### Householder
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 3
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1d_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 3
     args.theta_learned = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_2_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 2
     args.p_matrix = 3
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_3_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_3_3_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 3
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_3a_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1d_3a_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.theta_learned = True
     args.p_matrix = 3
@@ -5913,61 +4402,61 @@ def transformer_lm_baevski_wiki103(args):
 ###### Householder
 
 ###### Fourier
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_4_4_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_4_4_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 4
     args.p_matrix = 4
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_4d_4_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_4d_4_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 4
     args.p_matrix = 4
     args.theta_learned = True
 ###### Fourier
 
 ###### Odd Even
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 5
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1d_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 5
     args.theta_learned = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_2_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_2_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 2
     args.p_matrix = 5
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_3_5_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_3_5_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 5
 
@@ -5979,7 +4468,7 @@ def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_spe = True
 
 @register_model_architecture("transformer_head_lm", "transformer_lm_per_base")
@@ -5988,7 +4477,7 @@ def transformer_lm_baevski_wiki103(args):
     ### add
     args.weight_type = -1
     args.use_permutate = True
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_spe = False
 
 @register_model_architecture("transformer_head_lm", "transformer_lm_t5_base")
@@ -5996,30 +4485,30 @@ def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_spe = False
     args.causal = True
     args.use_t5 = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_rpaw_base")
+@register_model_architecture("transformer_head_lm", "transformer_lm_rpe_vanilla_base")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = False
+    args.use_urpe = False
     args.use_spe = False
     args.causal = True
     args.use_t5 = False
-    args.use_rpaw = True
+    args.use_rpe_vanilla = True
 ###### abl
 
 ###### only rel
-@register_model_architecture("linear_orpe_lm", "1+elu_1d_3_wiki_base_no_abs")
+@register_model_architecture("linear_urpe_lm", "1+elu_1d_3_wiki_base_no_abs")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 3
@@ -6027,34 +4516,34 @@ def transformer_lm_baevski_wiki103(args):
     # add
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1d_3_base_no_abs")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1d_3_base_no_abs")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     ### add
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 3
     args.theta_learned = True
     # add
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("transformer_head_lm", "transformer_lm_orpe_1_1_base_no_abs")
+@register_model_architecture("transformer_head_lm", "transformer_lm_urpe_1_1_base_no_abs")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.weight_type = -1
-    args.use_orpe = True
+    args.use_urpe = True
     args.core_matrix = 1
     args.p_matrix = 1
     # add
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("linear_orpe_lm", "1+elu_1_1_wiki_base_no_abs")
+@register_model_architecture("linear_urpe_lm", "1+elu_1_1_wiki_base_no_abs")
 def transformer_lm_baevski_wiki103(args):
     base_lm_architecture(args)
     args.causal = True
     ### add
-    args.use_orpe = True
+    args.use_urpe = True
     args.kernel_type = "1+elu"
     args.core_matrix = 1
     args.p_matrix = 1
@@ -6071,7 +4560,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6089,7 +4578,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6108,7 +4597,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6125,7 +4614,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6144,7 +4633,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6158,7 +4647,7 @@ def transformer_lm_big(args):
 ################### norm attention + glu act
 
 ################### norm attention + urpe
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6166,7 +4655,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6175,13 +4664,13 @@ def transformer_lm_big(args):
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6189,7 +4678,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6199,13 +4688,13 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6213,7 +4702,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6223,13 +4712,13 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6237,7 +4726,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6248,13 +4737,13 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6262,7 +4751,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6271,13 +4760,13 @@ def transformer_lm_big(args):
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6285,7 +4774,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6295,15 +4784,15 @@ def transformer_lm_big(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 ################### norm attention + urpe
 
 ################### norm attention + urpe + dropout
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_orpe_1d3_dropout02")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_urpe_1d3_dropout02")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6311,7 +4800,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6320,14 +4809,14 @@ def transformer_lm_big(args):
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
     args.glu_dropout = 0.2
 
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_orpe_1d3_dropout02")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_urpe_1d3_dropout02")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6335,7 +4824,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6345,8 +4834,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6354,7 +4843,7 @@ def transformer_lm_big(args):
 ################### norm attention + urpe + dropout
 
 ################### norm attention + urpe + no_abs
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_orpe_1d3_no_abs")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_urpe_1d3_no_abs")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6362,7 +4851,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6372,15 +4861,15 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_orpe_1d3_no_abs")
+@register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_urpe_1d3_no_abs")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6388,7 +4877,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6399,15 +4888,15 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_orpe_1d3_no_abs")
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_urpe_1d3_no_abs")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6415,7 +4904,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6424,15 +4913,15 @@ def transformer_lm_big(args):
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_orpe_1d3_no_abs")
+@register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_urpe_1d3_no_abs")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6440,7 +4929,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6450,8 +4939,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6460,7 +4949,7 @@ def transformer_lm_big(args):
 ################### norm attention + urpe + no_abs
 
 ################### norm attention + urpe + pure rms norm
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_small_init")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_small_init")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6468,7 +4957,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6478,8 +4967,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6488,7 +4977,7 @@ def transformer_lm_big(args):
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_small_init")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6496,7 +4985,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6507,8 +4996,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6517,7 +5006,7 @@ def transformer_lm_big(args):
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_no_abs_small_init")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_no_abs_small_init")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6525,7 +5014,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6535,8 +5024,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6547,7 +5036,7 @@ def transformer_lm_big(args):
     ###### no abs
     args.no_token_positional_embeddings = True
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_no_abs_small_init")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_no_abs_small_init")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6555,7 +5044,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6566,8 +5055,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6580,7 +5069,7 @@ def transformer_lm_big(args):
 ################### norm attention + urpe + pure rms norm
 
 ################### norm attention + urpe + pure rms norm + geglu
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_geglu")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_geglu")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6588,7 +5077,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6598,8 +5087,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6607,7 +5096,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_geglu")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_geglu")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6615,7 +5104,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6626,8 +5115,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6635,7 +5124,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_small_init_geglu")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6643,7 +5132,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6653,8 +5142,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6663,7 +5152,7 @@ def transformer_lm_big(args):
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_small_init_geglu")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6671,7 +5160,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6682,8 +5171,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6694,7 +5183,7 @@ def transformer_lm_big(args):
 ################### norm attention + urpe + pure rms norm + geglu
 
 ################### pure rms norm + urpe + weight
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6702,7 +5191,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6712,8 +5201,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6721,7 +5210,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6729,7 +5218,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6740,8 +5229,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6749,7 +5238,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_laplace")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_laplace")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6757,7 +5246,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6767,8 +5256,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6778,7 +5267,7 @@ def transformer_lm_big(args):
     #### weight
     args.weight_type = 1
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_laplace")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_laplace")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6786,7 +5275,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6797,8 +5286,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6808,7 +5297,7 @@ def transformer_lm_big(args):
     #### weight
     args.weight_type = 1
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_gaussian")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_gaussian")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6816,7 +5305,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6826,8 +5315,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6837,7 +5326,7 @@ def transformer_lm_big(args):
     #### weight
     args.weight_type = 2
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_gaussian")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_gaussian")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6845,7 +5334,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6856,8 +5345,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6867,7 +5356,7 @@ def transformer_lm_big(args):
     #### weight
     args.weight_type = 2
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_final_dropout")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_final_dropout")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6875,7 +5364,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6885,8 +5374,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6897,7 +5386,7 @@ def transformer_lm_big(args):
     args.use_final_dropout = True
     args.final_dropout = 0.1
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_final_dropout")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_final_dropout")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6905,7 +5394,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6916,8 +5405,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6930,7 +5419,7 @@ def transformer_lm_big(args):
 ################### pure rms norm + urpe + weight
 
 ### relu2
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_relu2")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_relu2")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6938,7 +5427,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu2"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6948,8 +5437,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6957,7 +5446,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_relu2")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_relu2")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6965,7 +5454,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu2"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -6976,8 +5465,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -6987,7 +5476,7 @@ def transformer_lm_big(args):
 ### relu2
 
 ### linear_chunk
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_linear_chunk")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -6995,7 +5484,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7005,8 +5494,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -7014,7 +5503,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_linear_chunk")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -7022,7 +5511,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7033,8 +5522,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -7042,7 +5531,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_linear_chunk_32")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_32")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -7050,7 +5539,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 32
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7060,8 +5549,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -7069,7 +5558,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_linear_chunk_32")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_32")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -7077,7 +5566,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 32
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7088,8 +5577,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -7097,7 +5586,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_linear_chunk_16")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_16")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -7105,7 +5594,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 16
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7115,8 +5604,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -7124,7 +5613,7 @@ def transformer_lm_big(args):
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
-@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_orpe_1d3_linear_chunk_16")
+@register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_16")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -7132,7 +5621,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 16
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7143,8 +5632,8 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
@@ -7163,7 +5652,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7182,7 +5671,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers)]
@@ -7200,7 +5689,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
@@ -7317,7 +5806,7 @@ def transformer_lm_flash_linear(args):
 ############# flash_lm
 
 ############# softmax + 1 + elu
-@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_orpe_1d3_softmax_1+elu")
+@register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_softmax_1+elu")
 def transformer_lm_big(args):
     base_lm_architecture(args)
     ### add
@@ -7325,7 +5814,7 @@ def transformer_lm_big(args):
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
-    args.decoder_use_orpe = False
+    args.decoder_use_urpe = False
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
@@ -7335,8 +5824,8 @@ def transformer_lm_big(args):
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### orpe
-    args.decoder_use_orpe = True
+    ###### urpe
+    args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
