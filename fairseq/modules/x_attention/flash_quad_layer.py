@@ -12,8 +12,6 @@ from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecod
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
-# merge attention
-# from fairseq.modules import FlashQuadAttention
 from .flash_quad_attention import FlashQuadAttention
 
 class FlashQuadEncoderLayer(nn.Module):

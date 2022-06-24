@@ -25,21 +25,22 @@ from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 from fairseq.models.roberta import RobertaEncoder, RobertaModel, base_architecture
 
-from fairseq.models.transformer import FlashLinearEncoder
+from fairseq.models.transformer import CosformerEncoder
 
-class RobertaFlashLinearEncoder(RobertaEncoder):
+# cosformer
+class RobertaCosformerEncoder(RobertaEncoder):
     """RoBERTa encoder."""
 
     def __init__(self, args, dictionary):
         super().__init__(args, dictionary)
 
     def build_encoder(self, args, dictionary, embed_tokens):
-        encoder = FlashLinearEncoder(args, dictionary, embed_tokens)
+        encoder = CosformerEncoder(args, dictionary, embed_tokens)
         encoder.apply(init_bert_params)
         return encoder
 
-@register_model("roberta_flash_linear")
-class RobertaFlashLinearModel(RobertaModel):
+@register_model("roberta_cosformer")
+class RobertaCosformerModel(RobertaModel):
     def __init__(self, args, encoder):
         super().__init__(args, encoder)
 
@@ -53,16 +54,13 @@ class RobertaFlashLinearModel(RobertaModel):
         if not hasattr(args, "max_positions"):
             args.max_positions = args.tokens_per_sample
 
-        encoder = RobertaFlashLinearEncoder(args, task.source_dictionary)
+        encoder = RobertaCosformerEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
-@register_model_architecture("roberta_flash_linear", "roberta_flash_linear_v1")
-def roberta_base_architecture_flash_linear(args):
+# cosformer
+@register_model_architecture("roberta_cosformer", "roberta_cosformer_v1")
+def roberta_cosformer_architecture_v1(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
     args.causal = False
-    args.has_out = False
-    args.encoder_attention_heads = 1
-    args.encoder_layers = 24
-    args.chunk_size = 64
+    args.has_out = True

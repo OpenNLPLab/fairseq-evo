@@ -12,8 +12,9 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 
 
+# cosformer
 @with_incremental_state
-class MultiheadSimpleAttention(nn.Module):
+class CosformerAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -35,6 +36,13 @@ class MultiheadSimpleAttention(nn.Module):
         qn_block_size=8,
         # add
         index=0,
+        use_relu=True,
+        use_elu=False,
+        use_leak=False,
+        max_l=1024,
+        has_out=False,
+        causal=False,
+        resi=False,
     ):
         # add
         self.index = index
@@ -54,7 +62,7 @@ class MultiheadSimpleAttention(nn.Module):
         assert (
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
-        self.scaling = self.head_dim ** -0.5
+        
 
         self.self_attention = self_attention
         self.encoder_decoder_attention = encoder_decoder_attention
@@ -62,21 +70,35 @@ class MultiheadSimpleAttention(nn.Module):
         assert not self.self_attention or self.qkv_same_dim, (
             "Self-attention requires query, key and " "value to be of the same size"
         )
-
-        self.qk_proj = quant_noise(
-            nn.Linear(embed_dim, self.kdim, bias=bias), q_noise, qn_block_size
+        
+        self.k_proj = quant_noise(
+            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
         )
         self.v_proj = quant_noise(
             nn.Linear(self.vdim, embed_dim, bias=bias), q_noise, qn_block_size
         )
+        self.q_proj = quant_noise(
+            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        )
 
-        if add_bias_kv:
-            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
-            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
-        else:
-            self.bias_k = self.bias_v = None
 
-        self.add_zero_attn = add_zero_attn
+        # add begin
+        self.use_relu = use_relu
+        self.use_elu = use_elu
+        self.use_leak = use_leak
+        self.max_l = max_l
+        self.has_out = has_out
+        self.causal = causal
+
+        print("========================")
+        print("cosformer")
+        print(f"self.use_relu {self.use_relu}")
+        print("========================")
+
+        if self.has_out:
+            self.out_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
 
         self.reset_parameters()
 
@@ -89,21 +111,19 @@ class MultiheadSimpleAttention(nn.Module):
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
-            nn.init.xavier_uniform_(self.qk_proj.weight, gain=1 / math.sqrt(2))
             nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
-            # nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
         else:
-            nn.init.xavier_uniform_(self.qk_proj.weight)
             nn.init.xavier_uniform_(self.v_proj.weight)
-            # nn.init.xavier_uniform_(self.q_proj.weight)
 
-        # nn.init.xavier_uniform_(self.out_proj.weight)
-        # if self.out_proj.bias is not None:
-        #     nn.init.constant_(self.out_proj.bias, 0.0)
-        if self.bias_k is not None:
-            nn.init.xavier_normal_(self.bias_k)
-        if self.bias_v is not None:
-            nn.init.xavier_normal_(self.bias_v)
+        if self.has_out:
+            nn.init.xavier_uniform_(self.out_proj.weight)
+            if self.out_proj.bias is not None:
+                nn.init.constant_(self.out_proj.bias, 0.0)
+
+    def get_index(self, seq_len):
+        index = np.pi / 2 * torch.arange(1, seq_len + 1).reshape(1, -1, 1)
+
+        return nn.Parameter(index, requires_grad=False)
 
     def forward(
         self,
@@ -117,6 +137,7 @@ class MultiheadSimpleAttention(nn.Module):
         attn_mask: Optional[Tensor] = None,
         before_softmax: bool = False,
         need_head_weights: bool = False,
+        eps=1e-4
     ) -> Tuple[Tensor, Optional[Tensor]]:
         """Input shape: Time x Batch x Channel
 
@@ -154,37 +175,88 @@ class MultiheadSimpleAttention(nn.Module):
         head_dim = embed_dim // num_heads
 
         tgt_len, bsz, embed_dim = query.size()
-        # N, L, E
-        q = self.qk_proj(query).transpose(0, 1)
-        # N, S, E
-        k = key.transpose(0, 1)
-        # N, S, E
-        value = value.transpose(0, 1)
-    
-        # test for roberta
+
         scaling = float(embed_dim) ** -0.5
-        q = q * scaling
+        # L, N, E1
+        q = self.q_proj(query)
+        # S, N, E1
+        k = self.k_proj(key)
+        # S, N, E2
+        v = self.v_proj(value)
 
-        # N, L, S
-        attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+        # N * b, L, e1
+        q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, S, e2
+        if k is not None:
+            k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # N * b, S, e2
+        if v is not None:
+            v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        if attn_mask is not None:
-            attn_output_weights += attn_mask
-       
-        # N, L, S
-        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-        # dropout
-        attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
-        # N, L, E
-        attn_output = torch.bmm(attn_output_weights, value)
-        # L, N, E
-        attn_output = attn_output.transpose(0, 1)
-        attn_output = self.v_proj(attn_output)
+        if self.use_relu:
+            q = F.relu(q)
+            k = F.relu(k)
+        elif self.use_elu:
+            q = F.elu(q)
+            k = F.elu(k)
+        elif self.use_leak:
+            q = F.leaky_relu(q)
+            k = F.leaky_relu(k)
 
-        if need_weights:
-            return attn_output, attn_output_weights
+        # cos transform
+        m = max(src_len, tgt_len)
+        # get index and send to cuda
+        weight_index = self.get_index(m).to(q)
+        # (N * h, L, 2 * d)
+        q_ = torch.cat([q * torch.sin(weight_index[:, :tgt_len, :] / m), q * torch.cos(weight_index[:, :tgt_len, :] / m)], dim=-1)
+        # (N * h, S, 2 * d)
+        k_ = torch.cat([k * torch.sin(weight_index[:, :src_len, :] / m), k * torch.cos(weight_index[:, :src_len, :] / m)], dim=-1)
+
+        if self.causal:
+            # # Need to improve speed!
+            # # (N * h, L, 2 * d) (N * h, L, d) -> (N * h, L, h, 2 * d, d)
+            # kv_ = torch.einsum("nld,nlm->nldm", k_, v)
+            # # (N * h, L, 2 * d, d) -> (N * h, L, 2 * d, d)
+            # kv_cum = torch.cumsum(kv_, dim=1)
+            # # (N * h, L, 2 * d) (N * h, L, 2 * d, d) -> (N * h, L, d)
+            # qkv = torch.einsum("nld,nldm->nlm", q_, kv_cum)
+            # # (N * h, L, 2 * d) -> (N * h, L, 2 * d)
+            # k_cum = torch.cumsum(k_, dim=1)
+            # # (N * h, L, 2 * d) (N * h, L, 2 * d) -> (N * h, L)
+            # denom = torch.clamp_min(torch.einsum("nlm,nlm->nl", q_, k_cum), eps)
+            # # (N * h, L, d) (N * h, L, 1) -> (N * h, L, d)
+            # attn_output = qkv / denom.unsqueeze(-1)
+            # # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+            # attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
+            weights = torch.bmm(q_, k_.transpose(1, 2))
+            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            # (N * h, L, S) -> (N * h, L, S)
+            denom = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
+            # (N * h, L, S) (N * h, L, S) -> (N * h, L, S)
+            attn_weights = weights / denom
+            # (N * h, L, S) (N * h, S, d) -> (N * h, L, d)
+            attn_output = torch.bmm(attn_weights, v)
+            # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+            attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         else:
-            return attn_output, None
+            # (N * h, L, 2 * d) (N * h, L, d) -> (N * h, 2 * d, d)
+            kv_ = torch.einsum('nld,nlm->ndm', k_, v)
+            # (N * h, L, 2 * d) (N * h, 2 * d) -> (N * h, L)
+            z_ = 1 / torch.clamp_min(torch.einsum('nld,nd->nl', q_, torch.sum(k_, axis=1)), eps)
+            # (N * h, L, 2 * d) (N * h, d, 2 * d) (N * h, L) -> (N * h, L, d)
+            attn_output = torch.einsum('nld,ndm,nl->nlm', q_, kv_, z_)
+            # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+            attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # L, N, E
+        if self.has_out:
+            attn_output = self.out_proj(attn_output)
+
+        return attn_output, None
 
     @staticmethod
     def _append_prev_key_padding_mask(

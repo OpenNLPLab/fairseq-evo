@@ -12,18 +12,16 @@ from fairseq.modules import MultiheadAttention, LayerNorm, TransformerEncoderLay
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
-# merge attention
-from fairseq.modules import NormLocalAttention, NormLinearAttention
-from fairseq.modules import MultiheadCosformerAttention, PerformerAttention, LinearKernelAttention
-from fairseq.modules import GLU
-# norm layer
-from fairseq.modules import SimpleRMSNorm
-from fairseq.modules import GatedRMSNorm
-from fairseq.modules import RMSNorm
-from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
 
-class LinearVanillaEncoderLayer(nn.Module):
+from .norm_local_attention import NormLocalAttention
+from .norm_linear_attention import NormLinearAttention
+from .cosformer_attention import CosformerAttention
+from .performer_attention import PerformerAttention
+from .linear_kernel_attention import LinearKernelAttention
+from ..ffn import GLU
+from ..norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
+
+class LinearCombinationEncoderLayer(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.args = args

@@ -12,15 +12,14 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
-from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
+from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
-from einops import rearrange
 
 @with_incremental_state
-class NormLinearAttention(nn.Module):
+class NormMixAttention(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -49,7 +48,7 @@ class NormLinearAttention(nn.Module):
         max_l=1024,
         has_out=False,
         causal=False,
-        weight_type=-1,
+        weight_type=1,
         c=1.0,
         v_act=False,
         use_dropout=False,
@@ -66,7 +65,8 @@ class NormLinearAttention(nn.Module):
         mem_use_k=False,
         attention_use_layer_norm=True,
         model_update_freq=1,
-        act_fun="gelu",
+        linear_act_fun="gelu",
+        local_act_fun="relu",
         out_use_act=True,
         init_type="default",
         norm_type="layernorm",
@@ -82,10 +82,10 @@ class NormLinearAttention(nn.Module):
         theta_type="a",
         theta_learned=False, 
         householder_learned=False,
-        kv_act='identity',
-        # final dropout
-        use_final_dropout=False,
-        final_dropout=0.0,
+        # chunk_size
+        chunk_size=32,
+        # forward形式, 1为并联, 2为local + linear, 3为linear + local
+        forward_type=1
     ):
         # add
         self.index = index
@@ -113,32 +113,57 @@ class NormLinearAttention(nn.Module):
         assert not self.self_attention or self.qkv_same_dim, (
             "Self-attention requires query, key and " "value to be of the same size"
         )
+
+        d = embed_dim // 2
         
-        self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.k_proj_linear = quant_noise(
+            nn.Linear(self.kdim, d, bias=bias), q_noise, qn_block_size
         )
-        self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.q_proj_linear = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
         )
-        self.v_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.v_proj_linear = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
         )
+        self.out_proj_linear = quant_noise(
+            nn.Linear(d, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+
+        self.k_proj_local = quant_noise(
+            nn.Linear(self.kdim, d, bias=bias), q_noise, qn_block_size
+        )
+        self.q_proj_local = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
+        )
+        self.v_proj_local = quant_noise(
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
+        )
+        self.out_proj_local = quant_noise(
+            nn.Linear(d, embed_dim, bias=bias), q_noise, qn_block_size
+        )
+        self.dropout_module = FairseqDropout(
+            dropout, module_name=self.__class__.__name__
+        )
+
+        # self.gated_rms_norm = GatedRMSNorm(d)
 
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
         if self.attention_use_layer_norm:
             if self.norm_type == "rmsnorm":
-                print("here! rmsnorm")
-                self.layer_norm = RMSNorm(embed_dim)
+                self.layer_norm = RMSNorm(d)
+                self.gated_rms_norm = RMSNorm(d)
             elif self.norm_type == "gatedrmsnorm":
                 print("here! gatedrmsnorm")
-                self.layer_norm = GatedRMSNorm(embed_dim)
+                self.layer_norm = GatedRMSNorm(d)
+                self.gated_rms_norm = GatedRMSNorm(d)
             elif self.norm_type == "simplermsnorm":
                 print("here! simple rmsnorm")
-                self.layer_norm = SimpleRMSNorm(embed_dim)
+                self.layer_norm = SimpleRMSNorm(d)
+                self.gated_rms_norm = SimpleRMSNorm(d)
             else:
-                print("here! layer norm")
-                self.layer_norm = nn.LayerNorm(embed_dim)
+                self.layer_norm = nn.LayerNorm(d)
+                self.gated_rms_norm = nn.LayerNorm(d)
 
         self.i = 0
         self.model_update_freq = model_update_freq
@@ -156,24 +181,15 @@ class NormLinearAttention(nn.Module):
         self.has_out = has_out
         self.mem_use_q = mem_use_q
         self.mem_use_k = mem_use_k
-        self.act_fun = act_fun
+        self.linear_act_fun = linear_act_fun
+        self.local_act_fun = local_act_fun
         self.out_use_act = out_use_act
         self.init_type = init_type
         self.seq_dropout = seq_dropout
         self.seq_p = seq_p
         self.use_v = use_v
         self.negative_slope = negative_slope
-        self.use_dropout = use_dropout
-
-        if self.use_dropout:
-            self.dropout_module = FairseqDropout(
-                dropout, module_name=self.__class__.__name__
-            )
-        self.use_final_dropout = use_final_dropout
-        if use_final_dropout:
-            self.final_dropout_module = FairseqDropout(
-                final_dropout, module_name=self.__class__.__name__
-            )
+        self.chunk_size = chunk_size
 
         # urpe
         self.core_matrix = core_matrix
@@ -183,47 +199,25 @@ class NormLinearAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_urpe:
-            print("=====================================")
-            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe1 = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe2 = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            print("=====================================")
 
-        print("=========================")
-        print("qk_act")
-        self.act = self.get_act_fun(self.act_fun)
-        print("=========================")
-        print("kv_act")
-        self.kv_act = self.get_act_fun(kv_act)
-        print("=========================")
-
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-        self.weight_type = weight_type
-        if self.weight_type == 1:
-            a0 = 1 - np.exp(-1)
-            a2 = 25 / 2 - 35 * np.exp(-1)
-            self.b0 = 3 * a2 / 2
-            self.b1 = a0 - a2 / 2
-        elif self.weight_type == 2:
-            # self.register_buffer("ratio", torch.sigmoid(torch.randn(1)))
-            self.r = 0.5
-            self.c = -2 * np.log(self.r)
+        self.linear_act = self.get_act_fun(self.linear_act_fun)
+        self.local_act = self.get_act_fun(self.local_act_fun)
+        self.forward_type = forward_type
 
         print(f"causal {self.causal}")
         print(f"has_out {self.has_out}")
         print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
         print(f"num_heads {self.num_heads}")
-        print(f"act_fun_type: {act_fun}")
+        print(f"linear_act_fun: {self.linear_act_fun}")
+        print(f"local_act_fun: {self.local_act_fun}")
         print(f"norm_type {self.norm_type}")
         print(f"init_type {self.init_type}")
         print(f"use_urpe {self.use_urpe}")
-        print(f"use_dropout {self.use_dropout}")
-        print(f"kv_act {kv_act}")
-        print(f"self.weight_type {self.weight_type}")
-        print(f"self.use_final_dropout {self.use_final_dropout}")
-        print(f"self.final_dropout {final_dropout}")
+        print(f"chunk_size {self.chunk_size}")
+        print(f"self.forward_type {self.forward_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -231,7 +225,6 @@ class NormLinearAttention(nn.Module):
             self.reset_parameters()
 
     def get_act_fun(self, act_fun):
-        print(act_fun)
         if act_fun == "gelu":
             return F.gelu
         elif act_fun == "relu":
@@ -250,14 +243,8 @@ class NormLinearAttention(nn.Module):
             def f(x):
                 return 1 + F.elu(x)
             return f
-        elif act_fun == "silu":
-            return F.silu
-        elif self.act_fun == "relu2":
-            def f(x):
-                return torch.square(torch.relu(x))
-            return f
         else:
-            return lambda x: x
+            return None
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -267,21 +254,32 @@ class NormLinearAttention(nn.Module):
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
-            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.k_proj_linear.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.q_proj_linear.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.v_proj_linear.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.k_proj_local.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.q_proj_local.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(self.v_proj_local.weight, gain=1 / math.sqrt(2))
         else:
-            nn.init.xavier_uniform_(self.k_proj.weight)
-            nn.init.xavier_uniform_(self.q_proj.weight)
-            nn.init.xavier_uniform_(self.v_proj.weight)
+            nn.init.xavier_uniform_(self.k_proj_linear.weight)
+            nn.init.xavier_uniform_(self.q_proj_linear.weight)
+            nn.init.xavier_uniform_(self.v_proj_linear.weight)
+            nn.init.xavier_uniform_(self.k_proj_local.weight)
+            nn.init.xavier_uniform_(self.q_proj_local.weight)
+            nn.init.xavier_uniform_(self.v_proj_local.weight)
 
         if self.has_out:
-            nn.init.xavier_uniform_(self.out_proj.weight)
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
+            nn.init.xavier_uniform_(self.out_proj_linear.weight)
+            nn.init.xavier_uniform_(self.out_proj_local.weight)
+            if self.out_proj_linear.bias is not None:
+                nn.init.constant_(self.out_proj_linear.bias, 0.0)
+            if self.out_proj_local.bias is not None:
+                nn.init.constant_(self.out_proj_local.bias, 0.0)
 
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
+            if self.out_proj_linear.bias is not None:
+                nn.init.constant_(self.out_proj_linear.bias, 0.0)
+            if self.out_proj_local.bias is not None:
+                nn.init.constant_(self.out_proj_local.bias, 0.0)
 
     def gelu_reset(self):
         print("use gelu init")
@@ -311,6 +309,41 @@ class NormLinearAttention(nn.Module):
             return nn.Parameter(index, requires_grad=False)
 
     def forward(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        # 并联
+        if self.forward_type == 1:
+            # print("a")
+            o1, _ = self.forward_linear(query, key, value)
+            o2, _ = self.forward_local(query, key, value)
+            o = (o1 + o2) / 2
+            return o, None
+        elif self.forward_type == 2:
+            # print("b")
+            # 串联 linear + local
+            o1, _ = self.forward_linear(query, key, value)
+            o2, _ = self.forward_local(o1, key, value)
+            return o2, _
+        else:
+            # print("c")
+            # 串联 loal + linear
+            o1, _ = self.forward_local(query, key, value)
+            o2, _ = self.forward_linear(o1, key, value)
+            return o2, _
+
+        
+
+    def forward_linear(
         self,
         query,
         key: Optional[Tensor],
@@ -354,20 +387,23 @@ class NormLinearAttention(nn.Module):
           the embedding dimension.
         '''
         num_heads = self.num_heads
-        tgt_len, bsz, embed_dim = query.size()
+        
         src_len = key.size(0)
         eps = 1e-4
         self.i += 1
 
         # L, N, E1
-        q = self.q_proj(query)
+        q = self.q_proj_linear(query)
         # S, N, E1
-        k = self.k_proj(key)
-        v = self.v_proj(value)
+        k = self.k_proj_linear(key)
+        v = self.v_proj_linear(value)
+
+        tgt_len, bsz, embed_dim = q.size()
 
         # N, L, H, E, batch, length, head, dim
         # N, L, e1
         head_dim = embed_dim // num_heads
+
 
         l = max(src_len, tgt_len)
 
@@ -375,55 +411,20 @@ class NormLinearAttention(nn.Module):
         q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         # (N * h, S, d)
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # (N * h, S, d)
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        q = self.act(q)
-        k = self.act(k)
+        q = self.linear_act(q)
+        k = self.linear_act(k)
 
         if self.use_urpe:
-            q = self.urpe(q)
-            k = self.urpe(k)
-
-        #### for save
-        # q1, k1, v1 = map(lambda t: rearrange(t, '(b h) n d -> b h n d', h=self.num_heads), [q, k, v])
-
-        # # b h n d
-        # attn_output_weights = torch.einsum('bhnd,bhmd->bhnm', q1, k1)
-        # denorm = torch.sum(attn_output_weights, dim=-1, keepdim=True)
-        # attn_output_weights = attn_output_weights / denorm
-        # # print(attn_output_weights.shape)
-
-        # data = attn_output_weights[0]
-        # if tgt_len == 512:
-        #     print(self.index)
-        #     print(data.shape)
-        #     print(torch.sum(attn_output_weights, dim=-1))
-        #     np.save(f"./matrix/lg_softmax/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
-        #### for save
-
-        if self.weight_type == 1:
-            # print("linear laplace")
-            m = max(tgt_len, src_len)
-            index = torch.arange(1, m + 1).reshape(1, -1, 1).to(q)
-            q_index = index[:, :tgt_len, :] / m
-            k_index = index[:, :src_len, :] / m
-            q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
-            k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
-        elif self.weight_type == 2:
-            # print("linear guassian")
-            m = max(tgt_len, src_len)
-            index = torch.arange(m).reshape(1, -1, 1).to(q)
-            q_index = index[:, :tgt_len, :] / m
-            k_index = index[:, :src_len, :] / m
-            q = (self.r ** (q_index ** 2)) * q
-            k = (self.r ** (k_index ** 2)) * k
-            q = torch.cat([q, self.c * q], dim=-1)
-            k = torch.cat([k, k], dim=-1)
+            q = self.urpe1(q)
+            k = self.urpe1(k)
 
         if self.causal:
-            if (attn_mask == None):
-                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
-                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
             weights = torch.bmm(q, k.transpose(1, 2))
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             output = torch.bmm(weights, v)
@@ -434,19 +435,120 @@ class NormLinearAttention(nn.Module):
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # B, N, e2
-        if self.attention_use_layer_norm:
-            output = self.layer_norm(output)
-
-        if self.use_dropout:
-            output = self.dropout_module(output)
+        output = self.layer_norm(output)
 
         # L, N, e1
-        output = self.out_proj(output)
-        if self.use_final_dropout:
-            # print("linear_use_final")
-            output = self.final_dropout_module(output)
+        output = self.out_proj_linear(output)
 
         return output, None
+
+    def forward_local(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        # self.cnt += 1
+        # if self.cnt == 10:
+        #     sys.exit(0)
+        num_heads = self.num_heads
+        src_len = key.size(0)
+        
+        # L, N, E1
+        q = self.q_proj_local(query)
+        # S, N, E1
+        k = self.k_proj_local(key)
+        # S, N, E2
+        v = self.v_proj_local(value)
+
+        # scaling
+        tgt_len, bsz, embed_dim = q.size()
+        head_dim = embed_dim // self.num_heads
+        scaling = float(head_dim) ** -0.5
+        # scale
+        q *= scaling
+
+
+        # pad至chunk_size整数倍
+        tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
+        src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
+        tgt_g = (tgt_len + tgt_len_pad) // self.chunk_size
+        src_g = (src_len + src_len_pad) // self.chunk_size
+
+        # 填充0
+        q = F.pad(q, (0, 0, 0, 0, 0, tgt_len_pad))
+        k = F.pad(k, (0, 0, 0, 0, 0, src_len_pad))
+        v = F.pad(v, (0, 0, 0, 0, 0, src_len_pad))
+
+        # N, L, H, E: batch, length, head, dim
+        # N, L, E1 -> N * h, L, e1 -> N * h, g, l, e1
+        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # N, S, E1 -> N * h, S, e1 -> N * h, g, s, e1
+        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+        # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
+        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
+
+        if self.use_urpe:
+            q = self.urpe2(q)
+            k = self.urpe2(k)
+
+        # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
+        logits = torch.einsum("bgle,bgse->bgls", q, k)
+        prob = self.local_act(logits)
+
+        if self.causal:
+            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1)
+            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            prob = prob.masked_fill(attn_mask==float("-inf"), 0)
+        weights = self.dropout_module(prob)
+
+        # (N * h, g, l, s), (N * h, g, s, e2) -> (N * h, g, l, e2)
+        output = torch.einsum("bgls,bgsd->bgld", weights, v)
+        # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
+        output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
+        # perform RMSNorm to stabilize running
+        output = self.gated_rms_norm(output)
+        # outprojection
+        output = self.out_proj_local(output)
+
+        return output, prob
 
     @staticmethod
     def _append_prev_key_padding_mask(

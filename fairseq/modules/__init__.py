@@ -77,78 +77,25 @@ from .x_attention import TransformerLSModel
 ##### ReLA
 from .x_attention import ReLAttention
 from .x_attention import ReLAEncoderLayer, ReLADecoderLayer
+##### cosformer
+from .x_attention import CosformerAttention
+from .x_attention import CosformerEncoderLayer, CosformerDecoderLayer
+##### norm mix attention
+from .x_attention import NormMixAttention
+from .x_attention import NormMixAttentionDecoderLayer, NormMixAttentionEncoderLayer
+##### norm local/linear attention
+from .x_attention import NormLinearAttention
+from .x_attention import NormLocalAttention
+from .x_attention import NormAttentionDecoderLayer, NormAttentionEncoderLayer
+##### linear combination
+from .x_attention import LinearCombinationEncoderLayer
 ########## xattention
 
 # sparse
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
 # sparse relu
-from .multihead_sparse_relu_attention import MultiheadSparseReluAttention
-from .transformer_sparse_relu_layer import (
-    TransformerSparseReluEncoderLayer,
-    TransformerSparseReluDecoderLayer,
-)
 
-# from .multihead_cos_attention import MultiheadCosAttention
-# from .transformer_cos_layer import (
-#     TransformerCosEncoderLayer,
-#     TransformerCosDecoderLayer,
-# )
-# cosformer
-from .multihead_cosformer_attention import MultiheadCosformerAttention
-from .transformer_cosformer_layer import (
-    CosformerEncoderLayer,
-    CosformerDecoderLayer,
-)
-
-
-# debug
-from .multihead_cosformer_attention_ import MultiheadCosformerAttention_
-from .transformer_cosformer_layer_ import (
-    CosformerEncoderLayer_,
-    CosformerDecoderLayer_,
-)
-
-# glu
-# from .glu import GLU
-
-# norm rfa
-#from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionNorm
-#from .transformer_rfa_layer import TransformerRfaNormDecoderLayer
-# debug
-#from .multihead_rfa_causal_attention import MultiheadRfaCausalAttentionDebug
-#from .transformer_rfa_layer import TransformerRfaDecoderDebugLayer
-# performer
-# from .multihead_performer_attention import PerformerAttention
-# from .performer_layer import PerformerDecoderLayer, PerformerEncoderLayer
-# transformer merge
-from .multihead_merge_attention import MultiheadMergeAttention
-from .transformer_merge_layer import TransformerMergeDecoderLayer, TransformerMergeEncoderLayer
-# simple attention
-from .multihead_simple_attention import MultiheadSimpleAttention
-
-
-
-# norm mix
-from .norm_mix_attention import NormMixAttention
-from .norm_mix_layer import NormMixAttentionDecoderLayer, NormMixAttentionEncoderLayer
-
-
-# norm
-from .norm_linear_attention import NormLinearAttention
-from .norm_local_attention import NormLocalAttention
-from .norm_attention_layer import NormAttentionDecoderLayer, NormAttentionEncoderLayer
-
-
-# another version
-# from .ls_attention import LongShortAttention
-# long short attention
-# from .ls_attention_causal import LSCausalAttention
-# from .ls_attention_non_causal import LSAttentionNonCausal
-# from .ls_attention_layer import LSAttentionEncoderLayer, LSAttentionDecoderLayer
-# from .ls_attention_causal_model import TransformerLSModel
-
-from .linear_vanilla_attention_layer import LinearVanillaEncoderLayer
 
 __all__ = [
     "AdaptiveInput",

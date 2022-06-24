@@ -38,23 +38,9 @@ from fairseq.modules import (
     # sparse transformer
     SparseTransformerEncoderLayer,
     SparseTransformerDecoderLayer,
-    # # linear transformer
-    # LinearTransformerEncoderLayer,
-    # LinearTransformerDecoderLayer,
-    # # reformer
-    # ReformerEncoderLayer,
-    # ReformerDecoderLayer,
-    # # longformer
-    # TransformerLongformerDecoderLayer,
-    # merge transformer
-    TransformerMergeDecoderLayer,
-    TransformerMergeEncoderLayer,
     # head
     TransformerDecoderLayerPlus,
     TransformerEncoderLayerPlus,
-    # sparse relu
-    TransformerSparseReluEncoderLayer,
-    TransformerSparseReluDecoderLayer,
     # cos
     # TransformerCosEncoderLayer,
     # TransformerCosDecoderLayer,
@@ -62,8 +48,8 @@ from fairseq.modules import (
     CosformerEncoderLayer,
     CosformerDecoderLayer,
     # cosformer_
-    CosformerEncoderLayer_,
-    CosformerDecoderLayer_,
+    # CosformerEncoderLayer_,
+    # CosformerDecoderLayer_,
     # FLASH
     FlashQuadEncoderLayer,
     FlashQuadDecoderLayer,
@@ -86,7 +72,7 @@ from fairseq.modules import (
     LSAttentionEncoderLayer,
     # LSAttentionDecoderLayer,
     # LinearVanilla
-    LinearVanillaEncoderLayer,
+    LinearCombinationEncoderLayer,
 )
 
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
@@ -1577,95 +1563,6 @@ class SparseTransformerDecoder(TransformerDecoder):
 
 
 
-# add merge transformer
-class TransformerMergeDecoder(TransformerDecoder):
-    def __init__(
-        self,
-        args,
-        dictionary,
-        embed_tokens,
-        no_encoder_attn=False,
-        output_projection=None,
-    ):
-        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
-
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = TransformerMergeDecoderLayer(args, no_encoder_attn)
-        checkpoint = getattr(args, "checkpoint_activations", False)
-        if checkpoint:
-            offload_to_cpu = getattr(args, "offload_activations", False)
-            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
-        # if we are checkpointing, enforce that FSDP always wraps the
-        # checkpointed layer, regardless of layer size
-        min_params_to_wrap = (
-            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
-            if not checkpoint else 0
-        )
-        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
-        return layer
-
-class TransformerMergeEncoder(TransformerEncoder):
-    """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
-    is a :class:`TransformerEncoderLayer`.
-
-    Args:
-        args (argparse.Namespace): parsed command-line arguments
-        dictionary (~fairseq.data.Dictionary): encoding dictionary
-        embed_tokens (torch.nn.Embedding): input embedding
-    """
-
-    def __init__(self, args, dictionary, embed_tokens):
-        super().__init__(args, dictionary, embed_tokens)
-
-    def build_encoder_layer(self, args):
-        layer = TransformerMergeEncoderLayer(args)
-        checkpoint = getattr(args, "checkpoint_activations", False)
-        if checkpoint:
-            offload_to_cpu = getattr(args, "offload_activations", False)
-            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
-        # if we are checkpointing, enforce that FSDP always wraps the
-        # checkpointed layer, regardless of layer size
-        min_params_to_wrap = (
-            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
-            if not checkpoint else 0
-        )
-        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
-        return layer
-
-@register_model("transformermerge")
-class TransformerMergeModel(TransformerModel):
-    """
-    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
-    <https://arxiv.org/abs/1706.03762>`_.
-
-    Args:
-        encoder (TransformerEncoder): the encoder
-        decoder (TransformerDecoder): the decoder
-
-    The Transformer model provides the following named architectures and
-    command-line arguments:
-
-    .. argparse::
-        :ref: fairseq.models.transformer_parser
-        :prog:
-    """
-
-    def __init__(self, args, encoder, decoder):
-        super().__init__(args, encoder, decoder)
-
-    @classmethod
-    def build_encoder(cls, args, src_dict, embed_tokens):
-        return TransformerMergeEncoder(args, src_dict, embed_tokens)
-
-    @classmethod
-    def build_decoder(cls, args, tgt_dict, embed_tokens):
-        return TransformerMergeDecoder(
-            args,
-            tgt_dict,
-            embed_tokens,
-            no_encoder_attn=getattr(args, "no_cross_attention", False),
-        )
 
 # head
 class TransformerDecoderPlus(TransformerDecoder):
@@ -1749,62 +1646,6 @@ class TransfomerHeadModel(TransformerModel):
         return TransformerEncoderPlus(args, src_dict, embed_tokens)
 
 
-# sparse relu
-# add sparse relu
-class TransformerSparseReluDecoder(TransformerDecoder):
-    def __init__(
-        self,
-        args,
-        dictionary,
-        embed_tokens,
-        no_encoder_attn=False,
-        output_projection=None,
-    ):
-        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
-
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = TransformerSparseReluDecoderLayer(args, no_encoder_attn)
-        checkpoint = getattr(args, "checkpoint_activations", False)
-        if checkpoint:
-            offload_to_cpu = getattr(args, "offload_activations", False)
-            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
-        # if we are checkpointing, enforce that FSDP always wraps the
-        # checkpointed layer, regardless of layer size
-        min_params_to_wrap = (
-            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
-            if not checkpoint else 0
-        )
-        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
-        return layer
-
-class TransformerSparseReluEncoder(TransformerEncoder):
-    """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
-    is a :class:`TransformerEncoderLayer`.
-
-    Args:
-        args (argparse.Namespace): parsed command-line arguments
-        dictionary (~fairseq.data.Dictionary): encoding dictionary
-        embed_tokens (torch.nn.Embedding): input embedding
-    """
-
-    def __init__(self, args, dictionary, embed_tokens):
-        super().__init__(args, dictionary, embed_tokens)
-
-    def build_encoder_layer(self, args):
-        layer = TransformerSparseReluEncoderLayer(args)
-        checkpoint = getattr(args, "checkpoint_activations", False)
-        if checkpoint:
-            offload_to_cpu = getattr(args, "offload_activations", False)
-            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
-        # if we are checkpointing, enforce that FSDP always wraps the
-        # checkpointed layer, regardless of layer size
-        min_params_to_wrap = (
-            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
-            if not checkpoint else 0
-        )
-        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
-        return layer
 
 # add cosformer
 class CosformerDecoder(TransformerDecoder):
@@ -1862,61 +1703,6 @@ class CosformerEncoder(TransformerEncoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
-# add cosformer
-class CosformerDecoder_(TransformerDecoder):
-    def __init__(
-        self,
-        args,
-        dictionary,
-        embed_tokens,
-        no_encoder_attn=False,
-        output_projection=None,
-    ):
-        super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
-
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = CosformerDecoderLayer_(args, no_encoder_attn)
-        checkpoint = getattr(args, "checkpoint_activations", False)
-        if checkpoint:
-            offload_to_cpu = getattr(args, "offload_activations", False)
-            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
-        # if we are checkpointing, enforce that FSDP always wraps the
-        # checkpointed layer, regardless of layer size
-        min_params_to_wrap = (
-            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
-            if not checkpoint else 0
-        )
-        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
-        return layer
-
-class CosformerEncoder_(TransformerEncoder):
-    """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
-    is a :class:`TransformerEncoderLayer`.
-
-    Args:
-        args (argparse.Namespace): parsed command-line arguments
-        dictionary (~fairseq.data.Dictionary): encoding dictionary
-        embed_tokens (torch.nn.Embedding): input embedding
-    """
-
-    def __init__(self, args, dictionary, embed_tokens):
-        super().__init__(args, dictionary, embed_tokens)
-
-    def build_encoder_layer(self, args):
-        layer = CosformerEncoderLayer_(args)
-        checkpoint = getattr(args, "checkpoint_activations", False)
-        if checkpoint:
-            offload_to_cpu = getattr(args, "offload_activations", False)
-            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
-        # if we are checkpointing, enforce that FSDP always wraps the
-        # checkpointed layer, regardless of layer size
-        min_params_to_wrap = (
-            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
-            if not checkpoint else 0
-        )
-        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
-        return layer
 
 # Cosformer + Softmaxdecoder
 class CosformerSoftmaxDecoder(FairseqIncrementalDecoder):
@@ -2406,39 +2192,6 @@ class CosformerModel(TransformerModel):
             no_encoder_attn=getattr(args, "no_cross_attention", False),
         )
 
-@register_model("cosformer_")
-class CosformerModel_(TransformerModel):
-    """
-    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
-    <https://arxiv.org/abs/1706.03762>`_.
-
-    Args:
-        encoder (TransformerEncoder): the encoder
-        decoder (TransformerDecoder): the decoder
-
-    The Transformer model provides the following named architectures and
-    command-line arguments:
-
-    .. argparse::
-        :ref: fairseq.models.transformer_parser
-        :prog:
-    """
-
-    def __init__(self, args, encoder, decoder):
-        super().__init__(args, encoder, decoder)
-
-    @classmethod
-    def build_encoder(cls, args, src_dict, embed_tokens):
-        return CosformerEncoder_(args, src_dict, embed_tokens)
-
-    @classmethod
-    def build_decoder(cls, args, tgt_dict, embed_tokens):
-        return CosformerDecoder_(
-            args,
-            tgt_dict,
-            embed_tokens,
-            no_encoder_attn=getattr(args, "no_cross_attention", False),
-        )
 
 @register_model("decoder_cosformer")
 class Decoder_CosformerModel(TransformerModel):
@@ -3239,7 +2992,7 @@ class LinearVanillaAttentionEncoder(TransformerEncoder):
         super().__init__(args, dictionary, embed_tokens)
 
     def build_encoder_layer(self, args):
-        layer = LinearVanillaEncoderLayer(args)
+        layer = LinearCombinationEncoderLayer(args)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -3321,23 +3074,7 @@ def base_architecture(args):
     args.quant_noise_scalar = getattr(args, "quant_noise_scalar", 0)
 
 
-# merge start
-@register_model_architecture("transformermerge", "transformer_merge_base_wmt_en_de")
-def transformer_merge_base_wmt_en_de(args):
-    base_architecture(args)
 
-@register_model_architecture("transformermerge", "transformer_merge_wmt_en_de")
-def transformer_merge_wmt_en_de(args):
-    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
-    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4096)
-    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 16)
-    args.encoder_normalize_before = getattr(args, "encoder_normalize_before", False)
-    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 1024)
-    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 4096)
-    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
-    args.dropout = getattr(args, "dropout", 0.3)
-    base_architecture(args)
-# merge end
 
 @register_model_architecture("transformer", "transformer_iwslt_de_en")
 def transformer_iwslt_de_en(args):

@@ -12,15 +12,14 @@ from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecod
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
-# merge attention
-from fairseq.modules import MultiheadMergeAttention
+from .cosformer_attention import CosformerAttention
 
-class TransformerMergeEncoderLayer(TransformerEncoderLayer):
+class CosformerEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):
         super().__init__(args)
 
     def build_self_attention(self, embed_dim, args):
-        return MultiheadMergeAttention(
+        return CosformerAttention(
             embed_dim,
             args.encoder_attention_heads,
             dropout=args.attention_dropout,
@@ -28,21 +27,17 @@ class TransformerMergeEncoderLayer(TransformerEncoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # add
-            is_base=getattr(args, "is_base", True),
-            is_ada_q=getattr(args, "is_ada_q", False),
-            is_ada_k=getattr(args, "is_ada_k", False),
-            lambda_=getattr(args, "lambda_", 0.99),
-            up_fq=getattr(args, "up_fq", 16),
-            dropout_before=getattr(args, "dropout_before", False),
             has_out=getattr(args, "has_out", False),
-            use_q=getattr(args, "use_q", False),
-            use_k=getattr(args, "use_k", False),
-            dim_scale=getattr(args, "dim_scale", -1),
-            has_right_weight=getattr(args, "has_right_weight", False),
-            do_softmax=getattr(args, "do_softmax", False),
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            index=args.index,
+            max_l=getattr(args, "max_l", 1024),
+            causal=getattr(args, "causal", False),
+            resi=getattr(args, "resi", False),
         )
 
-class TransformerMergeDecoderLayer(TransformerDecoderLayer):
+class CosformerDecoderLayer(TransformerDecoderLayer):
     def __init__(
         elf, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
@@ -51,7 +46,7 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
-        return MultiheadMergeAttention(
+        return CosformerAttention(
             embed_dim,
             args.decoder_attention_heads,
             dropout=args.attention_dropout,
@@ -61,22 +56,18 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # add
-            is_base=getattr(args, "is_base", True),
-            is_ada_q=getattr(args, "is_ada_q", False),
-            is_ada_k=getattr(args, "is_ada_k", False),
-            lambda_=getattr(args, "lambda_", 0.99),
-            up_fq=getattr(args, "up_fq", 16),
-            dropout_before=getattr(args, "dropout_before", False),
             has_out=getattr(args, "has_out", False),
-            use_q=getattr(args, "use_q", False),
-            use_k=getattr(args, "use_k", False),
-            dim_scale=getattr(args, "dim_scale", -1),
-            has_right_weight=getattr(args, "has_right_weight", False),
-            do_softmax=getattr(args, "do_softmax", False),
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            index=args.index,
+            max_l=getattr(args, "max_l", 1024),
+            causal=getattr(args, "causal", False),
+            resi=getattr(args, "resi", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
-        return MultiheadMergeAttention(
+        return CosformerAttention(
             embed_dim,
             args.decoder_attention_heads,
             kdim=getattr(args, "encoder_embed_dim", None),
@@ -86,16 +77,12 @@ class TransformerMergeDecoderLayer(TransformerDecoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # add
-            is_base=getattr(args, "is_base", True),
-            is_ada_q=getattr(args, "is_ada_q", False),
-            is_ada_k=getattr(args, "is_ada_k", False),
-            lambda_=getattr(args, "lambda_", 0.99),
-            up_fq=getattr(args, "up_fq", 16),
-            dropout_before=getattr(args, "dropout_before", False),
             has_out=getattr(args, "has_out", False),
-            use_q=getattr(args, "use_q", False),
-            use_k=getattr(args, "use_k", False),
-            dim_scale=getattr(args, "dim_scale", -1),
-            has_right_weight=getattr(args, "has_right_weight", False),
-            do_softmax=getattr(args, "do_softmax", False),
+            use_relu=getattr(args, "use_relu", False),
+            use_elu=getattr(args, "use_elu", False),
+            use_leak=getattr(args, "use_leak", False),
+            index=args.index,
+            max_l=getattr(args, "max_l", 1024),
+            causal=getattr(args, "causal", False),
+            resi=getattr(args, "resi", False),
         )

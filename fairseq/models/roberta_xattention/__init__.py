@@ -5,3 +5,5 @@ from .flash_linear_attention import *
 from .multihead_attention_plus import *
 from .ls_attention import *
 from .rela_attention import *
+from .cosformer_attention import *
+from .norm_attention import *

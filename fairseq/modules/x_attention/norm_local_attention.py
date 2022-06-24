@@ -20,8 +20,6 @@ from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from einops import rearrange
-# from fast_transformers.causal_product import causal_dot_product
-# N, L, H, E, batch, length, head, dim
 
 def look_around(x, backward = 1, forward = 0, pad_value = -1, dim = 2):
     t = x.shape[1]
@@ -156,7 +154,6 @@ class NormLocalAttention(nn.Module):
             print("here! layer norm")
             self.gated_rms_norm = nn.LayerNorm(embed_dim)
         
-
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
             self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
@@ -357,9 +354,6 @@ class NormLocalAttention(nn.Module):
         - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
           the embedding dimension.
         '''
-        # self.cnt += 1
-        # if self.cnt == 10:
-        #     sys.exit(0)
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
@@ -377,35 +371,9 @@ class NormLocalAttention(nn.Module):
         # S, N, E2
         v = self.v_proj(value)
 
-
         if self.use_urpe:
             q = self.urpe(q)
             k = self.urpe(k)
-
-        # if self.weight_type == 1:
-        #     print("local laplace")
-        #     m = max(tgt_len, src_len)
-        #     index = torch.arange(m).reshape(-1, 1, 1).to(q)
-        #     q_index = index[:tgt_len, :, :] / m
-        #     k_index = index[:src_len, :, :] / m
-        #     print(q_index.shape, k_index.shape)
-        #     print(q.shape, k.shape)
-        #     q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
-        #     k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
-        #     print(q.shape, k.shape)
-        # elif self.weight_type == 2:
-        #     print("local guassian")
-        #     index = torch.arange(m).reshape(-1, 1, 1).to(q)
-        #     q_index = index[:tgt_len, :, :] / m
-        #     k_index = index[:src_len, :, :] / m
-        #     print(q_index.shape, k_index.shape)
-        #     print(q.shape, k.shape)
-        #     q = (self.r ** (q_index ** 2)) * q
-        #     k = (self.r ** (k_index ** 2)) * k
-        #     print(q.shape, k.shape)
-        #     q = torch.cat([q, self.c * q])
-        #     k = torch.cat([k, k])
-        #     print(q.shape, k.shape)
 
         # pad至chunk_size整数倍
         tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
@@ -431,7 +399,6 @@ class NormLocalAttention(nn.Module):
         bq = q.reshape(b, -1, self.chunk_size, e)
         bk = k.reshape(b, -1, self.chunk_size, e)
         bv = v.reshape(b, -1, self.chunk_size, e)
-
 
         look_around_kwargs = {'backward': self.left_window, 'forward': self.right_window}
         # s1 = window_size * (left + right + 1)
@@ -509,9 +476,6 @@ class NormLocalAttention(nn.Module):
         - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
           the embedding dimension.
         '''
-        # self.cnt += 1
-        # if self.cnt == 10:
-        #     sys.exit(0)
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
@@ -542,33 +506,10 @@ class NormLocalAttention(nn.Module):
         k = F.pad(k, (0, 0, 0, 0, 0, len_pad))
         v = F.pad(v, (0, 0, 0, 0, 0, len_pad))
 
-        # pad至chunk_size整数倍
-        # tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
-        # src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
-        # tgt_g = (tgt_len + tgt_len_pad) // self.chunk_size
-        # src_g = (src_len + src_len_pad) // self.chunk_size
-        
-
-        # 填充0
-        # q = F.pad(q, (0, 0, 0, 0, 0, tgt_len_pad))
-        # k = F.pad(k, (0, 0, 0, 0, 0, src_len_pad))
-        # v = F.pad(v, (0, 0, 0, 0, 0, src_len_pad))
-
-        # N, L, H, E: batch, length, head, dim
-        # N, L, E1 -> N * h, L, e1 -> N * h, g, l, e1
-        # q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
-        # N, S, E1 -> N * h, S, e1 -> N * h, g, s, e1
-        # k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
-        # N, S, E2 -> N * h, S, e2 -> N * h, g, s, e2
-        # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1).contiguous().view(bsz * num_heads, -1, self.chunk_size, head_dim)
-        
-        # q = rearrange(q, 'l b (h e) -> l (b h) e', h=self.num_heads)
-        # q = rearrange(q, 'l n e -> n l e')
-        # q = rearrange(q, 'n (l c) e -> n l c e', c=self.chunk_size)
+        # n, l, c, d
         q = self.transform(q)
         k = self.transform(k)
         v = self.transform(v)
-        # n, l, c, d
 
         if self.use_urpe:
             q = self.urpe(q)
@@ -593,11 +534,7 @@ class NormLocalAttention(nn.Module):
             q = torch.cat([q, self.c * q], dim=-1)
             k = torch.cat([k, k], dim=-1)
 
-        # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
         logits = torch.einsum("bgle,bgse->bgls", q, k)
-        # logits = torch.einsum("bgle,bhse->bghls", q, k)
-        # logits = rearrange(logits, 'b g h l s -> b g l h s')
-        # logits = rearrange(logits, 'b g l h s -> b (g l) (h s)')
 
         if self.causal:
             attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
@@ -605,13 +542,10 @@ class NormLocalAttention(nn.Module):
                 logits = logits.masked_fill(attn_mask==0, 0)
             else:
                 logits = logits.masked_fill(attn_mask==0, -1e8)
-            # attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            # prob = prob.masked_fill(attn_mask[:self.chunk_size, :self.chunk_size]==float("-inf"), 0)
-            # print(prob[0][0][:9, :9])
+
         if not self.use_softmax:
             prob = self.act(logits)
         else:
-            # logits *= scaling
             prob = F.softmax(logits, dim=-1)
 
         #### for save
@@ -646,7 +580,6 @@ class NormLocalAttention(nn.Module):
         # (N * h, g, l, s), (N * h, g, s, e2) -> (N * h, g, l, e2)
         output = torch.einsum("bgls,bgsd->bgld", weights, v)
         # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
-        # output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
         output = rearrange(output, 'n l c e -> n (l c) e', c=self.chunk_size)
         output = rearrange(output, 'n l e -> l n e')
         output = rearrange(output, 'l (b h) e -> l b (h e)', h=self.num_heads)
@@ -660,7 +593,6 @@ class NormLocalAttention(nn.Module):
             # print("local_use_final")
             output = self.final_dropout_module(output)
 
-        # output = output
         return output, prob
 
     # 分组版本

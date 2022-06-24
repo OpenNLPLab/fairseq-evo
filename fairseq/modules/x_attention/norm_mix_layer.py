@@ -12,8 +12,7 @@ from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecod
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
-# merge attention
-from fairseq.modules import NormMixAttention
+from .norm_mix_attention import NormMixAttention
 
 class NormMixAttentionEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):

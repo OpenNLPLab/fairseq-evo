@@ -20,3 +20,15 @@ from .ls_causal_attention_model import TransformerLSModel
 
 from .rela_attention import ReLAttention
 from .rela_layer import ReLAEncoderLayer, ReLADecoderLayer
+
+from .cosformer_attention import CosformerAttention
+from .cosformer_layer import CosformerEncoderLayer, CosformerDecoderLayer
+
+from .norm_local_attention import NormLocalAttention
+from .norm_linear_attention import NormLinearAttention
+from .norm_attention_layer import NormAttentionEncoderLayer, NormAttentionDecoderLayer
+
+from .norm_mix_attention import NormMixAttention
+from .norm_mix_layer import NormMixAttentionEncoderLayer, NormMixAttentionDecoderLayer
+
+from .linear_attention_combination_layer import LinearCombinationEncoderLayer
