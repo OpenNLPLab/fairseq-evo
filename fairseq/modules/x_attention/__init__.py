@@ -35,3 +35,6 @@ from .linear_attention_combination_layer import LinearCombinationEncoderLayer
 
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+
+from .doublefusion import DoubleFusion
+from .doublefusion_layer import DoubleFusionEncoderLayer, DoubleFusionDecoderLayer

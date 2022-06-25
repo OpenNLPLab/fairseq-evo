@@ -93,6 +93,10 @@ from .x_attention import LinearCombinationEncoderLayer
 from .x_attention import SparseMultiheadAttention
 from .x_attention import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
 ##### sparse attetntioin
+##### double fusion
+from .x_attention import DoubleFusion
+from .x_attention import DoubleFusionEncoderLayer, DoubleFusionDecoderLayer
+##### double fusion
 ########## xattention
 
 ########## sparse

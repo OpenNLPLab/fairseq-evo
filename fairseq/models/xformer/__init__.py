@@ -10,3 +10,4 @@ from .transformer_plus import TransformerEncoderPlus, TransformerDecoderPlus, Tr
 from .norm_transformer import NormAttentionEncoder, NormAttentionDecoder, TransformerNormModel, TransformerNormOnlyEncoderModel
 from .norm_mix_transformer import NormMixAttentionEncoder, NormMixAttentionDecoder
 from .sparse_transformer import SparseTransformerDecoder
+from .doublefusion import DoubleFusionEncoder, DoubleFusionDecoder, DoubleFusionModel
