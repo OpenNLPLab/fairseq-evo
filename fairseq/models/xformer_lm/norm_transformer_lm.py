@@ -113,13 +113,12 @@ class NormAttentionLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
-######################################
 # norm attention
 # linear: attention_type = 1
 # local: attention_type = 2
 # local, ... , local, linear, ... ,linear
 @register_model_architecture("norm_attention_lm", "norm_attention_lm_type1")
-def transformer_lm_baevski_wiki103(args):
+def transformer_norm_attention_lm_type1(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
     args.dropout = getattr(args, "dropout", 0.3)
@@ -135,7 +134,7 @@ def transformer_lm_baevski_wiki103(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    # add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -146,11 +145,11 @@ def transformer_lm_baevski_wiki103(args):
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
 
 
-################### norm attention(local + linear)
+########## norm attention(local + linear)
 @register_model_architecture("norm_attention_lm", "norm_ln_glu_lm_base")
-def transformer_lm_big(args):
+def transformer_norm_ln_glu_lm_base(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -159,16 +158,16 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
 @register_model_architecture("norm_attention_lm", "norm_ln_glu_small_lm_base")
-def transformer_lm_big(args):
+def transformer_norm_ln_glu_small_lm_base(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -177,7 +176,7 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
@@ -185,9 +184,9 @@ def transformer_lm_big(args):
     args.multiple = 2
 
 @register_model_architecture("norm_attention_lm", "norm_ln_ffn_lm_base")
-def transformer_lm_big(args):
+def transformer_norm_ln_ffn_lm_base(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -196,15 +195,15 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
-################### norm attention + glu act
+########## norm attention + glu act
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_elu")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_lm_base_elu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -213,7 +212,7 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.fina_act = "elu"
@@ -221,9 +220,9 @@ def transformer_lm_big(args):
     args.norm_type = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_elu")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_small_lm_base_elu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -232,20 +231,20 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.fina_act = "elu"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
-################### norm attention + glu act
+########## norm attention + glu act
 
-################### norm attention + urpe
+########## norm attention + urpe
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_lm_base_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -254,21 +253,21 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_small_lm_base_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -277,22 +276,22 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_lm_base_ln_rms_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -301,22 +300,22 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_small_lm_base_ln_rms_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -325,23 +324,23 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_all_layernorm_glu_lm_base_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -350,21 +349,21 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_all_layernorm_glu_small_lm_base_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -373,24 +372,24 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-################### norm attention + urpe
+########## norm attention + urpe
 
-################### norm attention + urpe + dropout
+########## norm attention + urpe + dropout
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_urpe_1d3_dropout02")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_lm_base_urpe_1d3_dropout02(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -399,12 +398,12 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
@@ -412,9 +411,9 @@ def transformer_lm_big(args):
     args.glu_dropout = 0.2
 
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_urpe_1d3_dropout02")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_small_lm_base_urpe_1d3_dropout02(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -423,25 +422,25 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
     args.glu_dropout = 0.2
-################### norm attention + urpe + dropout
+########## norm attention + urpe + dropout
 
-################### norm attention + urpe + no_abs
+########## norm attention + urpe + no_abs
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_lm_base_ln_rms_urpe_1d3_no_abs")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_lm_base_ln_rms_urpe_1d3_no_abs(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -450,24 +449,24 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    ###### no abs
+    ##### no abs
     args.no_token_positional_embeddings = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_rms_glu_small_lm_base_ln_rms_urpe_1d3_no_abs")
-def transformer_lm_big(args):
+def transformer_norm_all_rms_glu_small_lm_base_ln_rms_urpe_1d3_no_abs(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -476,25 +475,25 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    ###### no abs
+    ##### no abs
     args.no_token_positional_embeddings = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_lm_base_urpe_1d3_no_abs")
-def transformer_lm_big(args):
+def transformer_norm_all_layernorm_glu_lm_base_urpe_1d3_no_abs(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -503,23 +502,23 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    ###### no abs
+    ##### no abs
     args.no_token_positional_embeddings = True
 
 @register_model_architecture("norm_attention_lm", "norm_all_layernorm_glu_small_lm_base_urpe_1d3_no_abs")
-def transformer_lm_big(args):
+def transformer_norm_all_layernorm_glu_small_lm_base_urpe_1d3_no_abs(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -528,26 +527,26 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
     args.multiple = 2
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    ###### no abs
+    ##### no abs
     args.no_token_positional_embeddings = True
-################### norm attention + urpe + no_abs
+########## norm attention + urpe + no_abs
 
-################### norm attention + urpe + pure rms norm
+########## norm attention + urpe + pure rms norm
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_small_init")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_small_init(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -556,26 +555,26 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -584,27 +583,27 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_no_abs_small_init")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_no_abs_small_init(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -613,28 +612,28 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
-    ###### no abs
+    ##### no abs
     args.no_token_positional_embeddings = True
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_no_abs_small_init")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_no_abs_small_init(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -643,31 +642,31 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
-    ###### no abs
+    ##### no abs
     args.no_token_positional_embeddings = True
-################### norm attention + urpe + pure rms norm
+########## norm attention + urpe + pure rms norm
 
-################### norm attention + urpe + pure rms norm + geglu
+########## norm attention + urpe + pure rms norm + geglu
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_geglu")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_geglu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -676,25 +675,25 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "gelu"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_geglu")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_geglu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -703,26 +702,26 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "gelu"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -731,26 +730,26 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "gelu"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -759,29 +758,29 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "gelu"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     args.init_method = "small_embdding"
-################### norm attention + urpe + pure rms norm + geglu
+########## norm attention + urpe + pure rms norm + geglu
 
-################### pure rms norm + urpe + weight
+########## pure rms norm + urpe + weight
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -790,25 +789,25 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -817,26 +816,26 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_laplace")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_laplace(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -845,27 +844,27 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     #### weight
     args.weight_type = 1
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_laplace")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_laplace(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -874,28 +873,28 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     #### weight
     args.weight_type = 1
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_gaussian")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_gaussian(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -904,27 +903,27 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     #### weight
     args.weight_type = 2
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_gaussian")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_gaussian(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -933,28 +932,28 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     #### weight
     args.weight_type = 2
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_final_dropout")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_final_dropout(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -963,28 +962,28 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
-    # final dropout
+    ##### final dropout
     args.use_final_dropout = True
     args.final_dropout = 0.1
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_final_dropout")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_final_dropout(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -993,31 +992,31 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
-    # final dropout
+    ##### final dropout
     args.use_final_dropout = True
     args.final_dropout = 0.1
-################### pure rms norm + urpe + weight
+########## pure rms norm + urpe + weight
 
-### relu2
+##### relu2
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_relu2")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_relu2(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "relu2"
     args.local_act_fun = "relu2"
     args.max_l = getattr(args, "max_l", 512)
@@ -1026,25 +1025,25 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_relu2")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_relu2(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "relu2"
     args.local_act_fun = "relu2"
     args.max_l = getattr(args, "max_l", 512)
@@ -1053,28 +1052,28 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
-### relu2
+##### relu2
 
-### linear_chunk
+##### linear_chunk
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1083,25 +1082,25 @@ def transformer_lm_big(args):
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1110,26 +1109,26 @@ def transformer_lm_big(args):
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_32")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_32(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1138,25 +1137,25 @@ def transformer_lm_big(args):
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 32
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_32")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_32(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1165,26 +1164,26 @@ def transformer_lm_big(args):
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 32
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_16")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_16(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1193,25 +1192,25 @@ def transformer_lm_big(args):
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 16
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
 
 @register_model_architecture("norm_attention_lm", "norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_16")
-def transformer_lm_big(args):
+def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_linear_chunk_16(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1220,29 +1219,29 @@ def transformer_lm_big(args):
     args.group_type = "linear_chunk"
     args.decoder_chunk_size = 16
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.multiple = 2
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
-### linear_chunk
+##### linear_chunk
 
-### speed test
-# 删除mask, 不影响速度
+##### speed test
+##### 删除mask, 不影响速度
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_abl")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_abl(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1251,7 +1250,7 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.decoder_causal = False
     args.use_glu = True
     args.glu_act = "swish"
@@ -1259,9 +1258,9 @@ def transformer_lm_big(args):
     args.norm_type = "layernorm"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_chunk")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_chunk(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1270,16 +1269,16 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers)]
-    ### glu
+    ##### glu
     args.use_glu = False
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
 
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_linear")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_linear(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1288,18 +1287,18 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
-    ### glu
+    ##### glu
     args.use_glu = False
     args.glu_act = "swish"
     args.local_norm_type = "layernorm"
     args.norm_type = "layernorm"
-### speed test
+##### speed test
 
-############# softmax + 1 + elu
+########## softmax + 1 + elu
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_softmax_1+elu")
-def transformer_lm_big(args):
+def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_softmax_1_elu(args):
     base_lm_architecture(args)
-    ### add
+    ##### add
     args.linear_act_fun = "1+elu"
     args.local_act_fun = "relu"
     args.max_l = getattr(args, "max_l", 512)
@@ -1308,20 +1307,20 @@ def transformer_lm_big(args):
     args.group_type = "chunk"
     args.decoder_chunk_size = 64
     args.decoder_attention_types = [2 for _ in range(args.decoder_layers // 2)] + [1 for _ in range(args.decoder_layers // 2)]
-    ### glu
+    ##### glu
     args.use_glu = True
     args.glu_act = "swish"
     args.local_norm_type = "simplermsnorm"
     args.norm_type = "simplermsnorm"
     args.attn_type = "simplermsnorm"
-    ###### urpe
+    ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
-    #### pure layernorm 
+    ##### pure layernorm 
     args.embdding_layernorm = "simplermsnorm"
     args.final_layernorm = "simplermsnorm"
     ###### softmax
     args.use_softmax = True
-############# softmax + 1 + elu
+########## softmax + 1 + elu
