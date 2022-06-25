@@ -7,8 +7,7 @@ import math
 
 import torch
 
-from .multihead_attention import MultiheadAttention
-
+from fairseq.modules import MultiheadAttention
 
 class SparseMultiheadAttention(MultiheadAttention):
     """Sparse Multi-Headed Attention.

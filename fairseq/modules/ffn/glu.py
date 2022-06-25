@@ -15,7 +15,7 @@ class GLU(nn.Module):
         self.fina_act = self.get_act_fun(fina_act)
 
         print(f"act_fun {self.act_fun}")
-        print(f"dropout {self.dropout}")
+        print(f"dropout {self.p}")
         print(f"final {self.fina_act}")
 
     def get_act_fun(self, act_fun):

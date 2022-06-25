@@ -13,7 +13,7 @@ from torch.nn import Parameter
 from torch.nn import Dropout
 import sys
 from ..positional_encoding import rope
-from ..norm import scale_norm
+from ..norm import ScaleNorm
 
 # https://github.com/JunnYu/FLASHQuad_pytorch/blob/main/flash/gau.py
 @with_incremental_state

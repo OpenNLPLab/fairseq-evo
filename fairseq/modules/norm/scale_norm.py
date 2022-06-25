@@ -1,4 +1,5 @@
 # for flash
+import torch
 from torch import nn
 
 class ScaleNorm(nn.Module):

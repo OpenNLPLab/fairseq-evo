@@ -25,7 +25,7 @@ from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 from fairseq.models.roberta import RobertaEncoder, RobertaModel, base_architecture
 
-from fairseq.models.transformer import ReLAEncoder
+from fairseq.models.xformer import ReLAEncoder
 
 class RobertaReLAEncoder(RobertaEncoder):
     """RoBERTa encoder."""

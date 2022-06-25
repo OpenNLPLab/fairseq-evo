@@ -89,12 +89,16 @@ from .x_attention import NormLocalAttention
 from .x_attention import NormAttentionDecoderLayer, NormAttentionEncoderLayer
 ##### linear combination
 from .x_attention import LinearCombinationEncoderLayer
+##### sparse attetntioin
+from .x_attention import SparseMultiheadAttention
+from .x_attention import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+##### sparse attetntioin
 ########## xattention
 
-# sparse
-from .sparse_multihead_attention import SparseMultiheadAttention
-from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
-# sparse relu
+########## sparse
+# from .sparse_multihead_attention import SparseMultiheadAttention
+# from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
+########## sparse relu
 
 
 __all__ = [

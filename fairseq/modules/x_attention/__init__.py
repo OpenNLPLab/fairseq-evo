@@ -32,3 +32,6 @@ from .norm_mix_attention import NormMixAttention
 from .norm_mix_layer import NormMixAttentionEncoderLayer, NormMixAttentionDecoderLayer
 
 from .linear_attention_combination_layer import LinearCombinationEncoderLayer
+
+from .sparse_multihead_attention import SparseMultiheadAttention
+from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer

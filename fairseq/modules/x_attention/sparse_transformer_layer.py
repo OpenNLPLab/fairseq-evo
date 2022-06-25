@@ -12,8 +12,7 @@ from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecod
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
-# rfa
-from fairseq.modules import SparseMultiheadAttention
+from .sparse_multihead_attention import SparseMultiheadAttention
 
 class SparseTransformerEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):

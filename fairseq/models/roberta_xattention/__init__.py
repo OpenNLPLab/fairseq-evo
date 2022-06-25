@@ -7,3 +7,5 @@ from .ls_attention import *
 from .rela_attention import *
 from .cosformer_attention import *
 from .norm_attention import *
+from .norm_mix_attention import *
+from .linear_attention_combination import *

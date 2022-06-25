@@ -25,7 +25,7 @@ from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 from fairseq.models.roberta import RobertaEncoder, RobertaModel, base_architecture
 
-from fairseq.models.transformer import TransformerEncoderPlus
+from fairseq.models.xformer import TransformerEncoderPlus
 
 class RobertaEncoderPlus(RobertaEncoder):
     """RoBERTa encoder."""
@@ -104,7 +104,6 @@ def roberta_base_architecture_urpe_1d_1(args):
     args.p_matrix = 1
     args.theta_learned = True
     
-
 @register_model_architecture("roberta_plus", "roberta_urpe_2_1")
 def roberta_base_architecture_urpe_2_1(args):
     base_architecture(args)

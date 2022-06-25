@@ -102,7 +102,7 @@ class LinearCombinationEncoderLayer(nn.Module):
             print("===========")
             print("cos")
             print("===========")
-            return MultiheadCosformerAttention(
+            return CosformerAttention(
                 embed_dim,
                 args.encoder_attention_heads,
                 dropout=args.attention_dropout,
