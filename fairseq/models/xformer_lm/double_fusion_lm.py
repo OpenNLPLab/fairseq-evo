@@ -188,13 +188,13 @@ def double_fusion_lm_rmsnorm_sigmoid(args):
 ##### act test
 
 ##### urpe test
-@register_model_architecture("double_fusion_lm", "double_fusion_lm_gatedrmsnorm_1+elu_urpe_1d3")
-def double_fusion_lm_gatedrmsnorm_1_elu_urpe_1d3(args):
+@register_model_architecture("double_fusion_lm", "double_fusion_lm_rmsnorm_1+elu_urpe_1d3")
+def double_fusion_lm_rmsnorm_1_elu_urpe_1d3(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "gatedrmsnorm"
+    args.norm_type = "rmsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
     ##### urpe
@@ -203,13 +203,13 @@ def double_fusion_lm_gatedrmsnorm_1_elu_urpe_1d3(args):
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("double_fusion_lm", "double_fusion_lm_gatedrmsnorm_1+elu_urpe_1")
-def double_fusion_lm_gatedrmsnorm_1_elu_urpe_1(args):
+@register_model_architecture("double_fusion_lm", "double_fusion_lm_rmsnorm_1+elu_urpe_1")
+def double_fusion_lm_rmsnorm_1_elu_urpe_1(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "gatedrmsnorm"
+    args.norm_type = "rmsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
     ##### urpe
