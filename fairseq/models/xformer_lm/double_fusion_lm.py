@@ -203,8 +203,8 @@ def double_fusion_lm_gatedrmsnorm_1_elu_urpe_1d3(args):
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("double_fusion_lm", "double_fusion_lm_gatedrmsnorm_1+elu_urpe_13")
-def double_fusion_lm_gatedrmsnorm_1_elu_urpe_13(args):
+@register_model_architecture("double_fusion_lm", "double_fusion_lm_gatedrmsnorm_1+elu_urpe_1")
+def double_fusion_lm_gatedrmsnorm_1_elu_urpe_1(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
