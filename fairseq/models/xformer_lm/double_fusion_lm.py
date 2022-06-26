@@ -216,3 +216,16 @@ def double_fusion_lm_gatedrmsnorm_1_elu_urpe_1(args):
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
 ##### urpe test
+
+##### head test
+@register_model_architecture("double_fusion_lm", "double_fusion_lm_rmsnorm_1+elu_single_head")
+def double_fusion_lm_rmsnorm_1_elu_single_head(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "rmsnorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+##### head test
