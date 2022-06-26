@@ -190,11 +190,21 @@ class DoubleFusionDecoderLayer(nn.Module):
         )
 
         export = getattr(args, "char_inputs", False)
+        self.normalize_before = args.decoder_normalize_before
+
+        attn_type = getattr(args, 'attn_type', 'layernorm')
+        print(f"Decoder Norm Type: {attn_type}")
+        if attn_type == "simplermsnorm":
+            self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
+        else:
+            self.self_attn_layer_norm = LayerNorm(self.embed_dim)
 
         if no_encoder_attn:
             self.encoder_attn = None
+            self.encoder_attn_layer_norm = None
         else:
             self.encoder_attn = self.build_encoder_attention(self.embed_dim, args)
+            self.encoder_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
 
         self.need_attn = True
 
@@ -365,6 +375,10 @@ class DoubleFusionDecoderLayer(nn.Module):
         if need_head_weights:
             need_attn = True
 
+        residual = x
+        if self.normalize_before:
+            x = self.self_attn_layer_norm(x)
+
         if prev_self_attn_state is not None:
             prev_key, prev_value = prev_self_attn_state[:2]
             saved_state: Dict[str, Optional[Tensor]] = {
@@ -410,10 +424,16 @@ class DoubleFusionDecoderLayer(nn.Module):
             attn_mask=self_attn_mask,
         )
 
+        x = self.residual_connection(x, residual)
+        #print('residule connection', x.shape)
+
+        if not self.normalize_before:
+            x = self.self_attn_layer_norm(x)
+
         if self.encoder_attn is not None and encoder_out is not None:
-            if self.use_layernorm:
-                if self.normalize_before:
-                    x = self.encoder_attn_layer_norm(x)
+            residual = x
+            if self.normalize_before:
+                x = self.encoder_attn_layer_norm(x)
             if prev_attn_state is not None:
                 prev_key, prev_value = prev_attn_state[:2]
                 saved_state: Dict[str, Optional[Tensor]] = {
@@ -435,6 +455,10 @@ class DoubleFusionDecoderLayer(nn.Module):
                 need_weights=need_attn or (not self.training and self.need_attn),
                 need_head_weights=need_head_weights,
             )
+
+            x = self.residual_connection(x, residual)
+            if not self.normalize_before:
+                x = self.encoder_attn_layer_norm(x)
 
         return x, attn, None
 

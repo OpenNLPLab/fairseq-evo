@@ -9,3 +9,4 @@ from .transformer_plus_lm import *
 from .norm_mix_transformer_lm import *
 from .norm_transformer_lm import *
 from .sparse_transformer_lm import *
+from .double_fusion_lm import *
