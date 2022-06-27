@@ -100,6 +100,8 @@ from .x_attention import SparseTransformerEncoderLayer, SparseTransformerDecoder
 ##### double fusion
 from .x_attention import DoubleFusion
 from .x_attention import DoubleFusionEncoderLayer, DoubleFusionDecoderLayer
+from .x_attention import DoubleFusionV2
+from .x_attention import DoubleFusionV2EncoderLayer, DoubleFusionV2DecoderLayer
 ##### double fusion
 ########## xattention
 

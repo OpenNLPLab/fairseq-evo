@@ -11,3 +11,4 @@ from .norm_transformer import NormAttentionEncoder, NormAttentionDecoder, Transf
 from .norm_mix_transformer import NormMixAttentionEncoder, NormMixAttentionDecoder
 from .sparse_transformer import SparseTransformerDecoder
 from .doublefusion import DoubleFusionEncoder, DoubleFusionDecoder, DoubleFusionModel
+from .doublefusion_v2 import DoubleFusionV2Encoder, DoubleFusionV2Decoder, DoubleFusionV2Model

@@ -38,3 +38,6 @@ from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTrans
 
 from .doublefusion import DoubleFusion
 from .doublefusion_layer import DoubleFusionEncoderLayer, DoubleFusionDecoderLayer
+
+from .doublefusion_v2 import DoubleFusionV2
+from .doublefusion_v2_layer import DoubleFusionV2EncoderLayer, DoubleFusionV2DecoderLayer
