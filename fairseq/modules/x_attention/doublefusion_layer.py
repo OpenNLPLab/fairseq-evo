@@ -14,6 +14,7 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 
 from .doublefusion import DoubleFusion
+from fairseq.modules import TokenShift
 
 ########################################################################
 # DoubleFusion
@@ -31,6 +32,13 @@ class DoubleFusionEncoderLayer(nn.Module):
             self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
         else:
             self.self_attn_layer_norm = LayerNorm(self.embed_dim)
+
+        ##### token_shift
+        self.token_shift = getattr(args, 'token_shift', False)
+        print(f"token_shift: {self.token_shift}")
+        if self.token_shift:
+            self.token_shift_layer = TokenShift()
+        ##### token_shift
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
@@ -140,6 +148,10 @@ class DoubleFusionEncoderLayer(nn.Module):
         # will become -inf, which results in NaN in model parameters
         
         residual = x
+
+        ##### token_shift
+        x = self.token_shift_layer(x)
+        ##### token_shift
         x, _ = self.self_attn(
             query=x,
             key=x,
@@ -198,6 +210,14 @@ class DoubleFusionDecoderLayer(nn.Module):
             self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
         else:
             self.self_attn_layer_norm = LayerNorm(self.embed_dim)
+        
+        ##### token_shift
+        self.token_shift = getattr(args, 'token_shift', False)
+        print(f"token_shift: {self.token_shift}")
+        if self.token_shift:
+            self.token_shift_layer = TokenShift()
+        ##### token_shift
+
 
         if no_encoder_attn:
             self.encoder_attn = None
@@ -411,7 +431,17 @@ class DoubleFusionDecoderLayer(nn.Module):
                 )
             assert encoder_out is not None
             y = torch.cat((encoder_out, x), dim=0)
+
+            ##### token shift
+            if self.token_shift:
+                x = self.token_shift_layer(x)
+                y = self.token_shift_layer(y)
+            ##### token shift
         else:
+            ##### token shift
+            if self.token_shift:
+                x = self.token_shift_layer(x)
+            ##### token shift
             y = x
 
         x, attn = self.self_attn(
@@ -445,6 +475,11 @@ class DoubleFusionDecoderLayer(nn.Module):
                 assert incremental_state is not None
                 self.encoder_attn._set_input_buffer(incremental_state, saved_state)
 
+            ##### token shift
+            if self.token_shift:
+                x = self.token_shift_layer(x)
+                encoder_out = self.token_shift_layer(encoder_out)
+            ##### token shift
             x, attn = self.encoder_attn(
                 query=x,
                 key=encoder_out,

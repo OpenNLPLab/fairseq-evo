@@ -239,3 +239,16 @@ def double_fusion_lm_rmsnorm_1_elu_single_head(args):
     args.causal = True
     args.decoder_attention_heads = 1
 ##### head test
+
+##### token shift
+@register_model_architecture("double_fusion_lm", "double_fusion_lm_rmsnorm_1+elu_token_shift")
+def double_fusion_lm_rmsnorm_1_elu_token_shift(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "rmsnorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+    args.token_shift = True
+##### token shift

@@ -50,6 +50,10 @@ from .positional_encoding import UrpeV2
 from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm, ScaleNorm
 ########## norm
 
+########## token shift
+from .token_shift import TokenShift
+########## token shift
+
 ########## ffn
 from .ffn import GLU
 ########## ffn
