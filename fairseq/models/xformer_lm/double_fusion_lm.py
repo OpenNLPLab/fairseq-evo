@@ -103,7 +103,7 @@ def double_fusion_lm_denorm_1_elu(args):
     args.causal = True
 ##### base
 
-##### 1+elu
+##### norm test
 @register_model_architecture("double_fusion_lm", "double_fusion_lm_layernorm_1+elu")
 def double_fusion_lm_layernorm_1_elu(args):
     base_lm_architecture(args)
@@ -143,7 +143,17 @@ def double_fusion_lm_simplermsnorm_1_elu(args):
     args.norm_type = "simplermsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
-##### 1+elu
+
+@register_model_architecture("double_fusion_lm", "double_fusion_lm_scalenorm_1+elu")
+def double_fusion_lm_scalenorm_1_elu(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "scalenorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+##### norm test
 
 ##### act test
 @register_model_architecture("double_fusion_lm", "double_fusion_lm_rmsnorm_elu")

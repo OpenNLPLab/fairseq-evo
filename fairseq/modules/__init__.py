@@ -47,7 +47,7 @@ from .positional_encoding import UrpeV2
 ########## positional encoding
 
 ########## norm
-from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
+from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm, ScaleNorm
 ########## norm
 
 ########## ffn

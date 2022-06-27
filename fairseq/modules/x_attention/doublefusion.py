@@ -15,6 +15,7 @@ import sys
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
+from fairseq.modules import ScaleNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from fairseq.modules import GLU
@@ -137,6 +138,9 @@ class DoubleFusion(nn.Module):
             elif self.norm_type == "simplermsnorm":
                 print("here! simple rmsnorm")
                 self.layer_norm = SimpleRMSNorm(embed_dim)
+            elif self.norm_type == "scalenorm":
+                print("here! scale norm")
+                self.layer_norm = ScaleNorm(embed_dim)
             else:
                 print("here! layer norm")
                 self.layer_norm = nn.LayerNorm(embed_dim)
