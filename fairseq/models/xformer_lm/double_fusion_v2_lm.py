@@ -156,55 +156,55 @@ def double_fusion_v2_lm_scalenorm_1_elu(args):
 ##### norm test
 
 ##### act test
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_elu")
-def double_fusion_v2_lm_rmsnorm_elu(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_elu")
+def double_fusion_v2_lm_simplermsnorm_elu(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "elu"
     args.causal = True
 
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_relu")
-def double_fusion_v2_lm_rmsnorm_relu(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_relu")
+def double_fusion_v2_lm_simplermsnorm_relu(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "relu"
     args.causal = True
 
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_relu2")
-def double_fusion_v2_lm_rmsnorm_relu2(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_relu2")
+def double_fusion_v2_lm_simplermsnorm_relu2(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "relu2"
     args.causal = True
 
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_sigmoid")
-def double_fusion_v2_lm_rmsnorm_sigmoid(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_sigmoid")
+def double_fusion_v2_lm_simplermsnorm_sigmoid(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "sigmoid"
     args.causal = True
 ##### act test
 
 ##### urpe test
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_1+elu_urpe_1d3")
-def double_fusion_v2_lm_rmsnorm_1_elu_urpe_1d3(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_urpe_1d3")
+def double_fusion_v2_lm_simplermsnorm_1_elu_urpe_1d3(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
     ##### urpe
@@ -213,13 +213,13 @@ def double_fusion_v2_lm_rmsnorm_1_elu_urpe_1d3(args):
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_1+elu_urpe_1")
-def double_fusion_v2_lm_rmsnorm_1_elu_urpe_1(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_urpe_1")
+def double_fusion_v2_lm_simplermsnorm_1_elu_urpe_1(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
     ##### urpe
@@ -228,26 +228,26 @@ def double_fusion_v2_lm_rmsnorm_1_elu_urpe_1(args):
 ##### urpe test
 
 ##### head test
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_1+elu_single_head")
-def double_fusion_v2_lm_rmsnorm_1_elu_single_head(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_single_head")
+def double_fusion_v2_lm_simplermsnorm_1_elu_single_head(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
     args.decoder_attention_heads = 1
 ##### head test
 
 ##### token shift
-@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_rmsnorm_1+elu_token_shift")
-def double_fusion_v2_lm_rmsnorm_1_elu_token_shift(args):
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_token_shift")
+def double_fusion_v2_lm_simplermsnorm_1_elu_token_shift(args):
     base_lm_architecture(args)
     args.has_out = True
     args.decoder_layers = 12
     args.attention_use_layer_norm = True
-    args.norm_type = "rmsnorm"
+    args.norm_type = "simplermsnorm"
     args.linear_act_fun = "1+elu"
     args.causal = True
     args.token_shift = True
