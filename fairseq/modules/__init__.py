@@ -105,6 +105,8 @@ from .x_attention import DoubleFusionV2
 from .x_attention import DoubleFusionV2EncoderLayer, DoubleFusionV2DecoderLayer
 from .x_attention import DoubleFusionV3
 from .x_attention import DoubleFusionV3EncoderLayer, DoubleFusionV3DecoderLayer
+from .x_attention import DoubleFusionQuad
+from .x_attention import DoubleFusionQuadEncoderLayer, DoubleFusionQuadDecoderLayer
 ##### double fusion
 ########## xattention
 
