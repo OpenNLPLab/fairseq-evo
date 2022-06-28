@@ -11,3 +11,4 @@ from .norm_transformer_lm import *
 from .sparse_transformer_lm import *
 from .double_fusion_lm import *
 from .double_fusion_v2_lm import *
+from .double_fusion_v3_lm import *

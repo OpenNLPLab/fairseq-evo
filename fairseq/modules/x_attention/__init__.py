@@ -41,3 +41,6 @@ from .doublefusion_layer import DoubleFusionEncoderLayer, DoubleFusionDecoderLay
 
 from .doublefusion_v2 import DoubleFusionV2
 from .doublefusion_v2_layer import DoubleFusionV2EncoderLayer, DoubleFusionV2DecoderLayer
+
+from .doublefusion_v3 import DoubleFusionV3
+from .doublefusion_v3_layer import DoubleFusionV3EncoderLayer, DoubleFusionV3DecoderLayer
