@@ -252,3 +252,16 @@ def double_fusion_v2_lm_simplermsnorm_1_elu_token_shift(args):
     args.causal = True
     args.token_shift = True
 ##### token shift
+
+##### postnorm
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_postnorm")
+def double_fusion_v2_lm_simplermsnorm_1_elu_postnorm(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+    args.decoder_normalize_before = False
+##### postnorm
