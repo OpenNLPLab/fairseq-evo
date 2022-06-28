@@ -265,3 +265,38 @@ def double_fusion_v2_lm_simplermsnorm_1_elu_postnorm(args):
     args.causal = True
     args.decoder_normalize_before = False
 ##### postnorm
+
+##### convmix
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_convmix1")
+def double_fusion_v2_lm_simplermsnorm_1_elu_convmix1(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+    args.conv_mix = 1
+
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_convmix3")
+def double_fusion_v2_lm_simplermsnorm_1_elu_convmix1(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+    args.conv_mix = 3
+
+@register_model_architecture("double_fusion_v2_lm", "double_fusion_v2_lm_simplermsnorm_1+elu_convmix9")
+def double_fusion_v2_lm_simplermsnorm_1_elu_convmix1(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.linear_act_fun = "1+elu"
+    args.causal = True
+    args.conv_mix = 9
+##### convmix

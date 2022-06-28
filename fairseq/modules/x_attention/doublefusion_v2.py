@@ -19,6 +19,7 @@ from fairseq.modules import ScaleNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from fairseq.modules import GLU
+from fairseq.modules import ConvMix
 from einops import rearrange
 
 @with_incremental_state
@@ -90,6 +91,7 @@ class DoubleFusionV2(nn.Module):
         final_dropout=0.0,
         ##### transformer v2
         glu_act="swish",
+        conv_mix=-1,
     ):
         # add
         self.index = index
@@ -114,19 +116,28 @@ class DoubleFusionV2(nn.Module):
         assert not self.self_attention or self.qkv_same_dim, (
             "Self-attention requires query, key and " "value to be of the same size"
         )
-        
-        # d^2
-        self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        # d^2
-        self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        # d^2
-        self.v_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
+        self.conv_mix = conv_mix
+
+        if self.conv_mix > 0:
+            # d^2
+            self.k_proj = ConvMix(embed_dim, embed_dim, self.conv_mix)
+            # d^2
+            self.q_proj = ConvMix(embed_dim, embed_dim, self.conv_mix)
+            # d^2
+            self.v_proj = ConvMix(embed_dim, embed_dim, self.conv_mix)
+        else:
+            # d^2
+            self.k_proj = quant_noise(
+                nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.q_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
 
         # d^2
         self.u_proj = quant_noise(
@@ -244,10 +255,11 @@ class DoubleFusionV2(nn.Module):
         print(f"self.weight_type {self.weight_type}")
         print(f"self.use_final_dropout {self.use_final_dropout}")
         print(f"self.final_dropout {final_dropout}")
+        print(f"self.conv_mix {self.conv_mix}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
-        elif self.init_type == "default":
+        elif self.init_type == "default" and self.conv_mix == -1:
             self.reset_parameters()
 
     def get_act_fun(self, act_fun):
@@ -379,22 +391,47 @@ class DoubleFusionV2(nn.Module):
         eps = 1e-4
         self.i += 1
 
-        # L, N, E1
-        q = self.q_proj(query)
-        # S, N, E1
-        k = self.k_proj(key)
-        v = self.o1(self.glu_act(self.v_proj(value)))
-        u = self.glu_act(self.u_proj(value))
+        if self.conv_mix > 0:
+            u = self.glu_act(self.u_proj(value))
+            # print(query.shape)
+            query, key, value = map(lambda x: rearrange(x, 'n b d -> b d n'), [query, key, value])
+            # print(query.shape)
+            # L, N, E1
+            q = self.q_proj(query)
+            # S, N, E1
+            k = self.k_proj(key)
+            v = self.v_proj(value)
+            # print(q.shape)
+            q, k, v = map(lambda x: rearrange(x, 'b d n -> n b d'), [q, k, v])
+            # print(q.shape)
+            v = self.o1(self.glu_act(v))
 
 
-        # N, L, H, E, batch, length, head, dim
-        # N, L, e1
-        head_dim = embed_dim // num_heads
+            # N, L, H, E, batch, length, head, dim
+            # N, L, e1
+            head_dim = embed_dim // num_heads
 
-        l = max(src_len, tgt_len)
+            l = max(src_len, tgt_len)
 
-        # n h l d
-        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
+            # n h l d
+            q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
+        else:
+            # L, N, E1
+            q = self.q_proj(query)
+            # S, N, E1
+            k = self.k_proj(key)
+            v = self.o1(self.glu_act(self.v_proj(value)))
+            u = self.glu_act(self.u_proj(value))
+
+
+            # N, L, H, E, batch, length, head, dim
+            # N, L, e1
+            head_dim = embed_dim // num_heads
+
+            l = max(src_len, tgt_len)
+
+            # n h l d
+            q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
         q = self.act(q)
         k = self.act(k)
         if self.use_urpe:

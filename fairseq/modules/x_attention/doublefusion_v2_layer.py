@@ -106,6 +106,7 @@ class DoubleFusionV2EncoderLayer(nn.Module):
             final_dropout=getattr(args, "final_dropout", 0.0),
             ##### transformer v2
             glu_act=getattr(args, "glu_act", "swish"),
+            conv_mix=getattr(args, "conv_mix", -1),
         )
 
     def residual_connection(self, x, residual):
@@ -296,6 +297,7 @@ class DoubleFusionV2DecoderLayer(nn.Module):
             final_dropout=getattr(args, "final_dropout", 0.0),
             ##### transformer v2
             glu_act=getattr(args, "glu_act", "swish"),
+            conv_mix=getattr(args, "conv_mix", -1),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -357,6 +359,7 @@ class DoubleFusionV2DecoderLayer(nn.Module):
             final_dropout=getattr(args, "final_dropout", 0.0),
             ##### transformer v2
             glu_act=getattr(args, "glu_act", "swish"),
+            conv_mix=getattr(args, "conv_mix", -1),
         )
 
     def prepare_for_onnx_export_(self):
