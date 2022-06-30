@@ -47,3 +47,6 @@ from .doublefusion_v3_layer import DoubleFusionV3EncoderLayer, DoubleFusionV3Dec
 
 from .doublefusion_quad import DoubleFusionQuad
 from .doublefusion_quad_layer import DoubleFusionQuadEncoderLayer, DoubleFusionQuadDecoderLayer
+
+from .toeplitz_attention import ToeplitzAttention
+from .toeplitz_layer import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoderLayer

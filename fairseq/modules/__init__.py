@@ -45,6 +45,7 @@ from .positional_encoding import T5RPE
 from .positional_encoding import Urpe
 from .positional_encoding import UrpeV2
 from .positional_encoding import Toeplizt
+from .positional_encoding import ToepliztV2
 ########## positional encoding
 
 ########## norm
@@ -109,6 +110,10 @@ from .x_attention import DoubleFusionV3EncoderLayer, DoubleFusionV3DecoderLayer
 from .x_attention import DoubleFusionQuad
 from .x_attention import DoubleFusionQuadEncoderLayer, DoubleFusionQuadDecoderLayer
 ##### double fusion
+##### toeplitz attention
+from .x_attention import ToeplitzAttention
+from .x_attention import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoderLayer
+##### toeplitz attention
 ########## xattention
 
 ########## sparse

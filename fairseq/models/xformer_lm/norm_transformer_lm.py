@@ -1335,7 +1335,6 @@ def transofrmer_norm_lm_pure_linear_1_elu(args):
     args.has_out = True
     args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
     args.norm_type = "simplermsnorm"
-    args
 
 @register_model_architecture("norm_attention_lm", "norm_lm_pure_linear_1+elu_toep_learn")
 def transofrmer_norm_lm_pure_linear_1_elu_toep_learn(args):
