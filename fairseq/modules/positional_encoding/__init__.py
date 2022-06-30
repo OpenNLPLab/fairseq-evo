@@ -4,3 +4,4 @@ from .spe import SineSPE, ConvSPE, SPEFilter
 from .t5_rpe import T5RPE
 from .urpe import Urpe
 from .urpe_v2 import UrpeV2
+from .toeplitz_encoding import Toeplizt

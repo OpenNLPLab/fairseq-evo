@@ -1324,3 +1324,42 @@ def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_softmax_1_elu(args):
     ###### softmax
     args.use_softmax = True
 ########## softmax + 1 + elu
+
+########## norm linear + toeplizt
+@register_model_architecture("norm_attention_lm", "norm_lm_pure_linear_1+elu")
+def transofrmer_norm_lm_pure_linear_1_elu(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args
+
+@register_model_architecture("norm_attention_lm", "norm_lm_pure_linear_1+elu_toep_learn")
+def transofrmer_norm_lm_pure_linear_1_elu_toep_learn(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    ##### topelitz
+    args.use_toeplizt = True
+    args.type_num = -1
+
+@register_model_architecture("norm_attention_lm", "norm_lm_pure_linear_1+elu_toep_exp")
+def transofrmer_norm_lm_pure_linear_1_elu_toep_exp(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    ##### topelitz
+    args.use_toeplizt = True
+    args.type_num = 1
+########## norm linear + toeplizt

@@ -17,6 +17,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
+from fairseq.modules import Toeplizt
 from einops import rearrange
 
 @with_incremental_state
@@ -86,6 +87,9 @@ class NormLinearAttention(nn.Module):
         # final dropout
         use_final_dropout=False,
         final_dropout=0.0,
+        # Toeplizt
+        use_toeplizt=False,
+        type_num=-1
     ):
         # add
         self.index = index
@@ -130,15 +134,23 @@ class NormLinearAttention(nn.Module):
             if self.norm_type == "rmsnorm":
                 print("here! rmsnorm")
                 self.layer_norm = RMSNorm(embed_dim)
+                if use_toeplizt:
+                    self.toeplizt_norm = RMSNorm(embed_dim)
             elif self.norm_type == "gatedrmsnorm":
                 print("here! gatedrmsnorm")
                 self.layer_norm = GatedRMSNorm(embed_dim)
+                if use_toeplizt:
+                    self.toeplizt_norm = GatedRMSNorm(embed_dim)
             elif self.norm_type == "simplermsnorm":
                 print("here! simple rmsnorm")
                 self.layer_norm = SimpleRMSNorm(embed_dim)
+                if use_toeplizt:
+                    self.toeplizt_norm = SimpleRMSNorm(embed_dim)
             else:
                 print("here! layer norm")
                 self.layer_norm = nn.LayerNorm(embed_dim)
+                if use_toeplizt:
+                    self.toeplizt_norm = nn.LayerNorm(embed_dim)
 
         self.i = 0
         self.model_update_freq = model_update_freq
@@ -164,6 +176,12 @@ class NormLinearAttention(nn.Module):
         self.use_v = use_v
         self.negative_slope = negative_slope
         self.use_dropout = use_dropout
+        self.use_toeplizt = use_toeplizt
+        self.type_num = type_num
+        self.max_l = max_l
+
+        if self.use_toeplizt:
+            self.toeplizt = Toeplizt(self.max_l, self.type_num, self.causal)
 
         if self.use_dropout:
             self.dropout_module = FairseqDropout(
@@ -224,6 +242,8 @@ class NormLinearAttention(nn.Module):
         print(f"self.weight_type {self.weight_type}")
         print(f"self.use_final_dropout {self.use_final_dropout}")
         print(f"self.final_dropout {final_dropout}")
+        print(f"self.use_toeplizt {use_toeplizt}")
+        print(f"self.type_num {self.type_num}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -377,6 +397,9 @@ class NormLinearAttention(nn.Module):
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
+        if self.use_toeplizt:
+            toeplizt_part = self.toeplizt(v)
+
         q = self.act(q)
         k = self.act(k)
 
@@ -431,11 +454,16 @@ class NormLinearAttention(nn.Module):
             o1 = torch.matmul(k.transpose(1, 2), v)
             output = torch.bmm(q, o1)
 
+        if self.use_toeplizt:
+            toeplizt_part = toeplizt_part.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
+            if self.use_toeplizt:
+                output = output + self.toeplizt_norm(toeplizt_part)
 
         if self.use_dropout:
             output = self.dropout_module(output)

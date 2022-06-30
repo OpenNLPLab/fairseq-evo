@@ -184,7 +184,10 @@ class NormAttentionDecoderLayer(nn.Module):
                 kv_act=getattr(args, "decoder_kv_act", "identity"),
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
-                final_dropout=getattr(args, "final_dropout", 0.0)
+                final_dropout=getattr(args, "final_dropout", 0.0),
+                # Toeplizt
+                use_toeplizt=getattr(args, "use_toeplizt", False),
+                type_num=getattr(args, "type_num", -1),
             )
         elif args.attention_type == 2:
             print("======================")
@@ -344,6 +347,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
                 final_dropout=getattr(args, "final_dropout", 0.0),
+                # Toeplizt
+                use_toeplizt=getattr(args, "use_toeplizt", False),
+                type_num=getattr(args, "type_num", -1),
             )
         elif args.attention_type == 2:
             print("======================")
@@ -760,7 +766,10 @@ class NormAttentionEncoderLayer(nn.Module):
                 kv_act=getattr(args, "encoder_kv_act", "identity"),
                 # final dropout
                 use_final_dropout=getattr(args, "use_final_dropout", False),
-                final_dropout=getattr(args, "final_dropout", 0.0)
+                final_dropout=getattr(args, "final_dropout", 0.0),
+                # Toeplizt
+                use_toeplizt=getattr(args, "use_toeplizt", False),
+                type_num=getattr(args, "type_num", -1),
             )
         elif args.attention_type == 2:
             print("======================")

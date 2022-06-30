@@ -44,6 +44,7 @@ from .positional_encoding import SineSPE, ConvSPE, SPEFilter
 from .positional_encoding import T5RPE
 from .positional_encoding import Urpe
 from .positional_encoding import UrpeV2
+from .positional_encoding import Toeplizt
 ########## positional encoding
 
 ########## norm
