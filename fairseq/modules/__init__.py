@@ -49,7 +49,7 @@ from .positional_encoding import ToepliztV2
 ########## positional encoding
 
 ########## norm
-from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm, ScaleNorm
+from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm, ScaleNorm, OffsetScale
 ########## norm
 
 ########## token mix
@@ -114,6 +114,10 @@ from .x_attention import DoubleFusionQuadEncoderLayer, DoubleFusionQuadDecoderLa
 from .x_attention import ToeplitzAttention
 from .x_attention import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoderLayer
 ##### toeplitz attention
+##### gau
+from .x_attention import GauQuad
+from .x_attention import GauEncoderLayer, GauDecoderLayer
+##### gau
 ########## xattention
 
 ########## sparse

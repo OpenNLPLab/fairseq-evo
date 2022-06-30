@@ -15,3 +15,4 @@ from .doublefusion_v2 import DoubleFusionV2Encoder, DoubleFusionV2Decoder, Doubl
 from .doublefusion_v3 import DoubleFusionV3Encoder, DoubleFusionV3Decoder, DoubleFusionV3Model
 from .doublefusion_quad import DoubleFusionQuadEncoder, DoubleFusionQuadDecoder
 from .toeplitz_transformer import ToeplitzAttentionEncoder, ToeplitzAttentionDecoder, ToeplitzModel
+from .gau import GauEncoder, GauDecoder

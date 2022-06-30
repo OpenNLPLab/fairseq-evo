@@ -50,3 +50,6 @@ from .doublefusion_quad_layer import DoubleFusionQuadEncoderLayer, DoubleFusionQ
 
 from .toeplitz_attention import ToeplitzAttention
 from .toeplitz_layer import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoderLayer
+
+from .gau_quad import GauQuad
+from .gau_layer import GauEncoderLayer, GauDecoderLayer
