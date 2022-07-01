@@ -257,4 +257,36 @@ def gau_lm_simplermsnorm_softmax_urpe_1(args):
     ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
+
+@register_model_architecture("gau_lm", "gau_lm_simplermsnorm_softmax_urpe_1d3_one_head")
+def gau_lm_simplermsnorm_softmax_urpe_1d3_one_head(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.decoder_attention_heads = 1
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+
+@register_model_architecture("gau_lm", "gau_lm_simplermsnorm_softmax_urpe_1_one_head")
+def gau_lm_simplermsnorm_softmax_urpe_1_one_head(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.decoder_attention_heads = 1
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
 ##### urpe test

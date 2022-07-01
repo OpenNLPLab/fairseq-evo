@@ -182,6 +182,7 @@ class ToeplitzAttentionDecoderLayer(nn.Module):
             # Toeplizt
             type_num=getattr(args, "type_num", -1),
             toep_type=getattr(args, "toep_type", -1),
+            use_exp=getattr(args, "use_exp", True),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -244,6 +245,7 @@ class ToeplitzAttentionDecoderLayer(nn.Module):
             # Toeplizt
             type_num=getattr(args, "type_num", -1),
             toep_type=getattr(args, "toep_type", -1),
+            use_exp=getattr(args, "use_exp", True),
         )
 
     def prepare_for_onnx_export_(self):
@@ -563,6 +565,7 @@ class ToeplitzAttentionEncoderLayer(nn.Module):
             # Toeplizt
             type_num=getattr(args, "type_num", -1),
             toep_type=getattr(args, "toep_type", -1),
+            use_exp=getattr(args, "use_exp", True),
         )
 
     def residual_connection(self, x, residual):

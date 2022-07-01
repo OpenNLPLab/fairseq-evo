@@ -45,7 +45,7 @@ class ToepliztV2(nn.Module):
 
         # print(self.toeplizt_matrix(10))
 
-    def forward(self, x, dim=1, normalize=False):
+    def forward(self, x, dim=1, normalize=False, use_exp=True):
         # shape of x: b, n, e
         b = x.shape[0]
         n = x.shape[dim]
@@ -56,7 +56,10 @@ class ToepliztV2(nn.Module):
         
         pos = torch.cat([self.pos[:l1], torch.ones(l2).to(x) * self.infty])
         neg = torch.cat([torch.ones(l2).to(x) * self.infty, self.neg[-l1:]])
-        a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg]), max=30, min=-60))
+        if use_exp:
+            a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg]), max=30, min=-60))
+        else:
+            a = torch.cat([self.zero, pos, self.zero, neg])
         output = self.compute(x, a, dim, n)
 
         if normalize:
