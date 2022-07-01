@@ -97,11 +97,12 @@ class ToeplitzLanguageModel(TransformerLanguageModel):
 def transofrmer_toeplitz_lm_pure_linear_1_elu_TV(args):
     base_lm_architecture(args)
     ##### add
-    args.linear_act_fun = "elu"
+    args.linear_act_fun = "1+elu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
     args.norm_type = "simplermsnorm"
+    args.attention_use_layer_norm = False
     ##### topelitz
     args.type_num = -1
     args.toep_type = -1
@@ -140,10 +141,11 @@ def transofrmer_toeplitz_lm_pure_linear_1_elu_ATV(args):
 def transofrmer_toeplitz_lm_pure_norm_linear_1_elu_TV(args):
     base_lm_architecture(args)
     ##### add
-    args.linear_act_fun = "elu"
+    args.linear_act_fun = "1+elu"
     args.max_l = getattr(args, "max_l", 512)
     args.has_out = True
     args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
     ##### topelitz
     args.type_num = -1
     args.toep_type = -1
@@ -174,3 +176,63 @@ def transofrmer_toeplitz_lm_pure_norm_linear_1_elu_ATV(args):
     args.type_num = -1
     args.toep_type = 2
 ########## linear + toeplizt
+
+########## pure linear AV + TV
+@register_model_architecture("toeplitz_lm", "toeplitz_lm_pure_linear_1+elu_AV+TV_exp")
+def transofrmer_toeplitz_lm_pure_linear_1_elu_AV_TV_exp(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.attention_use_layer_norm = False
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = True
+
+@register_model_architecture("toeplitz_lm", "toeplitz_lm_pure_linear_1+elu_AV+TV_no_exp")
+def transofrmer_toeplitz_lm_pure_linear_1_elu_AV_TV_no_exp(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.attention_use_layer_norm = False
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = False
+########## pure linear AV + TV
+
+########## norm + toeplizt AV + TV
+@register_model_architecture("toeplitz_lm", "toeplitz_lm_pure_norm_linear_1+elu_AV+TV_exp")
+def transofrmer_toeplitz_lm_pure_norm_linear_1_elu_AV_TV_exp(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = True
+
+@register_model_architecture("toeplitz_lm", "toeplitz_lm_pure_norm_linear_1+elu_AV_TV_no_exp")
+def transofrmer_toeplitz_lm_pure_norm_linear_1_elu_AV_TV_no_exp(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = False
+########## norm + toeplizt AV + TV
