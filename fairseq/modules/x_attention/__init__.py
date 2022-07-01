@@ -52,4 +52,5 @@ from .toeplitz_attention import ToeplitzAttention
 from .toeplitz_layer import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoderLayer
 
 from .gau_quad import GauQuad
+from .gau_quad_v2 import GauQuadV2
 from .gau_layer import GauEncoderLayer, GauDecoderLayer

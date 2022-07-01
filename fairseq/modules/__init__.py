@@ -116,6 +116,7 @@ from .x_attention import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoder
 ##### toeplitz attention
 ##### gau
 from .x_attention import GauQuad
+from .x_attention import GauQuadV2
 from .x_attention import GauEncoderLayer, GauDecoderLayer
 ##### gau
 ########## xattention
