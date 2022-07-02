@@ -235,6 +235,32 @@ def double_fusion_quad_lm_simplermsnorm_1_elu_urpe_1(args):
     ##### urpe
     args.decoder_use_urpe = True
     args.decoder_core_matrix = 1
+
+@register_model_architecture("double_fusion_quad_lm", "double_fusion_quad_lm_simplermsnorm_softmax_urpe_1d3")
+def double_fusion_quad_lm_simplermsnorm_softmax_urpe_1d3(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.causal = True
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+
+@register_model_architecture("double_fusion_quad_lm", "double_fusion_quad_lm_simplermsnorm_softmax_urpe_1")
+def double_fusion_quad_lm_simplermsnorm_softmax_urpe_1(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 12
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.causal = True
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
 ##### urpe test
 
 ##### head test
