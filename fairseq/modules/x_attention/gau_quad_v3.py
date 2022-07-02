@@ -24,7 +24,7 @@ from fairseq.modules import OffsetScale
 from einops import rearrange
 
 @with_incremental_state
-class GauQuadV2(nn.Module):
+class GauQuadV3(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -121,37 +121,27 @@ class GauQuadV2(nn.Module):
 
         self.q_offsetscale = OffsetScale(embed_dim)
         self.k_offsetscale = OffsetScale(embed_dim)
-        # d^2
-        self.k_proj = quant_noise(
-            nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        # d^2
-        self.q_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
+        d = 2 * embed_dim
         # d^2
         self.v_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
         )
 
         # d^2
         self.u_proj = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            nn.Linear(embed_dim, d, bias=bias), q_noise, qn_block_size
         )
 
         # d^2
-        self.o1 = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-        )
-        self.o2 = quant_noise(
-            nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+        self.o = quant_noise(
+            nn.Linear(d, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
         self.pre_norm = self.get_norm_fun(self.norm_type, embed_dim)
         if self.attention_use_layer_norm:
-            self.layer_norm = self.get_norm_fun(self.norm_type, embed_dim)
+            self.layer_norm = self.get_norm_fun(self.norm_type, d)
 
         self.i = 0
         self.model_update_freq = model_update_freq
@@ -229,14 +219,8 @@ class GauQuadV2(nn.Module):
         nn.init.normal_(self.u_proj.bias, std=0.02)
         nn.init.normal_(self.v_proj.weight, std=0.02)
         nn.init.normal_(self.v_proj.bias, std=0.02)
-        nn.init.normal_(self.q_proj.weight, std=0.02)
-        nn.init.normal_(self.q_proj.bias, std=0.02)
-        nn.init.normal_(self.k_proj.weight, std=0.02)
-        nn.init.normal_(self.k_proj.bias, std=0.02)
-        nn.init.normal_(self.o1.weight, std=0.02)
-        nn.init.normal_(self.o1.bias, std=0.02)
-        nn.init.normal_(self.o2.weight, std=0.02)
-        nn.init.normal_(self.o2.bias, std=0.02)
+        nn.init.normal_(self.o.weight, std=0.02)
+        nn.init.normal_(self.o.bias, std=0.02)
 
     def get_norm_fun(self, norm_type, embed_dim):
         if norm_type == "rmsnorm":
@@ -385,9 +369,9 @@ class GauQuadV2(nn.Module):
 
         shortcut, x = query, self.pre_norm(query)
         u = self.act(self.u_proj(x))
-        v = self.act(self.o1(self.act(self.v_proj(x))))
-        q_base = self.act(self.q_proj(x))
-        k_base = self.act(self.k_proj(x))
+        v = self.act(self.v_proj(x))
+        q_base = self.act(x)
+        k_base = self.act(x)
         q = self.q_offsetscale(q_base)
         k = self.k_offsetscale(k_base)
         q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
@@ -423,7 +407,7 @@ class GauQuadV2(nn.Module):
             output = self.layer_norm(output)
         output = u * output
 
-        output = self.o2(output) + shortcut
+        output = self.o(output) + shortcut
 
         return output, None
 

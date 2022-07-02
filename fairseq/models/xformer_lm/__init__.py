@@ -16,3 +16,4 @@ from .double_fusion_quad_lm import *
 from .toeplitz_lm import *
 from .gau_lm import *
 from .gau_lm_v2 import *
+from .gau_lm_v3 import *
