@@ -608,7 +608,7 @@ class ToeplitzAttention(nn.Module):
             o1 = torch.matmul(k.transpose(1, 2), v)
             output = torch.bmm(q, o1)
             if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
+                denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps).unsqueeze(-1)
                 output = output / denorm
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
