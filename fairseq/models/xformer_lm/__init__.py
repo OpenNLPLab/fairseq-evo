@@ -18,3 +18,4 @@ from .gau_lm import *
 from .gau_lm_v2 import *
 from .gau_lm_v3 import *
 from .gau_lm_v4 import *
+from .gau_linear_lm_v4 import *

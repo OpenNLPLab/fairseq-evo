@@ -16,6 +16,7 @@ from .gau_quad import GauQuad
 from .gau_quad_v2 import GauQuadV2
 from .gau_quad_v3 import GauQuadV3
 from .gau_quad_v4 import GauQuadV4
+from .gau_linear_v4 import GauLinearV4
 
 class GauEncoderLayer(nn.Module):
     def __init__(self, args):
@@ -57,6 +58,11 @@ class GauEncoderLayer(nn.Module):
             print("use gau quad v4")
             print("======================")
             Attention = GauQuadV4
+        elif args.attention_type == -4:
+            print("======================")
+            print("use gau linear v4")
+            print("======================")
+            Attention = GauLinearV4
         return Attention(
             embed_dim,
             args.encoder_attention_heads,
@@ -238,6 +244,11 @@ class GauDecoderLayer(nn.Module):
             print("use gau quad v4")
             print("======================")
             Attention = GauQuadV4
+        elif args.attention_type == -4:
+            print("======================")
+            print("use gau linear v4")
+            print("======================")
+            Attention = GauLinearV4
         return Attention(
             embed_dim,
             args.decoder_attention_heads,
@@ -318,6 +329,11 @@ class GauDecoderLayer(nn.Module):
             print("use gau quad v4")
             print("======================")
             Attention = GauQuadV4
+        elif args.attention_type == -4:
+            print("======================")
+            print("use gau linear v4")
+            print("======================")
+            Attention = GauLinearV4
         return Attention(
             embed_dim,
             args.decoder_attention_heads,

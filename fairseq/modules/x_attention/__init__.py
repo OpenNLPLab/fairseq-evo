@@ -55,4 +55,5 @@ from .gau_quad import GauQuad
 from .gau_quad_v2 import GauQuadV2
 from .gau_quad_v3 import GauQuadV3
 from .gau_quad_v4 import GauQuadV4
+from .gau_linear_v4 import GauLinearV4
 from .gau_layer import GauEncoderLayer, GauDecoderLayer
