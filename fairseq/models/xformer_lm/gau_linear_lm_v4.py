@@ -82,6 +82,32 @@ def gau_linear_lm_v4_denorm_silu_single_head(args):
     args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
 ##### base
 
+##### head test
+@register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_1+elu_single_head")
+def gau_linear_lm_v4_simplermsnorm_1_elu_single_head(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    args.act_fun = "1+elu"
+    args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
+
+@register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_elu_single_head")
+def gau_linear_lm_v4_simplermsnorm_elu_single_head(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.decoder_attention_heads = 1
+    args.act_fun = "elu"
+    args.causal = True
+    args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
+##### head test
+
 ##### norm test
 @register_model_architecture("gau_lm", "gau_linear_lm_v4_layernorm_1+elu")
 def gau_linear_lm_v4_layernorm_1_elu(args):
