@@ -91,7 +91,9 @@ class GauQuadV2(nn.Module):
         use_final_dropout=False,
         final_dropout=0.0,
         # add 
-        norm_act="1+elu"
+        norm_act="1+elu",
+        chunk_size=64,
+        forward_type="vanilla",
     ):
         # add
         self.index = index

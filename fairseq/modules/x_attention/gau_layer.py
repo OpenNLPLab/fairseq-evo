@@ -117,7 +117,9 @@ class GauEncoderLayer(nn.Module):
             use_final_dropout=getattr(args, "use_final_dropout", False),
             final_dropout=getattr(args, "final_dropout", 0.0),
             # add
-            norm_act=getattr(args, "norm_act", "1+elu")
+            norm_act=getattr(args, "norm_act", "1+elu"),
+            chunk_size=getattr(args, "chunk_size", 64),
+            forward_type=getattr(args, "forward_type", "vanilla")
         )
 
     def residual_connection(self, x, residual):
@@ -304,8 +306,10 @@ class GauDecoderLayer(nn.Module):
             # final dropout
             use_final_dropout=getattr(args, "use_final_dropout", False),
             final_dropout=getattr(args, "final_dropout", 0.0),
-            # add
-            norm_act=getattr(args, "norm_act", "1+elu")
+            # add 
+            norm_act=getattr(args, "norm_act", "1+elu"),
+            chunk_size=getattr(args, "chunk_size", 64),
+            forward_type=getattr(args, "forward_type", "vanilla")
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -390,8 +394,10 @@ class GauDecoderLayer(nn.Module):
             # final dropout
             use_final_dropout=getattr(args, "use_final_dropout", False),
             final_dropout=getattr(args, "final_dropout", 0.0),
-            # add
-            norm_act=getattr(args, "norm_act", "1+elu")
+            # add 
+            norm_act=getattr(args, "norm_act", "1+elu"),
+            chunk_size=getattr(args, "chunk_size", 64),
+            forward_type=getattr(args, "forward_type", "vanilla")
         )
 
     def prepare_for_onnx_export_(self):

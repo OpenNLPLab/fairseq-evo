@@ -91,7 +91,9 @@ class GauQuadV4(nn.Module):
         use_final_dropout=False,
         final_dropout=0.0,
         # add 
-        norm_act="1+elu"
+        norm_act="1+elu",
+        chunk_size=64,
+        forward_type="vanilla",
     ):
         # add
         self.index = index
@@ -168,6 +170,9 @@ class GauQuadV4(nn.Module):
         self.use_v = use_v
         self.negative_slope = negative_slope
         self.use_dropout = use_dropout
+        self.chunk_size = chunk_size
+        if forward_type == "chunk":
+            self.forward = self.forward_chunk
 
         if self.use_dropout:
             self.dropout_module = FairseqDropout(
@@ -211,6 +216,8 @@ class GauQuadV4(nn.Module):
         print(f"norm_act {norm_act}")
         print(f"self.use_final_dropout {self.use_final_dropout}")
         print(f"self.final_dropout {final_dropout}")
+        print(f"forward_type {forward_type}")
+        print(f"chunk_size {chunk_size}")
 
         self.gau_init()
 
@@ -321,6 +328,21 @@ class GauQuadV4(nn.Module):
 
             return nn.Parameter(index, requires_grad=False)
 
+    def transform(self, q):
+        q = rearrange(q, 'l b (h e) -> l b h e', h=self.num_heads)
+        q = rearrange(q, 'l b h e -> b h l e')
+        q = rearrange(q, 'b h (l c) e -> b h l c e', c=self.chunk_size)
+
+        return q
+
+    def reverse_transform(self, q):
+        q = rearrange(q, 'b h l c e -> b h (l c) e')
+        q = rearrange(q, 'b h l e -> l b h e')
+        q = rearrange(q, 'l b h e -> l b (h e)')
+
+        return q
+
+
     def forward(
         self,
         query,
@@ -403,6 +425,86 @@ class GauQuadV4(nn.Module):
         output = torch.einsum('bhnm,bhmd->bhnd', weights, v)
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = rearrange(output, 'b h n e -> n b (h e)')
+        # B, N, e2
+        if self.attention_use_layer_norm:
+            output = self.layer_norm(output)
+        output = u * output
+
+        output = self.o(output) + shortcut
+
+        return output, None
+
+    def forward_chunk(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        eps = 1e-4
+
+        shortcut, x = query, self.pre_norm(query)
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        base = self.act(self.base_proj(x))
+        q = self.q_offsetscale(base)
+        k = self.k_offsetscale(base)
+
+        # n, b, e
+        d = max(tgt_len, src_len)
+        len_pad = (self.chunk_size - d % self.chunk_size) % self.chunk_size
+        q = F.pad(q, (0, 0, 0, 0, 0, len_pad))
+        k = F.pad(k, (0, 0, 0, 0, 0, len_pad))
+        v = F.pad(v, (0, 0, 0, 0, 0, len_pad))
+        # b, h, l, c, e
+        q = self.transform(q)
+        k = self.transform(k)
+        v = self.transform(v)
+
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
+
+        ##### compute
+        scale = self.head_dim ** -0.5
+        weights = torch.einsum('...nd,...md->...nm', q, k) * scale
+
+        if self.causal:
+            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1)
+            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            if not self.attention_use_layer_norm:
+                weights = weights.masked_fill(attn_mask==float("-inf"), float("-inf"))
+                weights = F.softmax(weights, dim=-1)
+            else:
+                weights = self.norm_act(weights)
+                weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+        else:
+            if not self.attention_use_layer_norm:
+                weights = F.softmax(weights, dim=-1)
+            else:
+                weights = self.norm_act(weights)
+        # print(weights[0][0][0])
+        output = torch.einsum('...nm,...md->...nd', weights, v)
+        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        output = self.reverse_transform(output)
+        output = output[:tgt_len, ...]
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
