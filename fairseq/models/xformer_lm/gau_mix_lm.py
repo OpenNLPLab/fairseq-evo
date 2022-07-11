@@ -96,4 +96,70 @@ def gau_lm_v4_simplermsnorm_softmax_urpe_1d3_one_head_chunk128(args):
     ##### block
     args.chunk_size = 128
     args.forward_type = "chunk"
+
+@register_model_architecture("gau_lm", "gau_lm_v4_simplermsnorm_relu_urpe_1d3_one_head_chunk32")
+def gau_lm_v4_simplermsnorm_relu_urpe_1d3_one_head_chunk32(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [4 for _ in range(args.decoder_layers)]
+    args.decoder_attention_heads = 1
+    args.attention_use_layer_norm = True
+    args.norm_act = "relu"
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ##### block
+    args.chunk_size = 32
+    args.forward_type = "chunk"
+
+@register_model_architecture("gau_lm", "gau_lm_v4_simplermsnorm_relu_urpe_1d3_one_head_chunk64")
+def gau_lm_v4_simplermsnorm_relu_urpe_1d3_one_head_chunk64(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [4 for _ in range(args.decoder_layers)]
+    args.decoder_attention_heads = 1
+    args.attention_use_layer_norm = True
+    args.norm_act = "relu"
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ##### block
+    args.chunk_size = 64
+    args.forward_type = "chunk"
+
+@register_model_architecture("gau_lm", "gau_lm_v4_simplermsnorm_relu_urpe_1d3_one_head_chunk128")
+def gau_lm_v4_simplermsnorm_relu_urpe_1d3_one_head_chunk128(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = False
+    args.norm_type = "simplermsnorm"
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [4 for _ in range(args.decoder_layers)]
+    args.decoder_attention_heads = 1
+    args.attention_use_layer_norm = True
+    args.norm_act = "relu"
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+    ##### block
+    args.chunk_size = 128
+    args.forward_type = "chunk"
 ##### pure block
