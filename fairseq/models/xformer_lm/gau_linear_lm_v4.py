@@ -106,6 +106,18 @@ def gau_linear_lm_v4_simplermsnorm_elu_single_head(args):
     args.act_fun = "elu"
     args.causal = True
     args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
+
+@register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_silu_single_head")
+def gau_linear_lm_v4_simplermsnorm_silu_single_head(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.decoder_attention_heads = 1
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
 ##### head test
 
 ##### norm test
@@ -166,6 +178,17 @@ def gau_linear_lm_v4_scalenorm_1_elu(args):
 ##### norm test
 
 ##### act test
+@register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_silu")
+def gau_linear_lm_v4_simplermsnorm_silu(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
+
 @register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_elu")
 def gau_linear_lm_v4_simplermsnorm_elu(args):
     base_lm_architecture(args)
@@ -270,6 +293,38 @@ def gau_linear_lm_v4_simplermsnorm_elu_single_head_urpe_1(args):
     args.norm_type = "simplermsnorm"
     args.decoder_attention_heads = 1
     args.act_fun = "elu"
+    args.causal = True
+    args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+
+@register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_silu_single_head_urpe_1d3")
+def gau_linear_lm_v4_simplermsnorm_silu_single_head_urpe_1d3(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.decoder_attention_heads = 1
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
+    ##### urpe
+    args.decoder_use_urpe = True
+    args.decoder_core_matrix = 1
+    args.decoder_p_matrix = 3
+    args.decoder_theta_learned = True
+
+@register_model_architecture("gau_lm", "gau_linear_lm_v4_simplermsnorm_silu_single_head_urpe_1")
+def gau_linear_lm_v4_simplermsnorm_silu_single_head_urpe_1(args):
+    base_lm_architecture(args)
+    args.has_out = True
+    args.decoder_layers = 2 * args.decoder_layers
+    args.attention_use_layer_norm = True
+    args.norm_type = "simplermsnorm"
+    args.decoder_attention_heads = 1
+    args.act_fun = "silu"
     args.causal = True
     args.decoder_attention_types = [-4 for _ in range(args.decoder_layers)]
     ##### urpe

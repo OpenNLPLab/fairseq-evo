@@ -171,8 +171,10 @@ class GauQuadV4(nn.Module):
         self.negative_slope = negative_slope
         self.use_dropout = use_dropout
         self.chunk_size = chunk_size
-        if forward_type == "chunk":
-            self.forward = self.forward_chunk
+        if forward_type == "chunk1":
+            self.forward = self.forward_chunk1
+        elif forward_type == "chunk2":
+            self.forward = self.forward_chunk2
 
         if self.use_dropout:
             self.dropout_module = FairseqDropout(
@@ -434,7 +436,7 @@ class GauQuadV4(nn.Module):
 
         return output, None
 
-    def forward_chunk(
+    def forward_chunk1(
         self,
         query,
         key: Optional[Tensor],
@@ -500,11 +502,80 @@ class GauQuadV4(nn.Module):
                 weights = F.softmax(weights, dim=-1)
             else:
                 weights = self.norm_act(weights)
-        # print(weights[0][0][0])
         output = torch.einsum('...nm,...md->...nd', weights, v)
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = self.reverse_transform(output)
         output = output[:tgt_len, ...]
+        # B, N, e2
+        if self.attention_use_layer_norm:
+            output = self.layer_norm(output)
+        output = u * output
+
+        output = self.o(output) + shortcut
+
+        return output, None
+
+    def forward_chunk2(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        '''
+        - query: :math:`(L, C, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, C, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, C, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        bsz, tgt_len, chunk_size, embed_dim = query.size()
+        src_len = key.size(0)
+        eps = 1e-4
+
+        shortcut, x = query, self.pre_norm(query)
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        base = self.act(self.base_proj(x))
+        q = self.q_offsetscale(base)
+        k = self.k_offsetscale(base)
+        q, k, v = map(lambda x: rearrange(x, 'n c b (h d) -> b h n c d', h=num_heads), [q, k, v])
+
+        # n, b, e
+
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
+
+        ##### compute
+        scale = self.head_dim ** -0.5
+        weights = torch.einsum('...nd,...md->...nm', q, k) * scale
+
+        if self.causal:
+            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1)
+            attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            if not self.attention_use_layer_norm:
+                weights = weights.masked_fill(attn_mask==float("-inf"), float("-inf"))
+                weights = F.softmax(weights, dim=-1)
+            else:
+                weights = self.norm_act(weights)
+                weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+        else:
+            if not self.attention_use_layer_norm:
+                weights = F.softmax(weights, dim=-1)
+            else:
+                weights = self.norm_act(weights)
+        output = torch.einsum('...nm,...md->...nd', weights, v)
+        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        output = rearrange(output, 'b h n c d -> n c b (h d)')
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
