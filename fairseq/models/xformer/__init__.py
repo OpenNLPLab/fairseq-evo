@@ -17,3 +17,4 @@ from .doublefusion_quad import DoubleFusionQuadEncoder, DoubleFusionQuadDecoder
 from .toeplitz_transformer import ToeplitzAttentionEncoder, ToeplitzAttentionDecoder, ToeplitzModel
 from .gau import GauEncoder, GauDecoder
 from .gau_mix import GauMixEncoder, GauMixDecoder
+from .weight_linear import WeightLinearEncoder, WeightLinearDecoder

@@ -11,3 +11,4 @@ from .norm_mix_attention import *
 from .linear_attention_combination import *
 from .double_fusion import *
 from .toeplitz_attention import *
+from .weight_linear import *

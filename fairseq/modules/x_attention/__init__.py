@@ -57,3 +57,6 @@ from .gau_quad_v3 import GauQuadV3
 from .gau_quad_v4 import GauQuadV4
 from .gau_linear_v4 import GauLinearV4
 from .gau_layer import GauEncoderLayer, GauDecoderLayer
+
+from .weight_linear_attention import WeightLinearAttention
+from .weight_linear_attention_layer import WeightLinearEncoderLayer, WeightLinearDecoderLayer

@@ -120,6 +120,10 @@ from .x_attention import GauQuadV2
 from .x_attention import GauQuadV3
 from .x_attention import GauEncoderLayer, GauDecoderLayer
 ##### gau
+##### weight linear
+from .x_attention import WeightLinearAttention
+from .x_attention import WeightLinearEncoderLayer, WeightLinearDecoderLayer
+##### weight linear
 ########## xattention
 
 ########## sparse
