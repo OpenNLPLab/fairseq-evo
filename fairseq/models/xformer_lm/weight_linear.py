@@ -91,7 +91,8 @@ class WeightLinearLanguageModel(TransformerLanguageModel):
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
-    
+
+########## no norm
 ##### baseline
 @register_model_architecture("weight_linear_lm", "weight_linear_relu")
 def weight_linear_relu(args):
@@ -114,11 +115,12 @@ def weight_linear_relu_quad(args):
     args.causal = True
     args.act_fun = "relu"
     args.weight_type = 2
-    
+########## no norm
+
 ########## norm
 ##### baseline
 @register_model_architecture("weight_linear_lm", "weight_linear_relu_norm")
-def weight_linear_relu(args):
+def weight_linear_relu_norm(args):
     base_lm_architecture(args)
     args.causal = True
     args.act_fun = "relu"
@@ -129,7 +131,7 @@ def weight_linear_relu(args):
 ##### baseline
 
 @register_model_architecture("weight_linear_lm", "weight_linear_relu_cos_norm")
-def weight_linear_relu_cos(args):
+def weight_linear_relu_cos_norm(args):
     base_lm_architecture(args)
     args.causal = True
     args.act_fun = "relu"
@@ -139,7 +141,7 @@ def weight_linear_relu_cos(args):
     args.norm_type = "simplermsnorm"
     
 @register_model_architecture("weight_linear_lm", "weight_linear_relu_quad_norm")
-def weight_linear_relu_quad(args):
+def weight_linear_relu_quad_norm(args):
     base_lm_architecture(args)
     args.causal = True
     args.act_fun = "relu"

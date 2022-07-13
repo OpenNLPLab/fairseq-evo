@@ -56,6 +56,7 @@ class RobertaWeightLinearModel(RobertaModel):
         encoder = RobertaWeightLinearEncoder(args, task.source_dictionary)
         return cls(args, encoder)
 
+########## no norm
 ##### baseline
 @register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu")
 def roberta_weight_linear_relu(args):
@@ -78,3 +79,38 @@ def roberta_weight_linear_relu_quad(args):
     args.causal = False
     args.act_fun = "relu"
     args.weight_type = 2
+########## no norm
+
+########## norm
+##### baseline
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_norm")
+def roberta_weight_linear_relu_norm(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "relu"
+    args.weight_type = -1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+##### baseline
+
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_cos_norm")
+def roberta_weight_linear_relu_cos_norm(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "relu"
+    args.weight_type = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_quad_norm")
+def roberta_weight_linear_relu_quad_norm(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "relu"
+    args.weight_type = 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+########## norm
