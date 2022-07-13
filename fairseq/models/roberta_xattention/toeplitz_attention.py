@@ -131,6 +131,7 @@ def roberta_toeplitz_layernorm_linear_1_elu_AV_TV_no_exp(args):
     args.type_num = -1
     args.toep_type = 3
     args.use_exp = False
+##### only T
 
 ##### urpe + T
 @register_model_architecture("roberta_toeplitz", "roberta_toeplitz_pure_linear_1+elu_AV+TV_exp_urpe_1d_3")
@@ -192,3 +193,84 @@ def roberta_toeplitz_norm_linear_1_elu_AV_TV_no_exp_urpe_1d_3(args):
     args.encoder_core_matrix = 1
     args.encoder_p_matrix = 3
     args.encoder_theta_learned = True
+##### urpe + T
+
+##### prenorm
+@register_model_architecture("roberta_toeplitz", "roberta_toeplitz_norm_linear_1+elu_AV+TV_exp_prenorm")
+def roberta_toeplitz_norm_linear_1_elu_AV_TV_exp_prenorm(args):
+    base_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args.causal = False
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = True
+    ##### prenorm
+    args.encoder_normalize_before = True
+
+@register_model_architecture("roberta_toeplitz", "roberta_toeplitz_norm_linear_1+elu_AV_TV_no_exp_prenorm")
+def roberta_toeplitz_norm_linear_1_elu_AV_TV_no_exp_prenorm(args):
+    base_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args.causal = False
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = False
+    ##### prenorm
+    args.encoder_normalize_before = True
+    
+@register_model_architecture("roberta_toeplitz", "roberta_toeplitz_norm_linear_1+elu_AV_TV_no_exp_urpe_1d_3_prenorm")
+def roberta_toeplitz_norm_linear_1_elu_AV_TV_no_exp_urpe_1d_3_prenorm(args):
+    base_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args.causal = False
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = False
+    ##### urpe
+    args.encoder_use_urpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    ##### prenorm
+    args.encoder_normalize_before = True
+    
+@register_model_architecture("roberta_toeplitz", "roberta_toeplitz_norm_linear_1+elu_AV+TV_exp_urpe_1d_3_prenorm")
+def roberta_toeplitz_norm_linear_1_elu_AV_TV_exp_urpe_1d_3_prenorm(args):
+    base_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args.causal = False
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = True
+    ##### urpe
+    args.encoder_use_urpe = True
+    args.encoder_core_matrix = 1
+    args.encoder_p_matrix = 3
+    args.encoder_theta_learned = True
+    ##### prenorm
+    args.encoder_normalize_before = True
+##### prenorm
