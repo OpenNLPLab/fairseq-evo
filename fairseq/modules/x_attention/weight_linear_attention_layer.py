@@ -38,6 +38,9 @@ class WeightLinearEncoderLayer(TransformerEncoderLayer):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            # norm
+            use_norm=getattr(args, "use_norm", False),
+            norm_type=getattr(args, "norm_type", "simplermsnorm"),
         )
 
 class WeightLinearDecoderLayer(TransformerDecoderLayer):
@@ -70,6 +73,9 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            # norm
+            use_norm=getattr(args, "use_norm", False),
+            norm_type=getattr(args, "norm_type", "simplermsnorm"),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -94,4 +100,7 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             theta_type=getattr(args, "theta_type", "a"),
             theta_learned=getattr(args, "theta_learned", False), 
             householder_learned=getattr(args, "householder_learned", False),
+            # norm
+            use_norm=getattr(args, "use_norm", False),
+            norm_type=getattr(args, "norm_type", "simplermsnorm"),
         )

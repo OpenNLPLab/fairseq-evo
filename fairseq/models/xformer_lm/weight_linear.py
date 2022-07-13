@@ -114,3 +114,37 @@ def weight_linear_relu_quad(args):
     args.causal = True
     args.act_fun = "relu"
     args.weight_type = 2
+    
+########## norm
+##### baseline
+@register_model_architecture("weight_linear_lm", "weight_linear_relu_norm")
+def weight_linear_relu(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "relu"
+    args.weight_type = -1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+##### baseline
+
+@register_model_architecture("weight_linear_lm", "weight_linear_relu_cos_norm")
+def weight_linear_relu_cos(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "relu"
+    args.weight_type = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_relu_quad_norm")
+def weight_linear_relu_quad(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "relu"
+    args.weight_type = 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+########## norm
