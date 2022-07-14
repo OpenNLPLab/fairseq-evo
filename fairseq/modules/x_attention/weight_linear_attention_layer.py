@@ -41,6 +41,7 @@ class WeightLinearEncoderLayer(TransformerEncoderLayer):
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
+            use_sigmoid=getattr(args, "use_sigmoid", False)
         )
 
 class WeightLinearDecoderLayer(TransformerDecoderLayer):
@@ -76,6 +77,7 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
+            use_sigmoid=getattr(args, "use_sigmoid", False)
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -103,4 +105,5 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
+            use_sigmoid=getattr(args, "use_sigmoid", False)
         )

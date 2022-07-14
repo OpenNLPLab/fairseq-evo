@@ -56,6 +56,7 @@ class WeightLinearAttention(nn.Module):
         # norm
         use_norm=False,
         norm_type="simplermsnorm",
+        use_sigmoid=False,
     ):
         # add
         self.index = index
@@ -107,6 +108,7 @@ class WeightLinearAttention(nn.Module):
         self.use_urpe = use_urpe
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
+        self.use_sigmoid = use_sigmoid
         if self.use_urpe:
             print("=====================================")
             self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
@@ -119,10 +121,12 @@ class WeightLinearAttention(nn.Module):
         
         # norm
         self.use_norm = use_norm
+        self.norm_type = norm_type
         if self.use_norm:
             self.norm = self.get_norm_fun(norm_type, embed_dim)
-        print(f"use_norm {use_norm}")
-        print(f"norm_type {norm_type}")
+        print(f"use_norm {self.use_norm}")
+        print(f"norm_type {self.norm_type}")
+        print(f"use_sigmoid {self.use_sigmoid}")
 
         self.reset_parameters()
 
@@ -278,8 +282,11 @@ class WeightLinearAttention(nn.Module):
             # 1, h, n, 1
             q_index = index[:, :tgt_len, :] / m
             k_index = index[:, :src_len, :] / m
-            q = torch.cat([(1 - self.alpha * (q_index ** 2)) * q, 2 * self.alpha * q_index * q, q], dim=-1)
-            k = torch.cat([k, k_index * k, self.alpha * (k_index ** 2) * k], dim=-1)
+            alpha = self.alpha
+            if self.use_sigmoid:
+                alpha = F.sigmoid(alpha)
+            q = torch.cat([(1 - alpha * (q_index ** 2)) * q, 2 * alpha * q_index * q, q], dim=-1)
+            k = torch.cat([k, k_index * k, alpha * (k_index ** 2) * k], dim=-1)
 
         eps = 1e-4
         if self.causal:

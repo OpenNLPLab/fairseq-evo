@@ -92,6 +92,7 @@ class WeightLinearLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
+########## relu
 ########## no norm
 ##### baseline
 @register_model_architecture("weight_linear_lm", "weight_linear_relu")
@@ -115,6 +116,14 @@ def weight_linear_relu_quad(args):
     args.causal = True
     args.act_fun = "relu"
     args.weight_type = 2
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_relu_quad_sigmoid")
+def weight_linear_relu_quad_sigmoid(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "relu"
+    args.weight_type = 2
+    args.use_sigmoid = True
 ########## no norm
 
 ########## norm
@@ -149,4 +158,96 @@ def weight_linear_relu_quad_norm(args):
     # norm
     args.use_norm = True
     args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_relu_quad_norm_sigmoid")
+def weight_linear_relu_quad_norm_sigmoid(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "relu"
+    args.weight_type = 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    args.use_sigmoid = True
 ########## norm
+########## relu
+
+########## 1+elu
+########## no norm
+##### baseline
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu")
+def weight_linear_1_elu(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = -1
+##### baseline
+
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_cos")
+def weight_linear_1_elu_cos(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 1
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_quad")
+def weight_linear_1_elu_quad(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 2
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_quad_sigmoid")
+def weight_linear_1_elu_quad_sigmoid(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 2
+    args.use_sigmoid = True
+########## no norm
+
+########## norm
+##### baseline
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_norm")
+def weight_linear_1_elu_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = -1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+##### baseline
+
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_cos_norm")
+def weight_linear_1_elu_cos_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_quad_norm")
+def weight_linear_1_elu_quad_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_quad_norm_sigmoid")
+def weight_linear_1_elu_quad_norm_sigmoid(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    args.use_sigmoid = True
+########## norm
+########## 1+elu
