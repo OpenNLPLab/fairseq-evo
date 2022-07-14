@@ -55,8 +55,8 @@ class ToepliztV3(nn.Module):
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
         # padding to seq len
-        pos = torch.cat([self.pos[:l1], torch.ones(l2).to(x) * self.zero_value])
-        neg = torch.cat([torch.ones(l2).to(x) * self.zero_value, self.neg[-l1:]])
+        pos = torch.cat([self.pos[-l1:], torch.ones(l2).to(x) * self.zero_value])
+        neg = torch.cat([torch.ones(l2).to(x) * self.zero_value, self.neg[:l1]])
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg]), max=30, min=-60))
         else:
@@ -98,8 +98,8 @@ class ToepliztV3(nn.Module):
         # c: first col, r: first row
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
-        pos = torch.clamp(torch.cat([self.pos[:l1], torch.ones(l2) * self.zero_value]), max=30, min=-60)
-        neg = torch.clamp(torch.cat([torch.ones(l2) * self.zero_value, self.neg[-l1:]]), max=30, min=-60)
+        pos = torch.clamp(torch.cat([self.pos[-l1:], torch.ones(l2) * self.zero_value]), max=30, min=-60)
+        neg = torch.clamp(torch.cat([torch.ones(l2) * self.zero_value, self.neg[:l1]]), max=30, min=-60)
         c = torch.exp(torch.cat([self.zero, pos]))
         r = torch.exp(torch.cat([self.zero, neg.flip(0)]))
         vals = torch.cat([r, c[1:].flip(0)])
@@ -113,8 +113,8 @@ class ToepliztV3(nn.Module):
         # c: first col, r: first row
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
-        pos = torch.cat([self.pos[:l1], torch.ones(l2) * self.zero_value])
-        neg = torch.cat([torch.ones(l2) * self.zero_value, self.neg[-l1:]])
+        pos = torch.cat([self.pos[-l1:], torch.ones(l2) * self.zero_value])
+        neg = torch.cat([torch.ones(l2) * self.zero_value, self.neg[:l1]])
         c = torch.cat([self.zero, pos])
         r = torch.cat([self.zero, neg.flip(0)])
         vals = torch.cat([r, c[1:].flip(0)])
@@ -133,8 +133,4 @@ class ToepliztV3(nn.Module):
 # x = torch.rand(b, n, e)
 # # print(x)
 # y = model.forward(x)
-# print(x[0][:10])
-# print(y[0][:10])
-# z = model.forward(y)
-# print(z[0][:10])
-# print(torch.norm(x - z))
+

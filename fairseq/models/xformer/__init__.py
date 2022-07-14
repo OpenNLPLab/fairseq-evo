@@ -18,3 +18,4 @@ from .toeplitz_transformer import ToeplitzAttentionEncoder, ToeplitzAttentionDec
 from .gau import GauEncoder, GauDecoder
 from .gau_mix import GauMixEncoder, GauMixDecoder
 from .weight_linear import WeightLinearEncoder, WeightLinearDecoder
+from .tno import TNOEncoder, TNODecoder

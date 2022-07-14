@@ -67,7 +67,7 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             act_fun=getattr(args, "act_fun", "gelu"),
             weight_type=getattr(args, "weight_type", -1),
             # add
-            causal=getattr(args, "causal", True),
+            causal=True,
             use_urpe=getattr(args, "use_urpe", False),
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
@@ -95,7 +95,7 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             act_fun=getattr(args, "act_fun", "gelu"),
             weight_type=getattr(args, "weight_type", -1),
             # add
-            causal=getattr(args, "causal", True),
+            causal=False,
             use_urpe=getattr(args, "use_urpe", False),
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),

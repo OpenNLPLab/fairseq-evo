@@ -21,3 +21,4 @@ from .gau_lm_v4 import *
 from .gau_linear_lm_v4 import *
 from .gau_mix_lm import *
 from .weight_linear import *
+from .tno_lm import *

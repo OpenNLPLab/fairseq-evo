@@ -47,6 +47,7 @@ from .positional_encoding import UrpeV2
 from .positional_encoding import Toeplizt
 from .positional_encoding import ToepliztV2
 from .positional_encoding import ToepliztV3
+from .positional_encoding import ToepliztMultihead
 ########## positional encoding
 
 ########## norm
@@ -125,6 +126,10 @@ from .x_attention import GauEncoderLayer, GauDecoderLayer
 from .x_attention import WeightLinearAttention
 from .x_attention import WeightLinearEncoderLayer, WeightLinearDecoderLayer
 ##### weight linear
+##### tno
+from .x_attention import TNO
+from .x_attention import TNOEncoderLayer, TNODecoderLayer
+##### tno
 ########## xattention
 
 ########## sparse

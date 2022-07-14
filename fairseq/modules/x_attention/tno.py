@@ -17,7 +17,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
-from fairseq.modules import ToepliztV2
+from fairseq.modules import ToepliztMultihead
 from einops import rearrange
 
 @with_incremental_state
@@ -43,54 +43,15 @@ class TNO(nn.Module):
         qn_block_size=8,
         # add
         index=0,
-        use_relu=True,
-        use_elu=False,
-        use_leak=False,
-        use_bound=False,
-        max_l=1024,
-        has_out=False,
+        act_fun="silu",
         causal=False,
-        weight_type=-1,
-        c=1.0,
-        v_act=False,
-        use_dropout=False,
-        p=0.5,
-        use_layer_norm=False,
-        qk_layer_norm=False,
-        seq_dropout=False,
-        seq_p=0.3,
-        lambda_=0.001,
-        use_gelu=False,
-        mem_use_gelu=False,
-        mem_use_grad=True,
-        mem_use_q=True,
-        mem_use_k=False,
-        attention_use_layer_norm=True,
-        model_update_freq=1,
-        act_fun="gelu",
-        out_use_act=True,
-        init_type="default",
-        norm_type="layernorm",
-        use_rope=False,
-        rope_type="a",
-        use_v=False,
-        negative_slope=0.1,
-        # urpe
-        use_urpe=False,
-        core_matrix=1, 
-        p_matrix=1, 
-        max_positions=512,
-        theta_type="a",
-        theta_learned=False, 
-        householder_learned=False,
-        kv_act='identity',
-        # final dropout
-        use_final_dropout=False,
-        final_dropout=0.0,
+        # norm
+        use_norm=False,
+        norm_type="simplermsnorm",
         # Toeplizt
-        type_num=-1,
-        toep_type=-1,
-        use_exp=True
+        use_exp=False,
+        toep_type=1,
+        max_l=512,
     ):
         # add
         self.index = index
@@ -102,9 +63,6 @@ class TNO(nn.Module):
         self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
-        # self.dropout_module = FairseqDropout(
-        #     dropout, module_name=self.__class__.__name__
-        # )
 
         self.head_dim = embed_dim // num_heads
         assert (
@@ -119,141 +77,59 @@ class TNO(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        self.attention_use_layer_norm = attention_use_layer_norm
-        self.norm_type = norm_type
-
-
-
-        self.i = 0
-        self.model_update_freq = model_update_freq
-        self.lambda_ = lambda_
-
-        # add begin
-        self.use_relu = use_relu
-        self.use_elu = use_elu
-        self.use_leak = use_leak
-        self.use_bound = use_bound
-        self.bound = embed_dim ** -0.5
-        self.causal = causal
-        self.use_gelu = use_gelu
-        self.mem_use_gelu = mem_use_gelu
-        self.has_out = has_out
-        self.mem_use_q = mem_use_q
-        self.mem_use_k = mem_use_k
-        self.act_fun = act_fun
-        self.out_use_act = out_use_act
-        self.init_type = init_type
-        self.seq_dropout = seq_dropout
-        self.seq_p = seq_p
-        self.use_v = use_v
-        self.negative_slope = negative_slope
-        self.use_dropout = use_dropout
-        self.type_num = type_num
-        self.max_l = max_l
         self.toep_type = toep_type
-        self.use_exp = use_exp
-        print(f"self.teop_type {self.toep_type}")
+        
         if self.toep_type == 1:
-            print("ATV")
-            self.forward = self.forward2
-        elif self.toep_type == 2:
-            print("TAV")
-            self.forward = self.forward2
-        elif self.toep_type == 3:
-            print("AV+TV")
-            self.forward = self.forward3
-        else:
-            print("TV")
+            d1 = 2 * embed_dim
+            d2 = embed_dim
+            self.head_dim = d2 // num_heads
+            # d^2
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.u_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.o = quant_noise(
+                nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
+            )
             self.forward = self.forward1
-
-        if self.attention_use_layer_norm:
-            self.layer_norm = self.get_norm_fun(self.norm_type, embed_dim)
-        if self.toep_type:
-            self.toeplizt_norm = self.get_norm_fun(self.norm_type, embed_dim)
-
-        self.toeplizt = ToepliztV2(self.max_l, self.type_num, self.causal)
-
-        if self.toep_type == 1 or self.toep_type == 2 or self.toep_type == 3:
-            self.k_proj = quant_noise(
-                nn.Linear(self.kdim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-            self.q_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-            self.v_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-        else:
-            self.v_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-
-        if self.use_dropout:
-            self.dropout_module = FairseqDropout(
-                dropout, module_name=self.__class__.__name__
-            )
-        self.use_final_dropout = use_final_dropout
-        if use_final_dropout:
-            self.final_dropout_module = FairseqDropout(
-                final_dropout, module_name=self.__class__.__name__
-            )
-
-        # urpe
-        self.core_matrix = core_matrix
-        self.p_matrix = p_matrix
-        self.max_positions = max_positions
-        self.use_urpe = use_urpe
-        self.theta_learned = theta_learned
-        self.householder_learned = householder_learned
-        if self.use_urpe:
-            print("=====================================")
-            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            print("=====================================")
-
-        print("=========================")
-        print("qk_act")
-        self.act = self.get_act_fun(self.act_fun)
-        print("=========================")
-        print("kv_act")
-        self.kv_act = self.get_act_fun(kv_act)
-        print("=========================")
-
-        if self.has_out:
-            self.out_proj = quant_noise(
-                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
-            )
-        self.weight_type = weight_type
-        if self.weight_type == 1:
-            a0 = 1 - np.exp(-1)
-            a2 = 25 / 2 - 35 * np.exp(-1)
-            self.b0 = 3 * a2 / 2
-            self.b1 = a0 - a2 / 2
-        elif self.weight_type == 2:
-            # self.register_buffer("ratio", torch.sigmoid(torch.randn(1)))
-            self.r = 0.5
-            self.c = -2 * np.log(self.r)
-
+            
+        self.causal = causal
+        self.act = self.get_act_fun(act_fun)
+        print(f"act_fun {act_fun}")
         print(f"causal {self.causal}")
-        print(f"has_out {self.has_out}")
-        print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
-        print(f"num_heads {self.num_heads}")
-        print(f"act_fun_type: {act_fun}")
-        print(f"norm_type {self.norm_type}")
-        print(f"init_type {self.init_type}")
-        print(f"use_urpe {self.use_urpe}")
-        print(f"use_dropout {self.use_dropout}")
-        print(f"kv_act {kv_act}")
-        print(f"self.weight_type {self.weight_type}")
-        print(f"self.use_final_dropout {self.use_final_dropout}")
-        print(f"self.final_dropout {final_dropout}")
-        print(f"self.type_num {self.type_num}")
+        
+        # toep
+        self.max_l = max_l
+        self.use_exp = use_exp
+        self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp)
+        print(f"self.num_heads {self.num_heads}")
+        print(f"self.max_l {self.max_l}")
         print(f"self.use_exp {self.use_exp}")
+        
+        # norm
+        self.norm_type = norm_type
+        self.pre_norm = self.get_norm_fun(self.norm_type, embed_dim)
+        
+        self.use_norm = use_norm
+        if self.use_norm:
+            self.norm = self.get_norm_fun(norm_type, embed_dim)
+        print(f"use_norm {self.use_norm}")
+        print(f"norm_type {self.norm_type}")
 
-        if self.init_type == "gelu":
-            self.gelu_reset()
-        elif self.init_type == "default" and (self.toep_type == 1 or self.toep_type == 2):
-            self.reset_parameters()
+        self.par_init()
+        
+    def par_init(self):
+        if self.toep_type == 1:
+            nn.init.normal_(self.u_proj.weight, std=0.02)
+            nn.init.normal_(self.u_proj.bias, std=0.02)
+            nn.init.normal_(self.v_proj.weight, std=0.02)
+            nn.init.normal_(self.v_proj.bias, std=0.02)
+            nn.init.normal_(self.o.weight, std=0.02)
+            nn.init.normal_(self.o.bias, std=0.02)
 
     def get_norm_fun(self, norm_type, embed_dim):
         if norm_type == "rmsnorm":
@@ -317,42 +193,13 @@ class TNO(nn.Module):
             nn.init.xavier_uniform_(self.q_proj.weight)
             nn.init.xavier_uniform_(self.v_proj.weight)
 
-        if self.has_out:
-            nn.init.xavier_uniform_(self.out_proj.weight)
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
+        nn.init.xavier_uniform_(self.out_proj.weight)
+        if self.out_proj.bias is not None:
+            nn.init.constant_(self.out_proj.bias, 0.0)
 
-            if self.out_proj.bias is not None:
-                nn.init.constant_(self.out_proj.bias, 0.0)
+        if self.out_proj.bias is not None:
+            nn.init.constant_(self.out_proj.bias, 0.0)
 
-    def gelu_reset(self):
-        print("use gelu init")
-        # std gelu
-        c = 0.5874
-        d1, d2 = self.k_proj.weight.shape
-        nn.init.normal_(self.k_proj.weight, std=c * np.sqrt(2 / (d1 + d2)))
-        d1, d2 = self.q_proj.weight.shape
-        nn.init.normal_(self.q_proj.weight, std=c * np.sqrt(2 / (d1 + d2)))
-        d1, d2 = self.out_proj.weight.shape
-        nn.init.normal_(self.out_proj.weight, std=np.sqrt(2 / (d1 + d2)))
-
-    def fft_coef(self, k):
-        return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
-
-    def get_weight(self, max_l):
-        # cosformer
-        if (self.weight_type == 1):
-            a = np.pi / 2
-            index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
-
-            return nn.Parameter(index, requires_grad=False)
-        elif (self.weight_type == 2) or (self.weight_type == 3) or (self.weight_type == 4):
-            # 1 - x^2
-            index = torch.arange(1, max_l + 1).reshape(1, -1, 1)
-
-            return nn.Parameter(index, requires_grad=False)
-
-    ##### only TV
     def forward1(
         self,
         query,
@@ -366,269 +213,54 @@ class TNO(nn.Module):
         before_softmax: bool = False,
         need_head_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
-        self.i += 1
 
-        v = self.v_proj(value)
-
-        # N, L, H, E, batch, length, head, dim
-        # N, L, e1
-        head_dim = embed_dim // num_heads
-
-        l = max(src_len, tgt_len)
-
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-
-        output = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
-
-        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-        # B, N, e2
-        if self.attention_use_layer_norm:
-            output = self.layer_norm(output)
-
-
-        if self.use_dropout:
-            output = self.dropout_module(output)
-
-        # L, N, e1
-        output = self.out_proj(output)
-        if self.use_final_dropout:
-            output = self.final_dropout_module(output)
-
-        return output, None
+        shortcut, x = query, self.pre_norm(query)
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        # reshape
+        v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
+        output = self.toep(v, dim=-2, normalize=not self.use_norm)
+        output = rearrange(output, 'b h n d -> n b (h d)')
+        output = u * output
+        if self.use_norm:
+            output = self.norm(output)
             
-    def forward2(
-        self,
-        query,
-        key: Optional[Tensor],
-        value: Optional[Tensor],
-        key_padding_mask: Optional[Tensor] = None,
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-        need_weights: bool = True,
-        static_kv: bool = False,
-        attn_mask: Optional[Tensor] = None,
-        before_softmax: bool = False,
-        need_head_weights: bool = False,
-        eps=1e-4
-    ) -> Tuple[Tensor, Optional[Tensor]]:
-        """Input shape: Time x Batch x Channel
-
-        Args:
-            key_padding_mask (ByteTensor, optional): mask to exclude
-                keys that are pads, of shape `(batch, src_len)`, where
-                padding elements are indicated by 1s.
-            need_weights (bool, optional): return the attention weights,
-                averaged over heads (default: False).
-            attn_mask (ByteTensor, optional): typically used to
-                implement causal attention, where the mask prevents the
-                attention from looking forward in time (default: None).
-            before_softmax (bool, optional): return the raw attention
-                weights and values before the attention softmax.
-            need_head_weights (bool, optional): return the attention
-                weights for each head. Implies *need_weights*. Default:
-                return the average attention weights over all heads.
-        """
-        if need_head_weights:
-            need_weights = True
-
-        assert key is not None and value is not None
-
-        '''
-        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
-          the embedding dimension.
-        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
-          the embedding dimension.
-        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
-          the embedding dimension.
-        '''
-        num_heads = self.num_heads
-        tgt_len, bsz, embed_dim = query.size()
-        src_len = key.size(0)
-        eps = 1e-4
-        self.i += 1
-
-        # L, N, E1
-        q = self.q_proj(query)
-        # S, N, E1
-        k = self.k_proj(key)
-        v = self.v_proj(value)
-
-        # N, L, H, E, batch, length, head, dim
-        # N, L, e1
-        head_dim = embed_dim // num_heads
-
-        l = max(src_len, tgt_len)
-
-        # (N * h, L, d)
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # (N * h, S, d)
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-
-        if self.toep_type == 1:
-            # print("ATV")
-            v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
-
-        q = self.act(q)
-        k = self.act(k)
-
-        if self.use_urpe:
-            q = self.urpe(q)
-            k = self.urpe(k)
-
-        if self.causal:
-            if (attn_mask == None):
-                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
-                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            weights = torch.bmm(q, k.transpose(1, 2))
-            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
-            if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
-                weights = weights / denorm
-            output = torch.bmm(weights, v)
-        else:
-            o1 = torch.matmul(k.transpose(1, 2), v)
-            output = torch.bmm(q, o1)
-            if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
-                output = output / denorm
-
-        if self.toep_type == 2:
-            # print("TAV")
-            output = self.toeplizt(output, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
-
-        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-        # B, N, e2
-        if self.attention_use_layer_norm:
-            output = self.layer_norm(output)
-
-        if self.use_dropout:
-            output = self.dropout_module(output)
-
-        # L, N, e1
-        output = self.out_proj(output)
-        if self.use_final_dropout:
-            output = self.final_dropout_module(output)
-
-        return output, None
-
-    def forward3(
-        self,
-        query,
-        key: Optional[Tensor],
-        value: Optional[Tensor],
-        key_padding_mask: Optional[Tensor] = None,
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-        need_weights: bool = True,
-        static_kv: bool = False,
-        attn_mask: Optional[Tensor] = None,
-        before_softmax: bool = False,
-        need_head_weights: bool = False,
-        eps=1e-4
-    ) -> Tuple[Tensor, Optional[Tensor]]:
-        """Input shape: Time x Batch x Channel
-
-        Args:
-            key_padding_mask (ByteTensor, optional): mask to exclude
-                keys that are pads, of shape `(batch, src_len)`, where
-                padding elements are indicated by 1s.
-            need_weights (bool, optional): return the attention weights,
-                averaged over heads (default: False).
-            attn_mask (ByteTensor, optional): typically used to
-                implement causal attention, where the mask prevents the
-                attention from looking forward in time (default: None).
-            before_softmax (bool, optional): return the raw attention
-                weights and values before the attention softmax.
-            need_head_weights (bool, optional): return the attention
-                weights for each head. Implies *need_weights*. Default:
-                return the average attention weights over all heads.
-        """
-        if need_head_weights:
-            need_weights = True
-
-        assert key is not None and value is not None
-
-        '''
-        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
-          the embedding dimension.
-        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
-          the embedding dimension.
-        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
-          the embedding dimension.
-        '''
-        num_heads = self.num_heads
-        tgt_len, bsz, embed_dim = query.size()
-        src_len = key.size(0)
-        eps = 1e-4
-        self.i += 1
-
-        # L, N, E1
-        q = self.q_proj(query)
-        # S, N, E1
-        k = self.k_proj(key)
-        v = self.v_proj(value)
-
-        # N, L, H, E, batch, length, head, dim
-        # N, L, e1
-        head_dim = embed_dim // num_heads
-
-        l = max(src_len, tgt_len)
-
-        # (N * h, L, d)
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # (N * h, S, d)
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-
-        toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
-
-        q = self.act(q)
-        k = self.act(k)
-
-        if self.use_urpe:
-            q = self.urpe(q)
-            k = self.urpe(k)
-
-        if self.causal:
-            if (attn_mask == None):
-                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
-                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            weights = torch.bmm(q, k.transpose(1, 2))
-            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
-            if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
-                weights = weights / denorm
-            output = torch.bmm(weights, v)
-        else:
-            o1 = torch.matmul(k.transpose(1, 2), v)
-            output = torch.bmm(q, o1)
-            if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps).unsqueeze(-1)
-                output = output / denorm
-
-        # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-        toeplizt_part = toeplizt_part.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-        # B, N, e2
-        if self.attention_use_layer_norm:
-            output = self.layer_norm(output)
-            toeplizt_part = self.toeplizt_norm(toeplizt_part)
-
-        output = output + toeplizt_part
-
-        if self.use_dropout:
-            output = self.dropout_module(output)
-
-        # L, N, e1
-        output = self.out_proj(output)
-        if self.use_final_dropout:
-            output = self.final_dropout_module(output)
-
+        output = self.o(output) + shortcut
+        
         return output, None
 
     @staticmethod
