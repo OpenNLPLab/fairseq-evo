@@ -46,6 +46,7 @@ from .positional_encoding import Urpe
 from .positional_encoding import UrpeV2
 from .positional_encoding import Toeplizt
 from .positional_encoding import ToepliztV2
+from .positional_encoding import ToepliztV3
 ########## positional encoding
 
 ########## norm

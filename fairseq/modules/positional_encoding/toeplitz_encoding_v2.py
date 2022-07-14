@@ -12,7 +12,7 @@ class ToepliztV2(nn.Module):
         self.type_num = type_num
         self.n = n
         self.causal = causal
-        self.infty = -1e20
+        self.infty = float("-inf")
         if self.type_num == -1:
             # [1,...,n-1]
             self.pos = nn.Parameter(torch.ones(n - 1))
@@ -99,12 +99,3 @@ class ToepliztV2(nn.Module):
         res = vals[j - i].reshape(*shape)
 
         return res
-
-
-# model = ToepliztV2(100)
-# b = 1
-# n = 200
-# e = 4
-# x = torch.rand(b, n, e)
-# print(x)
-# print(model(x))

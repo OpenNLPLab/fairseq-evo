@@ -18,11 +18,10 @@ from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from fairseq.modules import ToepliztV2
-from fairseq.modules import ToepliztV3
 from einops import rearrange
 
 @with_incremental_state
-class ToeplitzAttention(nn.Module):
+class TNO(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -172,7 +171,7 @@ class ToeplitzAttention(nn.Module):
         if self.toep_type:
             self.toeplizt_norm = self.get_norm_fun(self.norm_type, embed_dim)
 
-        self.toeplizt = ToepliztV3(self.max_l, self.causal, self.use_exp)
+        self.toeplizt = ToepliztV2(self.max_l, self.type_num, self.causal)
 
         if self.toep_type == 1 or self.toep_type == 2 or self.toep_type == 3:
             self.k_proj = quant_noise(
@@ -383,7 +382,7 @@ class ToeplitzAttention(nn.Module):
 
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        output = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+        output = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
@@ -472,7 +471,7 @@ class ToeplitzAttention(nn.Module):
 
         if self.toep_type == 1:
             # print("ATV")
-            v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+            v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
 
         q = self.act(q)
         k = self.act(k)
@@ -500,7 +499,7 @@ class ToeplitzAttention(nn.Module):
 
         if self.toep_type == 2:
             # print("TAV")
-            output = self.toeplizt(output, dim=1, normalize=not self.attention_use_layer_norm)
+            output = self.toeplizt(output, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
@@ -586,7 +585,7 @@ class ToeplitzAttention(nn.Module):
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+        toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm, use_exp=self.use_exp)
 
         q = self.act(q)
         k = self.act(k)
