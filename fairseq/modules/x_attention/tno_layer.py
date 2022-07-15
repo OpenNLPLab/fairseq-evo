@@ -52,6 +52,7 @@ class TNOEncoderLayer(nn.Module):
             use_exp=getattr(args, "use_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
+            use_decay=getattr(args, "use_decay", False),
         )
 
     def residual_connection(self, x, residual):
@@ -178,6 +179,7 @@ class TNODecoderLayer(nn.Module):
             use_exp=getattr(args, "use_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
+            use_decay=getattr(args, "use_decay", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -201,6 +203,7 @@ class TNODecoderLayer(nn.Module):
             use_exp=getattr(args, "use_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
+            use_decay=getattr(args, "use_decay", False),
         )
 
     def prepare_for_onnx_export_(self):

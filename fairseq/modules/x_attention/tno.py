@@ -52,6 +52,7 @@ class TNO(nn.Module):
         use_exp=False,
         toep_type=1,
         max_l=512,
+        use_decay=False
     ):
         # add
         self.index = index
@@ -105,10 +106,12 @@ class TNO(nn.Module):
         # toep
         self.max_l = max_l
         self.use_exp = use_exp
-        self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp)
+        self.use_decay = use_decay
+        self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
         print(f"self.num_heads {self.num_heads}")
         print(f"self.max_l {self.max_l}")
         print(f"self.use_exp {self.use_exp}")
+        print(f"self.use_decay {self.use_decay}")
         
         # norm
         self.norm_type = norm_type
