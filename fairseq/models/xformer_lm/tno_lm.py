@@ -92,6 +92,7 @@ class TNOLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
+########## small ratio
 ##### baseline
 @register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1")
 def tno_silu_simplermsnorm_toep_use_exp_1(args):
@@ -215,8 +216,9 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay(args):
     args.max_l = 512
     args.use_decay = True
 ##### decay
+########## small ratio
 
-########## big model
+########## big ratio
 ##### baseline
 @register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_ratio4")
 def tno_silu_simplermsnorm_toep_use_exp_1_ratio4(args):
@@ -348,4 +350,266 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_ratio4(args):
     # model
     args.expand_ratio = 4
 ##### decay
-########## big model
+########## big ratio
+
+########## no norm
+########## small ratio
+##### baseline
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+##### baseline
+
+##### decay
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_decay_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_decay(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_decay_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head_decay(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_decay_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_decay(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+##### decay
+########## small ratio
+
+########## big ratio
+##### baseline
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+##### baseline
+
+##### decay
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_decay_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_decay_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_decay_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_ratio4_no_norm")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+##### decay
+########## big ratio
+########## no norm
