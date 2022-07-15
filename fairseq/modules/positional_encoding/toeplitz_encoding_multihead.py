@@ -97,10 +97,10 @@ class ToepliztMultihead(nn.Module):
     def compute(self, x, a, dim, n):
         # x: b, h, n, 1
         # y: h, n
-        y = torch.fft.fft(x, 2 * n, dim=dim, norm="ortho")
-        v = torch.fft.fft(a, dim=1).unsqueeze(0).unsqueeze(-1)
+        y = torch.fft.rfft(x, 2 * n, dim=dim, norm="ortho")
+        v = torch.fft.rfft(a, dim=1).unsqueeze(0).unsqueeze(-1)
         u = v * y
-        output = torch.fft.ifft(u, 2 * n, dim=dim, norm="ortho")[:, :, :n, :].real
+        output = torch.fft.irfft(u, 2 * n, dim=dim, norm="ortho")[:, :, :n, :]
 
         return output
 
@@ -155,16 +155,16 @@ class ToepliztMultihead(nn.Module):
         return res
     
 # multi head
-# h = 8
-# b = 1
-# n = 200
-# e = 4
-# x = torch.rand(b, h, n, e)
-# model = ToepliztMultihead(h, 100, causal=True)
-# y = model.forward(x, dim=-2)
-# model = ToepliztMultihead(h, 100, causal=True, use_decay=True)
-# y = model.forward(x, dim=-2)
-# model = ToepliztMultihead(h, 100, causal=True, use_exp=True)
-# y = model.forward(x, dim=-2)
-# model = ToepliztMultihead(h, 100, causal=True, use_exp=True, use_decay=True)
-# y = model.forward(x, dim=-2)
+h = 8
+b = 1
+n = 200
+e = 4
+x = torch.rand(b, h, n, e)
+model = ToepliztMultihead(h, 100, causal=True)
+y = model.forward(x, dim=-2)
+model = ToepliztMultihead(h, 100, causal=True, use_decay=True)
+y = model.forward(x, dim=-2)
+model = ToepliztMultihead(h, 100, causal=True, use_exp=True)
+y = model.forward(x, dim=-2)
+model = ToepliztMultihead(h, 100, causal=True, use_exp=True, use_decay=True)
+y = model.forward(x, dim=-2)
