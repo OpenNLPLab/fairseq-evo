@@ -45,6 +45,7 @@ class TNOEncoderLayer(nn.Module):
             index=args.index,
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", True),
+            expand_ratio=getattr(args, "expand_ratio", 2),
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
@@ -172,6 +173,7 @@ class TNODecoderLayer(nn.Module):
             index=args.index,
             act_fun=getattr(args, "act_fun", "silu"),
             causal=True,
+            expand_ratio=getattr(args, "expand_ratio", 2),
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
@@ -196,6 +198,7 @@ class TNODecoderLayer(nn.Module):
             index=args.index,
             act_fun=getattr(args, "act_fun", "silu"),
             causal=False,
+            expand_ratio=getattr(args, "expand_ratio", 2),
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),

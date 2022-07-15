@@ -45,6 +45,7 @@ class TNO(nn.Module):
         index=0,
         act_fun="silu",
         causal=False,
+        expand_ratio=2,
         # norm
         use_norm=False,
         norm_type="simplermsnorm",
@@ -79,9 +80,11 @@ class TNO(nn.Module):
         )
         
         self.toep_type = toep_type
+        self.expand_ratio = expand_ratio
+        print(f"self.expand_ratio {self.expand_ratio}")
         
         if self.toep_type == 1:
-            d1 = 2 * embed_dim
+            d1 = self.expand_ratio * embed_dim
             d2 = embed_dim
             self.head_dim = d2 // num_heads
             # d^2

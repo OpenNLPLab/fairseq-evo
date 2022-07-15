@@ -215,3 +215,137 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay(args):
     args.max_l = 512
     args.use_decay = True
 ##### decay
+
+########## big model
+##### baseline
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_ratio4")
+def tno_silu_simplermsnorm_toep_use_exp_1_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_ratio4")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_ratio4")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_ratio4")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+##### baseline
+
+##### decay
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_decay_ratio4")
+def tno_silu_simplermsnorm_toep_use_exp_1_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_decay_ratio4")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_decay_ratio4")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_ratio4")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_ratio4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    # model
+    args.expand_ratio = 4
+##### decay
+########## big model
