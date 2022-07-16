@@ -16,11 +16,11 @@ class ToepliztV3(nn.Module):
             self.zero_value = float("-inf")
         else:
             self.zero_value = 0
-        # [n-1,...,1]
+        # [1,...,n-1]
         self.pos = nn.Parameter(torch.ones(n - 1))
         # [0]
         self.zero = nn.Parameter(torch.ones(1))
-        # [-1,...,-(n-1)]
+        # [-(n-1),...,-1]
         if self.causal:
             self.neg = nn.Parameter(torch.ones(n - 1) * self.zero_value, requires_grad=False)
         else:
@@ -55,8 +55,8 @@ class ToepliztV3(nn.Module):
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
         # padding to seq len
-        pos = torch.cat([self.pos[-l1:], torch.ones(l2).to(x) * self.zero_value])
-        neg = torch.cat([torch.ones(l2).to(x) * self.zero_value, self.neg[:l1]])
+        pos = torch.cat([self.pos[:l1], torch.ones(l2).to(x) * self.zero_value])
+        neg = torch.cat([torch.ones(l2).to(x) * self.zero_value, self.neg[-l1:]])
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg]), max=30, min=-60))
         else:
@@ -87,10 +87,10 @@ class ToepliztV3(nn.Module):
         ##### for test
     
     def compute(self, x, a, dim, n):
-        y = torch.fft.fft(x, 2 * n, dim=dim, norm="ortho")
-        v = torch.fft.fft(a).unsqueeze(0).unsqueeze(-1)
+        y = torch.fft.rfft(x, 2 * n, dim=dim, norm="ortho")
+        v = torch.fft.rfft(a).unsqueeze(0).unsqueeze(-1)
         u = v * y
-        output = torch.fft.ifft(u, 2 * n, dim=dim, norm="ortho")[:, :n, :].real
+        output = torch.fft.irfft(u, 2 * n, dim=dim, norm="ortho")[:, :n, :]
 
         return output
 
@@ -98,8 +98,8 @@ class ToepliztV3(nn.Module):
         # c: first col, r: first row
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
-        pos = torch.clamp(torch.cat([self.pos[-l1:], torch.ones(l2) * self.zero_value]), max=30, min=-60)
-        neg = torch.clamp(torch.cat([torch.ones(l2) * self.zero_value, self.neg[:l1]]), max=30, min=-60)
+        pos = torch.clamp(torch.cat([self.pos[:l1], torch.ones(l2) * self.zero_value]), max=30, min=-60)
+        neg = torch.clamp(torch.cat([torch.ones(l2) * self.zero_value, self.neg[-l1:]]), max=30, min=-60)
         c = torch.exp(torch.cat([self.zero, pos]))
         r = torch.exp(torch.cat([self.zero, neg.flip(0)]))
         vals = torch.cat([r, c[1:].flip(0)])
@@ -113,8 +113,8 @@ class ToepliztV3(nn.Module):
         # c: first col, r: first row
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
-        pos = torch.cat([self.pos[-l1:], torch.ones(l2) * self.zero_value])
-        neg = torch.cat([torch.ones(l2) * self.zero_value, self.neg[:l1]])
+        pos = torch.cat([self.pos[:l1], torch.ones(l2) * self.zero_value])
+        neg = torch.cat([torch.ones(l2) * self.zero_value, self.neg[-l1:]])
         c = torch.cat([self.zero, pos])
         r = torch.cat([self.zero, neg.flip(0)])
         vals = torch.cat([r, c[1:].flip(0)])
@@ -126,7 +126,7 @@ class ToepliztV3(nn.Module):
 
 
 # model = ToepliztV3(100, causal=True, use_exp=True)
-# # model = ToepliztV3(100, causal=True)
+# model = ToepliztV3(100, causal=True)
 # b = 1
 # n = 200
 # e = 4
