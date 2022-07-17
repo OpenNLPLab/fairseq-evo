@@ -46,6 +46,7 @@ class TNO(nn.Module):
         act_fun="silu",
         causal=False,
         expand_ratio=2,
+        resi_param=False,
         # norm
         use_norm=False,
         norm_type="simplermsnorm",
@@ -53,7 +54,7 @@ class TNO(nn.Module):
         use_exp=False,
         toep_type=1,
         max_l=512,
-        use_decay=False
+        use_decay=False,
     ):
         # add
         self.index = index
@@ -81,7 +82,11 @@ class TNO(nn.Module):
         
         self.toep_type = toep_type
         self.expand_ratio = expand_ratio
+        self.resi_param = resi_param
+        print(f"self.resi_param {self.resi_param}")
         print(f"self.expand_ratio {self.expand_ratio}")
+        if self.resi_param:
+            self.d = nn.Parameter(torch.randn(self.embed_dim))
         
         if self.toep_type == 1:
             d1 = self.expand_ratio * embed_dim
@@ -255,6 +260,8 @@ class TNO(nn.Module):
         eps = 1e-4
 
         shortcut, x = query, self.pre_norm(query)
+        if self.resi_param:
+            shortcut = shortcut * self.d
         u = self.act(self.u_proj(x))
         v = self.act(self.v_proj(x))
         # reshape
