@@ -216,6 +216,66 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay(args):
     args.max_l = 512
     args.use_decay = True
 ##### decay
+
+##### act test
+@register_model_architecture("tno_lm", "tno_gelu_simplermsnorm_toep_use_exp_1")
+def tno_gelu_simplermsnorm_toep_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    
+@register_model_architecture("tno_lm", "tno_gelu_simplermsnorm_toep_use_exp_1_one_head")
+def tno_gelu_simplermsnorm_toep_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    
+@register_model_architecture("tno_lm", "tno_gelu_simplermsnorm_toep_no_use_exp_1")
+def tno_gelu_simplermsnorm_toep_no_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    
+@register_model_architecture("tno_lm", "tno_gelu_simplermsnorm_toep_no_use_exp_1_one_head")
+def tno_gelu_simplermsnorm_toep_no_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    args.decoder_layers = args.decoder_layers * 2
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+##### act test
 ########## small ratio
 
 ########## big ratio
