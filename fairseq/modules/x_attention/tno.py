@@ -84,7 +84,8 @@ class TNO(nn.Module):
         print(f"self.expand_ratio {self.expand_ratio}")
         
         if self.toep_type == 1:
-            d1 = self.expand_ratio * embed_dim
+            d1 = int(self.expand_ratio * embed_dim)
+            d1 = (d1 // self.num_heads) * self.num_heads
             d2 = embed_dim
             self.head_dim = d2 // num_heads
             # d^2

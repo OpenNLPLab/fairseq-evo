@@ -19,3 +19,4 @@ from .gau import GauEncoder, GauDecoder
 from .gau_mix import GauMixEncoder, GauMixDecoder
 from .weight_linear import WeightLinearEncoder, WeightLinearDecoder
 from .tno import TNOEncoder, TNODecoder
+from .tno_ffn import TNOFFNEncoder, TNOFFNDecoder
