@@ -18,6 +18,7 @@ from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from fairseq.modules import ToepliztMultihead
+from fairseq.modules import SEBlock
 from einops import rearrange
 
 @with_incremental_state
@@ -55,6 +56,9 @@ class TNO(nn.Module):
         toep_type=1,
         max_l=512,
         use_decay=False,
+        # SE
+        use_se=False,
+        se_ratio=16,
     ):
         # add
         self.index = index
@@ -141,6 +145,14 @@ class TNO(nn.Module):
             self.norm = self.get_norm_fun(norm_type, d1)
         print(f"use_norm {self.use_norm}")
         print(f"norm_type {self.norm_type}")
+        
+        # se
+        self.use_se = use_se
+        self.se_ratio = se_ratio
+        if self.use_se:
+            self.se = SEBlock(d1, self.se_ratio, self.causal)
+        print(f"se_ratio {self.se_ratio}")
+        print(f"use_se {self.use_se}")
 
         self.par_init()
         
@@ -279,6 +291,8 @@ class TNO(nn.Module):
         v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
         output = self.toep(v, dim=-2)
         output = rearrange(output, 'b h n d -> n b (h d)')
+        if self.use_se:
+            output = self.se(output)
         output = u * output
         if self.use_norm:
             output = self.norm(output)

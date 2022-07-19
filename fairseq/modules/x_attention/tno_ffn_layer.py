@@ -39,6 +39,9 @@ class TNOFFNEncoderLayer(TransformerEncoderLayer):
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            # se
+            use_se=getattr(args, "use_se", False),
+            se_ratio=getattr(args, "se_ratio", 16),
         )
 
 class TNOFFNDecoderLayer(TransformerDecoderLayer):
@@ -72,6 +75,9 @@ class TNOFFNDecoderLayer(TransformerDecoderLayer):
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            # se
+            use_se=getattr(args, "use_se", False),
+            se_ratio=getattr(args, "se_ratio", 16),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -97,4 +103,7 @@ class TNOFFNDecoderLayer(TransformerDecoderLayer):
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            # se
+            use_se=getattr(args, "use_se", False),
+            se_ratio=getattr(args, "se_ratio", 16),
         )

@@ -63,6 +63,10 @@ from .token_mix import ConvMix
 from .ffn import GLU
 ########## ffn
 
+########## others
+from .others import SEBlock
+########## others
+
 ########## xattention
 ##### linearkernel
 from .x_attention import LinearKernelAttention
