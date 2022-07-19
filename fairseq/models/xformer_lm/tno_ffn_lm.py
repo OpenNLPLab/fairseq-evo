@@ -155,3 +155,67 @@ def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head(args):
     # model
     args.expand_ratio = 4 / 3
 ##### baseline
+
+##### gelu
+@register_model_architecture("tno_ffn_lm", "tno_ffn_gelu_simplermsnorm_toep_use_exp_1")
+def tno_ffn_gelu_simplermsnorm_toep_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_gelu_simplermsnorm_toep_use_exp_1_one_head")
+def tno_ffn_gelu_simplermsnorm_toep_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_gelu_simplermsnorm_toep_no_use_exp_1")
+def tno_ffn_gelu_simplermsnorm_toep_no_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_gelu_simplermsnorm_toep_no_use_exp_1_one_head")
+def tno_ffn_gelu_simplermsnorm_toep_no_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "gelu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+##### gelu
