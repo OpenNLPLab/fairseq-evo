@@ -58,58 +58,92 @@ class RobertaWeightLinearModel(RobertaModel):
 
 ########## no norm
 ##### baseline
-@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu")
-def roberta_weight_linear_relu(args):
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu")
+def roberta_weight_linear_1_elu(args):
     base_architecture(args)
     args.causal = False
-    args.act_fun = "relu"
+    args.act_fun = "1+elu"
     args.weight_type = -1
 ##### baseline
 
-@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_cos")
-def roberta_weight_linear_relu_cos(args):
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_cos")
+def roberta_weight_linear_1_elu_cos(args):
     base_architecture(args)
     args.causal = False
-    args.act_fun = "relu"
+    args.act_fun = "1+elu"
     args.weight_type = 1
     
-@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_quad")
-def roberta_weight_linear_relu_quad(args):
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_quad")
+def roberta_weight_linear_1_elu_quad(args):
     base_architecture(args)
     args.causal = False
-    args.act_fun = "relu"
+    args.act_fun = "1+elu"
     args.weight_type = 2
+    
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_laplace_legendre")
+def roberta_weight_linear_1_elu_laplace_legendre(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "1+elu"
+    args.weight_type = 3
+    
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_laplace_fft")
+def roberta_weight_linear_1_elu_laplace_fft(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "1+elu"
+    args.weight_type = 4
 ########## no norm
 
 ########## norm
 ##### baseline
-@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_norm")
-def roberta_weight_linear_relu_norm(args):
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_norm")
+def roberta_weight_linear_1_elu_norm(args):
     base_architecture(args)
     args.causal = False
-    args.act_fun = "relu"
+    args.act_fun = "1+elu"
     args.weight_type = -1
     # norm
     args.use_norm = True
     args.norm_type = "simplermsnorm"
 ##### baseline
 
-@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_cos_norm")
-def roberta_weight_linear_relu_cos_norm(args):
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_cos_norm")
+def roberta_weight_linear_1_elu_cos_norm(args):
     base_architecture(args)
     args.causal = False
-    args.act_fun = "relu"
+    args.act_fun = "1+elu"
     args.weight_type = 1
     # norm
     args.use_norm = True
     args.norm_type = "simplermsnorm"
     
-@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_relu_quad_norm")
-def roberta_weight_linear_relu_quad_norm(args):
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_quad_norm")
+def roberta_weight_linear_1_elu_quad_norm(args):
     base_architecture(args)
     args.causal = False
-    args.act_fun = "relu"
+    args.act_fun = "1+elu"
     args.weight_type = 2
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_laplace_legendre_norm")
+def roberta_weight_linear_1_elu_laplace_legendre_norm(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "1+elu"
+    args.weight_type = 3
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    
+@register_model_architecture("roberta_weight_linear", "roberta_weight_linear_1+elu_laplace_fft_norm")
+def roberta_weight_linear_1_elu_laplace_fft_norm(args):
+    base_architecture(args)
+    args.causal = False
+    args.act_fun = "1+elu"
+    args.weight_type = 4
     # norm
     args.use_norm = True
     args.norm_type = "simplermsnorm"
