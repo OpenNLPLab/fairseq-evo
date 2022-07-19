@@ -98,8 +98,24 @@ class WeightLinearAttention(nn.Module):
         
         self.causal = causal
         self.weight_type = weight_type
+        if (self.weight_type == 1):
+            print("cos")
         if self.weight_type == 2:
-           self.alpha = nn.Parameter(torch.zeros(1, self.num_heads, 1, 1))
+            print("1 - c x ^ 2")
+            self.alpha = nn.Parameter(torch.zeros(1, self.num_heads, 1, 1))
+        elif (self.weight_type == 3):
+            a0 = 1 - np.exp(-1)
+            a2 = 25 / 2 - 35 * np.exp(-1)
+            self.b0 = 3 * a2 / 2
+            self.b1 = a0 - a2 / 2
+            print("e^-|x|")
+        elif (self.weight_type == 4):
+            self.c0 = 1 - np.exp(-1)
+            self.c1 = self.fft_coef(1)
+            self.c2 = self.fft_coef(2)
+            print("fourier")
+            print("e^-|x|")
+
         self.act = self.get_act_fun(act_fun)
         
         # urpe
@@ -175,6 +191,9 @@ class WeightLinearAttention(nn.Module):
             return f
         else:
             return lambda x: x
+        
+    def fft_coef(self, k):
+        return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -287,6 +306,24 @@ class WeightLinearAttention(nn.Module):
                 alpha = F.sigmoid(alpha)
             q = torch.cat([(1 - alpha * (q_index ** 2)) * q, 2 * alpha * q_index * q, q], dim=-1)
             k = torch.cat([k, k_index * k, alpha * (k_index ** 2) * k], dim=-1)
+        elif (self.weight_type == 3):
+            # print("e ^ -|x|")
+            m = max(tgt_len, src_len)
+            index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
+            q_index = np.pi / 2 * index[:, :, :tgt_len, :] / m
+            k_index = np.pi / 2 * index[:, :, :src_len, :] / m
+            q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
+            k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+        elif (self.weight_type == 4):
+            # print("e ^ -|x| fourier")
+            m = max(tgt_len, src_len)
+            index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
+            q_index = np.pi / 2 * index[:, :, :tgt_len, :] / m
+            k_index = np.pi / 2 * index[:, :, :src_len, :] / m
+            q = torch.cat([self.c0 * q, self.c1 * q * torch.sin(np.pi * q_index), self.c1 * q * torch.cos(np.pi * q_index), \
+                            self.c2 * q * torch.sin(2 * np.pi * q_index), self.c2 * q * torch.cos(2 * np.pi * q_index)], dim=-1)
+            k = torch.cat([k, k * torch.sin(np.pi * k_index), k * torch.cos(np.pi * k_index), \
+                            k * torch.sin(2 * np.pi * k_index), k * torch.cos(2 * np.pi * k_index)], dim=-1)
 
         eps = 1e-4
         if self.causal:

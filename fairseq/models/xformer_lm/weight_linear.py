@@ -251,3 +251,47 @@ def weight_linear_1_elu_quad_norm_sigmoid(args):
     args.use_sigmoid = True
 ########## norm
 ########## 1+elu
+
+########## 1+elu
+##### weight 3
+##### no norm
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_laplace_legendre_no_norm")
+def weight_linear_1_elu_laplace_legendre_no_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 3
+    
+##### with norm
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_laplace_legendre_with_norm")
+def weight_linear_1_elu_laplace_legendre_with_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 3
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+##### weight 3
+
+##### weight 4
+##### no norm
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_laplace_fft_no_norm")
+def weight_linear_1_elu_laplace_fft_no_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 4
+    
+##### with norm
+@register_model_architecture("weight_linear_lm", "weight_linear_1+elu_laplace_fft_with_norm")
+def weight_linear_1_elu_laplace_fft_with_norm(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.act_fun = "1+elu"
+    args.weight_type = 4
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+##### weight 4
+########## 1+elu
