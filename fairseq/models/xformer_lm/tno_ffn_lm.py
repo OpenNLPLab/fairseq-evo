@@ -91,7 +91,8 @@ class TNOFFNLanguageModel(TransformerLanguageModel):
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
-    
+
+########## forward1
 ##### baseline
 @register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1")
 def tno_ffn_silu_simplermsnorm_toep_use_exp_1(args):
@@ -219,3 +220,134 @@ def tno_ffn_gelu_simplermsnorm_toep_no_use_exp_1_one_head(args):
     # model
     args.expand_ratio = 4 / 3
 ##### gelu
+
+##### norm test
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_layernorm_toep_use_exp_1")
+def tno_ffn_silu_layernorm_toep_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "layernorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_layernorm_toep_use_exp_1_one_head")
+def tno_ffn_silu_layernorm_toep_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "layernorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_layernorm_toep_no_use_exp_1")
+def tno_ffn_silu_layernorm_toep_no_use_exp_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "layernorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_layernorm_toep_no_use_exp_1_one_head")
+def tno_ffn_silu_layernorm_toep_no_use_exp_1_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "layernorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4 / 3
+##### norm test
+########## forward1
+
+########## forward2
+##### baseline
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_forward2")
+def tno_ffn_silu_simplermsnorm_toep_use_exp_1_forward2(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 2
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_one_head_forward2")
+def tno_ffn_silu_simplermsnorm_toep_use_exp_1_one_head_forward2(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 2
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_forward2")
+def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_forward2(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 2
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_forward2")
+def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_forward2(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 2
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+##### baseline
+########## forward2

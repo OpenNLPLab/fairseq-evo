@@ -15,6 +15,7 @@ import sys
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
+from fairseq.modules import ScaleNorm
 from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from fairseq.modules import ToepliztV2
