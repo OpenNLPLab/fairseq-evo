@@ -87,8 +87,9 @@ class TNO(nn.Module):
         self.toep_type = toep_type
         self.expand_ratio = expand_ratio
         self.resi_param = resi_param
-        print(f"self.resi_param {self.resi_param}")
+        print(f"self.toep_type {self.toep_type}")
         print(f"self.expand_ratio {self.expand_ratio}")
+        print(f"self.resi_param {self.resi_param}")
         if self.resi_param:
             self.d = nn.Parameter(torch.randn(self.embed_dim))
             
@@ -120,6 +121,20 @@ class TNO(nn.Module):
                 nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
             )
             self.forward = self.forward2
+        if self.toep_type == 3:
+            # d^2
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.u_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.o = quant_noise(
+                nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            self.forward = self.forward3
             
         self.causal = causal
         self.act = self.get_act_fun(act_fun)
@@ -158,6 +173,13 @@ class TNO(nn.Module):
         
     def par_init(self):
         if self.toep_type == 1:
+            nn.init.normal_(self.u_proj.weight, std=0.02)
+            nn.init.normal_(self.u_proj.bias, std=0.02)
+            nn.init.normal_(self.v_proj.weight, std=0.02)
+            nn.init.normal_(self.v_proj.bias, std=0.02)
+            nn.init.normal_(self.o.weight, std=0.02)
+            nn.init.normal_(self.o.bias, std=0.02)
+        elif self.toep_type == 3:
             nn.init.normal_(self.u_proj.weight, std=0.02)
             nn.init.normal_(self.u_proj.bias, std=0.02)
             nn.init.normal_(self.v_proj.weight, std=0.02)
@@ -364,6 +386,22 @@ class TNO(nn.Module):
         
         return output, None
     
+    def mean(self, x, dim):
+        if self.causal:
+            x = torch.cumsum(x, dim=dim)
+            n = x.shape[dim]
+            l = len(x.shape)
+            denom = torch.arange(1, n + 1).to(x)
+            for i in range(dim):
+                denom = denom.unsqueeze(0)
+            for i in range(dim + 1, l):
+                denom = denom.unsqueeze(-1)
+            x = x / denom
+        else:
+            x = torch.mean(x, dim=dim, keepdims=True)
+            
+        return x
+    
     def forward3(
         self,
         query,
@@ -415,11 +453,14 @@ class TNO(nn.Module):
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
             shortcut = shortcut * self.d
+        u = self.act(self.u_proj(x))
+        u = self.mean(u, dim=0)
         v = self.act(self.v_proj(x))
         # reshape
         v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
         output = self.toep(v, dim=-2)
         output = rearrange(output, 'b h n d -> n b (h d)')
+        output = u * output
         if self.use_norm:
             output = self.norm(output)
             
