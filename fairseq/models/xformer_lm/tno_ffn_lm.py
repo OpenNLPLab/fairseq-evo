@@ -351,6 +351,72 @@ def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_rate_2_3(args):
     # model
     args.expand_ratio = 2
     args.decoder_ffn_embed_dim = args.decoder_embed_dim * 3
+
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_rate_3_1_5")
+def tno_ffn_silu_simplermsnorm_toep_use_exp_1_rate_3_1_5(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.decoder_ffn_embed_dim = int(args.decoder_embed_dim * 1.5)
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_one_head_rate_3_1_5")
+def tno_ffn_silu_simplermsnorm_toep_use_exp_1_one_head_rate_3_1_5(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.decoder_ffn_embed_dim = int(args.decoder_embed_dim * 1.5)
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_rate_3_1_5")
+def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_rate_3_1_5(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.decoder_ffn_embed_dim = int(args.decoder_embed_dim * 1.5)
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_rate_3_1_5")
+def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_rate_3_1_5(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.decoder_ffn_embed_dim = int(args.decoder_embed_dim * 1.5)
 ##### rate test
 ########## forward1
 
