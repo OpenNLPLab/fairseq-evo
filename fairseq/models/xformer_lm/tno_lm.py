@@ -707,3 +707,73 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_decay_ratio4(args):
 ##### decay
 ########## big ratio
 ########## no norm
+
+########## forward4
+##### baseline
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_forward4")
+def tno_silu_simplermsnorm_toep_use_exp_1_forward4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 1
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_use_exp_1_one_head_forward4")
+def tno_silu_simplermsnorm_toep_use_exp_1_one_head_forward4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 1
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_forward4")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_forward4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 1
+    
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_forward4")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_one_head_forward4(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 1
+##### baseline
+########## forward4

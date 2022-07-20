@@ -47,6 +47,7 @@ class TNO(nn.Module):
         act_fun="silu",
         causal=False,
         expand_ratio=2,
+        shrink_ratio=1,
         resi_param=False,
         # norm
         use_norm=False,
@@ -121,7 +122,7 @@ class TNO(nn.Module):
                 nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
             )
             self.forward = self.forward2
-        if self.toep_type == 3:
+        elif self.toep_type == 3:
             # d^2
             self.v_proj = quant_noise(
                 nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
@@ -135,6 +136,27 @@ class TNO(nn.Module):
                 nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
             )
             self.forward = self.forward3
+        elif self.toep_type == 4:
+            self.shrink_ratio = shrink_ratio
+            d2 = embed_dim // self.shrink_ratio
+            d2 = (d2 // self.num_heads) * self.num_heads
+            print(f"self.shrik_ratio {self.shrink_ratio}")
+            # d^2
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, d2, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.u_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.o1 = quant_noise(
+                nn.Linear(d2, d1, bias=bias), q_noise, qn_block_size
+            )
+            self.o2 = quant_noise(
+                nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            self.forward = self.forward4
             
         self.causal = causal
         self.act = self.get_act_fun(act_fun)
@@ -186,6 +208,16 @@ class TNO(nn.Module):
             nn.init.normal_(self.v_proj.bias, std=0.02)
             nn.init.normal_(self.o.weight, std=0.02)
             nn.init.normal_(self.o.bias, std=0.02)
+        elif self.toep_type == 4:
+            return
+            # nn.init.normal_(self.u_proj.weight, std=0.02)
+            # nn.init.normal_(self.u_proj.bias, std=0.02)
+            # nn.init.normal_(self.v_proj.weight, std=0.02)
+            # nn.init.normal_(self.v_proj.bias, std=0.02)
+            # nn.init.normal_(self.o1.weight, std=0.02)
+            # nn.init.normal_(self.o1.bias, std=0.02)
+            # nn.init.normal_(self.o2.weight, std=0.02)
+            # nn.init.normal_(self.o2.bias, std=0.02)
 
     def get_norm_fun(self, norm_type, embed_dim):
         if norm_type == "rmsnorm":
@@ -465,6 +497,72 @@ class TNO(nn.Module):
             output = self.norm(output)
             
         output = self.o(output) + shortcut
+        
+        return output, None
+    
+    def forward4(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        eps = 1e-4
+
+        shortcut, x = query, self.pre_norm(query)
+        if self.resi_param:
+            shortcut = shortcut * self.d
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        # reshape
+        v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
+        output = self.toep(v, dim=-2)
+        output = rearrange(output, 'b h n d -> n b (h d)')
+        output = self.o1(output)
+        output = u * output
+        if self.use_norm:
+            output = self.norm(output)
+            
+        output = self.o2(output) + shortcut
         
         return output, None
 
