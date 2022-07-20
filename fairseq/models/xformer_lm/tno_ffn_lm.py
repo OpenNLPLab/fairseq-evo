@@ -421,6 +421,7 @@ def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_forward2(args):
 ########## forward2
 
 ########## se
+##### baseline
 @register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_se_16")
 def tno_ffn_silu_simplermsnorm_toep_use_exp_1_se_16(args):
     base_lm_architecture(args)
@@ -494,4 +495,85 @@ def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_se_16(args):
     # se
     args.use_se = True
     args.se_ratio = 16
+##### baseline
+
+##### ratio test
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_se_16_rate_2_3")
+def tno_ffn_silu_simplermsnorm_toep_use_exp_1_se_16_rate_2_3(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.decoder_ffn_embed_dim = args.decoder_embed_dim * 3
+    # se
+    args.use_se = True
+    args.se_ratio = 16
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_use_exp_1_one_head_se_16_rate_2_3")
+def tno_ffn_silu_simplermsnorm_toep_use_exp_1_one_head_se_16_rate_2_3(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.decoder_ffn_embed_dim = args.decoder_embed_dim * 3
+    # se
+    args.use_se = True
+    args.se_ratio = 16
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_se_16_rate_2_3")
+def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_se_16_rate_2_3(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.decoder_ffn_embed_dim = args.decoder_embed_dim * 3
+    # se
+    args.use_se = True
+    args.se_ratio = 16
+    
+@register_model_architecture("tno_ffn_lm", "tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_se_16_rate_2_3")
+def tno_ffn_silu_simplermsnorm_toep_no_use_exp_1_one_head_se_16_rate_2_3(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    args.decoder_attention_heads = 1
+    # norm
+    args.use_norm = True
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.decoder_ffn_embed_dim = args.decoder_embed_dim * 3
+    # se
+    args.use_se = True
+    args.se_ratio = 16
+##### ratio test
 ########## se

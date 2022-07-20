@@ -35,8 +35,14 @@ class SEBlock(nn.Module):
     def forward_causal(self, x):
         # x: ..., n, d
         n = x.shape[-2]
+        l = len(x.shape)
+        # n, 1
+        denorm = torch.arange(1, n + 1).reshape(n, 1).to(x)
+        # ..., n, 1
+        for i in range(l - 2):
+            denorm = denorm.unsqueeze(0)
         # ..., n, d
-        y = torch.cumsum(x, dim=-2) / torch.arange(1, n + 1).to(x)
+        y = torch.cumsum(x, dim=-2) / denorm
         # ..., n, d
         y = self.fc(y)
         
