@@ -23,3 +23,4 @@ from .gau_mix_lm import *
 from .weight_linear import *
 from .tno_lm import *
 from .tno_ffn_lm import *
+from .tno_glu_lm import *

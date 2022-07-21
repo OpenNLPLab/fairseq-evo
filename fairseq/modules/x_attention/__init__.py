@@ -64,3 +64,4 @@ from .weight_linear_attention_layer import WeightLinearEncoderLayer, WeightLinea
 from .tno import TNO
 from .tno_layer import TNOEncoderLayer, TNODecoderLayer
 from .tno_ffn_layer import TNOFFNEncoderLayer, TNOFFNDecoderLayer
+from .tno_glu_layer import TNOGLUEncoderLayer, TNOGLUDecoderLayer

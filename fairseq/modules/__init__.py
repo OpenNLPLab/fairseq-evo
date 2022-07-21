@@ -136,6 +136,7 @@ from .x_attention import WeightLinearEncoderLayer, WeightLinearDecoderLayer
 from .x_attention import TNO
 from .x_attention import TNOEncoderLayer, TNODecoderLayer
 from .x_attention import TNOFFNEncoderLayer, TNOFFNDecoderLayer
+from .x_attention import TNOGLUEncoderLayer, TNOGLUDecoderLayer
 ##### tno
 ########## xattention
 
