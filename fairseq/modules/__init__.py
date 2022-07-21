@@ -48,6 +48,8 @@ from .positional_encoding import Toeplizt
 from .positional_encoding import ToepliztV2
 from .positional_encoding import ToepliztV3
 from .positional_encoding import ToepliztMultihead
+from .positional_encoding import DynamicPosBias
+from .positional_encoding import DynamicToepliztMultihead
 ########## positional encoding
 
 ########## norm

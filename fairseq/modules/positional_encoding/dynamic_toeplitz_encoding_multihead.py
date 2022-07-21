@@ -1,13 +1,15 @@
 # https://alinush.github.io/2020/03/19/multiplying-a-vector-by-a-toeplitz-matrix.html
 # https://stackoverflow.com/questions/69809789/is-there-any-way-to-create-a-tensor-with-a-specific-pattern-in-pytorch
+# https://github.com/cheerss/CrossFormer/blob/main/models/crossformer.py
 
 import torch
 import torch.nn as nn
 import torch.functional as F
 import numpy as np
+from .dpb import DynamicPosBias
 
-class ToepliztMultihead(nn.Module):
-    def __init__(self, h, n, causal=False, use_exp=False, use_decay=False):
+class DynamicToepliztMultihead(nn.Module):
+    def __init__(self, h, n, d, causal=False, use_exp=False, use_decay=False, residual=False):
         super().__init__()
         self.h = h
         self.n = n
@@ -17,20 +19,22 @@ class ToepliztMultihead(nn.Module):
             self.zero_value = float("-inf")
         else:
             self.zero_value = 0
-            
+
         self.use_decay = use_decay
         if self.use_decay == 1:
             self.gamma = nn.Parameter(torch.zeros(1))
             
         # [1,...,(n-1)]
-        self.pos = nn.Parameter(torch.rand(h, n - 1))
+        self.pos = nn.Parameter(torch.arange(1, n).reshape(-1, 1) * 1.0, requires_grad=False)
         # [0]
-        self.zero = nn.Parameter(torch.rand(h, 1))
+        self.zero = nn.Parameter(torch.zeros(1).reshape(-1, 1) * 1.0, requires_grad=False)
         # [-(n-1),...,-1]
         if self.causal:
             self.neg = nn.Parameter(torch.ones(h, n - 1) * self.zero_value, requires_grad=False)
         else:
-            self.neg = nn.Parameter(torch.rand(h, n - 1))
+            self.neg = nn.Parameter(torch.arange(1, n).flip(0).reshape(-1, 1) * 1.0, requires_grad=False)
+            
+        self.dpb = DynamicPosBias(d, h, residual)
 
     def forward(self, x, dim=-2, normalize=False):
         # shape of x: b h, n, e
@@ -39,9 +43,16 @@ class ToepliztMultihead(nn.Module):
         ##### coef
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
+        # n, 1 -> n, h -> h, n
+        pos_dpb = self.dpb(self.pos[:l1]).transpose(0, 1)
+        if self.causal:
+            neg_dpb = self.neg[:, -l1:]
+        else:
+            neg_dpb = self.dpb(self.pos[-l1:]).transpose(0, 1)
+        zero_dpb = self.dpb(self.zero).transpose(0, 1)
         # padding to seq len
-        pos = torch.cat([self.pos[:, :l1], torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
-        neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, self.neg[:, -l1:]], dim=-1)
+        pos = torch.cat([pos_dpb, torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
+        neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, neg_dpb], dim=-1)
         if self.use_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
@@ -53,9 +64,9 @@ class ToepliztMultihead(nn.Module):
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
         if self.use_exp:
-            a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg], dim=-1), max=30, min=-60))
+            a = torch.exp(torch.clamp(torch.cat([zero_dpb, pos, zero_dpb, neg], dim=-1), max=30, min=-60))
         else:
-            a = torch.cat([self.zero, pos, self.zero, neg], dim=-1)
+            a = torch.cat([zero_dpb, pos, zero_dpb, neg], dim=-1)
         # h, n
         output = self.compute(x, a, dim, n)
 
@@ -99,8 +110,16 @@ class ToepliztMultihead(nn.Module):
         # c: first col, r: first row
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
-        pos = torch.clamp(torch.cat([self.pos[:, :l1], torch.ones(self.h, l2) * self.zero_value], dim=-1), max=30, min=-60)
-        neg = torch.clamp(torch.cat([torch.ones(self.h, l2) * self.zero_value, self.neg[:, -l1:]], dim=-1), max=30, min=-60)
+        # n, 1 -> n, h -> h, n
+        pos_dpb = self.dpb(self.pos[:l1]).transpose(0, 1)
+        if self.causal:
+            neg_dpb = self.neg[:, -l1:]
+        else:
+            neg_dpb = self.dpb(self.pos[-l1:]).transpose(0, 1)
+        zero_dpb = self.dpb(self.zero).transpose(0, 1)
+        # padding to seq len
+        pos = torch.cat([pos_dpb, torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
+        neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, neg_dpb], dim=-1)
         if self.use_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
@@ -111,8 +130,8 @@ class ToepliztMultihead(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
-        c = torch.exp(torch.cat([self.zero, pos], dim=-1))
-        r = torch.exp(torch.cat([self.zero, neg.flip(1)], dim=-1))
+        c = torch.exp(torch.cat([zero_dpb, pos], dim=-1))
+        r = torch.exp(torch.cat([zero_dpb, neg.flip(1)], dim=-1))
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T
@@ -124,8 +143,16 @@ class ToepliztMultihead(nn.Module):
         # c: first col, r: first row
         l1 = min(n - 1, self.n - 1)
         l2 = max(0, n - 1 - l1)
-        pos = torch.cat([self.pos[:, :l1], torch.ones(self.h, l2) * self.zero_value], dim=-1)
-        neg = torch.cat([torch.ones(self.h, l2) * self.zero_value, self.neg[-l1:]], dim=-1)
+        # n, 1 -> n, h -> h, n
+        pos_dpb = self.dpb(self.pos[:l1]).transpose(0, 1)
+        if self.causal:
+            neg_dpb = self.neg[:, -l1:]
+        else:
+            neg_dpb = self.dpb(self.pos[-l1:]).transpose(0, 1)
+        zero_dpb = self.dpb(self.zero).transpose(0, 1)
+        # padding to seq len
+        pos = torch.cat([pos_dpb, torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
+        neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, neg_dpb], dim=-1)
         if self.use_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
@@ -136,8 +163,8 @@ class ToepliztMultihead(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
-        c = torch.cat([self.zero, pos], dim=-1)
-        r = torch.cat([self.zero, neg.flip(1)], dim=-1)
+        c = torch.cat([zero_dpb, pos], dim=-1)
+        r = torch.cat([zero_dpb, neg.flip(1)], dim=-1)
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T
@@ -150,12 +177,9 @@ class ToepliztMultihead(nn.Module):
 # b = 1
 # n = 200
 # e = 4
+# d = 16
 # x = torch.rand(b, h, n, e)
-# model = ToepliztMultihead(h, 100, causal=True)
+# model = DynamicToepliztMultihead(h, 100, d, causal=True)
 # y = model.forward(x, dim=-2)
-# model = ToepliztMultihead(h, 100, causal=True, use_decay=True)
-# y = model.forward(x, dim=-2)
-# model = ToepliztMultihead(h, 100, causal=True, use_exp=True)
-# y = model.forward(x, dim=-2)
-# model = ToepliztMultihead(h, 100, causal=True, use_exp=True, use_decay=True)
+# model = DynamicToepliztMultihead(h, 100, d, causal=True, use_exp=True)
 # y = model.forward(x, dim=-2)

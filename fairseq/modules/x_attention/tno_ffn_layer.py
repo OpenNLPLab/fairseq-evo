@@ -39,6 +39,8 @@ class TNOFFNEncoderLayer(TransformerEncoderLayer):
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            use_dynamic=getattr(args, "use_dynamic", False),
+            dpb_embedding=getattr(args, "dpb_embedding", 512),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -75,6 +77,8 @@ class TNOFFNDecoderLayer(TransformerDecoderLayer):
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            use_dynamic=getattr(args, "use_dynamic", False),
+            dpb_embedding=getattr(args, "dpb_embedding", 512),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -103,6 +107,8 @@ class TNOFFNDecoderLayer(TransformerDecoderLayer):
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            use_dynamic=getattr(args, "use_dynamic", False),
+            dpb_embedding=getattr(args, "dpb_embedding", 512),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

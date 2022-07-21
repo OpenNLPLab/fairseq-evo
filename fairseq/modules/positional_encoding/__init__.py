@@ -8,3 +8,5 @@ from .toeplitz_encoding import Toeplizt
 from .toeplitz_encoding_v2 import ToepliztV2
 from .toeplitz_encoding_v3 import ToepliztV3
 from .toeplitz_encoding_multihead import ToepliztMultihead
+from .dynamic_toeplitz_encoding_multihead import DynamicToepliztMultihead
+from .dpb import DynamicPosBias
