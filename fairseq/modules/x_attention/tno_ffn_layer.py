@@ -41,6 +41,9 @@ class TNOFFNEncoderLayer(TransformerEncoderLayer):
             use_decay=getattr(args, "use_decay", False),
             use_dynamic=getattr(args, "use_dynamic", False),
             dpb_embedding=getattr(args, "dpb_embedding", 512),
+            use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
+            dpb_act=getattr(args, "dpb_act", "relu"),
+            dpb_use_pad=getattr(args, "dpb_use_pad", True),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -79,6 +82,9 @@ class TNOFFNDecoderLayer(TransformerDecoderLayer):
             use_decay=getattr(args, "use_decay", False),
             use_dynamic=getattr(args, "use_dynamic", False),
             dpb_embedding=getattr(args, "dpb_embedding", 512),
+            use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
+            dpb_act=getattr(args, "dpb_act", "relu"),
+            dpb_use_pad=getattr(args, "dpb_use_pad", True),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -109,6 +115,9 @@ class TNOFFNDecoderLayer(TransformerDecoderLayer):
             use_decay=getattr(args, "use_decay", False),
             use_dynamic=getattr(args, "use_dynamic", False),
             dpb_embedding=getattr(args, "dpb_embedding", 512),
+            use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
+            dpb_act=getattr(args, "dpb_act", "relu"),
+            dpb_use_pad=getattr(args, "dpb_use_pad", True),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

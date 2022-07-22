@@ -20,6 +20,7 @@ from fairseq.modules import UrpeV2
 from fairseq.modules import ToepliztMultihead
 from fairseq.modules import SEBlock
 from fairseq.modules import DynamicToepliztMultihead
+from fairseq.modules import DynamicToepliztMultiheadV2
 from einops import rearrange
 
 @with_incremental_state
@@ -60,6 +61,9 @@ class TNO(nn.Module):
         use_decay=False,
         use_dynamic=False,
         dpb_embedding=512,
+        use_dynamic_v2=False,
+        dpb_act="relu",
+        dpb_use_pad=True,
         # SE
         use_se=False,
         se_ratio=16,
@@ -172,8 +176,22 @@ class TNO(nn.Module):
         self.use_decay = use_decay
         self.use_dynamic = use_dynamic
         self.dpb_embedding = dpb_embedding
+        self.use_dynamic_v2 = use_dynamic_v2
+        self.dpb_act = dpb_act
+        self.dpb_use_pad = dpb_use_pad
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(h=self.num_heads, n=self.max_l, d=self.dpb_embedding, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
+        elif self.use_dynamic_v2:
+            self.toep = DynamicToepliztMultiheadV2(
+                h=self.num_heads, 
+                n=self.max_l, 
+                d=self.dpb_embedding, 
+                causal=self.causal, 
+                use_exp=self.use_exp, 
+                use_decay=self.use_decay, 
+                act=self.dpb_act,
+                use_pad=self.dpb_use_pad,
+            )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
         print(f"self.num_heads {self.num_heads}")
@@ -182,6 +200,9 @@ class TNO(nn.Module):
         print(f"self.use_decay {self.use_decay}")
         print(f"self.use_dynamic {self.use_dynamic}")
         print(f"self.dpb_embedding {self.dpb_embedding}")
+        print(f"self.use_dynamic_v2 {self.use_dynamic_v2}")
+        print(f"self.dpb_act {self.dpb_act}")
+        print(f"self.dpb_use_pad {self.dpb_use_pad}")
         
         # norm
         self.norm_type = norm_type
