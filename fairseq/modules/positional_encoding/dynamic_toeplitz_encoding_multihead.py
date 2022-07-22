@@ -21,8 +21,8 @@ class DynamicToepliztMultihead(nn.Module):
             self.zero_value = 0
 
         self.use_decay = use_decay
-        if self.use_decay == 1:
-            self.gamma = nn.Parameter(torch.zeros(1))
+        if self.use_decay:
+            self.gamma = nn.Parameter(torch.ones(1) * 10)
             
         # [1,...,(n-1)]
         self.pos = nn.Parameter(torch.arange(1, n).reshape(-1, 1) * 1.0, requires_grad=False)

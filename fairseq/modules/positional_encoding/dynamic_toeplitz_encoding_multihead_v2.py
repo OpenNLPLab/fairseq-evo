@@ -22,8 +22,8 @@ class DynamicToepliztMultiheadV2(nn.Module):
             self.zero_value = 0
 
         self.use_decay = use_decay
-        if self.use_decay == 1:
-            self.gamma = nn.Parameter(torch.zeros(1))
+        if self.use_decay:
+            self.gamma = nn.Parameter(torch.ones(1) * 10)
 
         self.dpb = DynamicPosBiasV2(d, h, residual, act)
         
@@ -69,6 +69,10 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = neg_index.transpose(0, 1)
             else:
                 neg = self.dpb(neg_index).transpose(0, 1)
+        # print("================")
+        # print(pos.shape)
+        # t1 = pos[0][:10]
+        # print(t1)
         if self.use_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
@@ -79,6 +83,10 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
+        #         t2 = pos[0][:10]
+        #         print(t2)
+        #         print(t2 / t1)
+        # print("================")
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero, neg], dim=-1), max=30, min=-60))
         else:

@@ -19,8 +19,8 @@ class ToepliztMultihead(nn.Module):
             self.zero_value = 0
             
         self.use_decay = use_decay
-        if self.use_decay == 1:
-            self.gamma = nn.Parameter(torch.zeros(1))
+        if self.use_decay:
+            self.gamma = nn.Parameter(torch.ones(1) * 10)
             
         # [1,...,(n-1)]
         self.pos = nn.Parameter(torch.rand(h, n - 1))
@@ -52,6 +52,7 @@ class ToepliztMultihead(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
+
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg], dim=-1), max=30, min=-60))
         else:
