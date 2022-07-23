@@ -61,6 +61,7 @@ class TNOEncoderLayer(nn.Module):
             use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
             dpb_act=getattr(args, "dpb_act", "relu"),
             dpb_use_pad=getattr(args, "dpb_use_pad", True),
+            normalize=getattr(args, "normalize", False),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -199,6 +200,7 @@ class TNODecoderLayer(nn.Module):
             use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
             dpb_act=getattr(args, "dpb_act", "relu"),
             dpb_use_pad=getattr(args, "dpb_use_pad", True),
+            normalize=getattr(args, "normalize", False),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -234,6 +236,7 @@ class TNODecoderLayer(nn.Module):
             use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
             dpb_act=getattr(args, "dpb_act", "relu"),
             dpb_use_pad=getattr(args, "dpb_use_pad", True),
+            normalize=getattr(args, "normalize", False),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

@@ -64,6 +64,7 @@ class TNO(nn.Module):
         use_dynamic_v2=False,
         dpb_act="relu",
         dpb_use_pad=True,
+        normalize=False,
         # SE
         use_se=False,
         se_ratio=16,
@@ -179,6 +180,7 @@ class TNO(nn.Module):
         self.use_dynamic_v2 = use_dynamic_v2
         self.dpb_act = dpb_act
         self.dpb_use_pad = dpb_use_pad
+        self.normalize = normalize
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(h=self.num_heads, n=self.max_l, d=self.dpb_embedding, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
         elif self.use_dynamic_v2:
@@ -203,6 +205,7 @@ class TNO(nn.Module):
         print(f"self.use_dynamic_v2 {self.use_dynamic_v2}")
         print(f"self.dpb_act {self.dpb_act}")
         print(f"self.dpb_use_pad {self.dpb_use_pad}")
+        print(f"self.normalize {self.normalize}")
         
         # norm
         self.norm_type = norm_type
@@ -374,7 +377,7 @@ class TNO(nn.Module):
         v = self.act(self.v_proj(x))
         # reshape
         v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
-        output = self.toep(v, dim=-2)
+        output = self.toep(v, dim=-2, normalize=self.normalize)
         output = rearrange(output, 'b h n d -> n b (h d)')
         if self.use_se:
             output = self.se(output)
@@ -440,7 +443,7 @@ class TNO(nn.Module):
         v = self.act(self.v_proj(x))
         # reshape
         v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
-        output = self.toep(v, dim=-2)
+        output = self.toep(v, dim=-2, normalize=self.normalize)
         output = rearrange(output, 'b h n d -> n b (h d)')
         if self.use_norm:
             output = self.norm(output)
@@ -521,7 +524,7 @@ class TNO(nn.Module):
         v = self.act(self.v_proj(x))
         # reshape
         v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
-        output = self.toep(v, dim=-2)
+        output = self.toep(v, dim=-2, normalize=self.normalize)
         output = rearrange(output, 'b h n d -> n b (h d)')
         output = u * output
         if self.use_norm:
@@ -586,7 +589,7 @@ class TNO(nn.Module):
         v = self.act(self.v_proj(x))
         # reshape
         v = rearrange(v, 'n b (h d) -> b h n d', h=num_heads)
-        output = self.toep(v, dim=-2)
+        output = self.toep(v, dim=-2, normalize=self.normalize)
         output = rearrange(output, 'b h n d -> n b (h d)')
         output = self.o1(output)
         output = u * output
