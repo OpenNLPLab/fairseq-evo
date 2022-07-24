@@ -59,6 +59,7 @@ class TNO(nn.Module):
         toep_type=1,
         max_l=512,
         use_decay=False,
+        use_multi_decay=False,
         use_dynamic=False,
         dpb_embedding=512,
         use_dynamic_v2=False,
@@ -175,6 +176,7 @@ class TNO(nn.Module):
         self.max_l = max_l
         self.use_exp = use_exp
         self.use_decay = use_decay
+        self.use_multi_decay = use_multi_decay
         self.use_dynamic = use_dynamic
         self.dpb_embedding = dpb_embedding
         self.use_dynamic_v2 = use_dynamic_v2
@@ -182,7 +184,15 @@ class TNO(nn.Module):
         self.dpb_use_pad = dpb_use_pad
         self.normalize = normalize
         if self.use_dynamic:
-            self.toep = DynamicToepliztMultihead(h=self.num_heads, n=self.max_l, d=self.dpb_embedding, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
+            self.toep = DynamicToepliztMultihead(
+                h=self.num_heads, 
+                n=self.max_l, 
+                d=self.dpb_embedding, 
+                causal=self.causal, 
+                use_exp=self.use_exp, 
+                use_decay=self.use_decay,
+                use_multi_decay=self.use_multi_decay,
+            )
         elif self.use_dynamic_v2:
             self.toep = DynamicToepliztMultiheadV2(
                 h=self.num_heads, 
@@ -191,6 +201,7 @@ class TNO(nn.Module):
                 causal=self.causal, 
                 use_exp=self.use_exp, 
                 use_decay=self.use_decay, 
+                use_multi_decay=self.use_multi_decay,
                 act=self.dpb_act,
                 use_pad=self.dpb_use_pad,
             )
@@ -200,6 +211,7 @@ class TNO(nn.Module):
         print(f"self.max_l {self.max_l}")
         print(f"self.use_exp {self.use_exp}")
         print(f"self.use_decay {self.use_decay}")
+        print(f"self.use_multi_decay {self.use_multi_decay}")
         print(f"self.use_dynamic {self.use_dynamic}")
         print(f"self.dpb_embedding {self.dpb_embedding}")
         print(f"self.use_dynamic_v2 {self.use_dynamic_v2}")

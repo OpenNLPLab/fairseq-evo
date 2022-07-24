@@ -9,7 +9,7 @@ import numpy as np
 from .dpb_v2 import DynamicPosBiasV2
 
 class DynamicToepliztMultiheadV2(nn.Module):
-    def __init__(self, h, n, d, causal=False, use_exp=False, use_decay=False, residual=False, act="relu", use_pad=False):
+    def __init__(self, h, n, d, causal=False, use_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False):
         super().__init__()
         self.h = h
         self.n = n
@@ -24,6 +24,9 @@ class DynamicToepliztMultiheadV2(nn.Module):
         self.use_decay = use_decay
         if self.use_decay:
             self.gamma = nn.Parameter(torch.ones(1) * 10)
+        self.use_multi_decay = use_multi_decay
+        if self.use_multi_decay:
+            self.gamma = nn.Parameter(torch.randn(self.h, 1))
 
         self.dpb = DynamicPosBiasV2(d, h, residual, act)
         
@@ -73,7 +76,7 @@ class DynamicToepliztMultiheadV2(nn.Module):
         # print(pos.shape)
         # t1 = pos[0][:10]
         # print(t1)
-        if self.use_decay:
+        if self.use_decay or self.use_multi_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
                 gamma = torch.log(torch.sigmoid(self.gamma)) * coef
@@ -153,8 +156,8 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = neg_index.transpose(0, 1)
             else:
                 neg = self.dpb(neg_index).transpose(0, 1)
-        if self.use_decay:
-            coef = torch.arange(1, n).reshape(1, -1).to(x)
+        if self.use_decay or self.use_multi_decay:
+            coef = torch.arange(1, n).reshape(1, -1)
             if self.use_exp:
                 gamma = torch.log(torch.sigmoid(self.gamma)) * coef
                 pos = gamma + pos
@@ -195,8 +198,8 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = neg_index.transpose(0, 1)
             else:
                 neg = self.dpb(neg_index).transpose(0, 1)
-        if self.use_decay:
-            coef = torch.arange(1, n).reshape(1, -1).to(x)
+        if self.use_decay or self.use_multi_decay:
+            coef = torch.arange(1, n).reshape(1, -1)
             if self.use_exp:
                 gamma = torch.log(torch.sigmoid(self.gamma)) * coef
                 pos = gamma + pos
