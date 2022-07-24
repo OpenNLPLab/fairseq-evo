@@ -32,6 +32,7 @@ from fairseq.models.transformer_lm import (
     TransformerLanguageModelConfig,
     base_lm_architecture,
     transformer_lm_big,
+    transformer_lm_baevski_wiki103,
 )
 
 from ..xformer import TNOGLUDecoder
@@ -91,6 +92,104 @@ class TNOGLULanguageModel(TransformerLanguageModel):
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
+    
+########## large model
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_ada")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_ada(args):
+    transformer_lm_baevski_wiki103(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 1024
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic = True
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # multi_decay
+    args.use_multi_decay = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_ada")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_ada(args):
+    transformer_lm_baevski_wiki103(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 1024
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic = True
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # multi_decay
+    args.use_multi_decay = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_ada")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_ada(args):
+    transformer_lm_baevski_wiki103(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 1024
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic = True
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_ada")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_ada(args):
+    transformer_lm_baevski_wiki103(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 1024
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic = True
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+########## large model
 
 ########## base
 @register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb")
