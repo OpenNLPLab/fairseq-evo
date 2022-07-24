@@ -56,6 +56,7 @@ class TNO(nn.Module):
         norm_type="simplermsnorm",
         # Toeplizt
         use_exp=False,
+        use_neg_exp=False, 
         toep_type=1,
         max_l=512,
         use_decay=False,
@@ -175,6 +176,7 @@ class TNO(nn.Module):
         # toep
         self.max_l = max_l
         self.use_exp = use_exp
+        self.use_neg_exp = use_neg_exp
         self.use_decay = use_decay
         self.use_multi_decay = use_multi_decay
         self.use_dynamic = use_dynamic
@@ -190,6 +192,7 @@ class TNO(nn.Module):
                 d=self.dpb_embedding, 
                 causal=self.causal, 
                 use_exp=self.use_exp, 
+                use_neg_exp=self.use_neg_exp,
                 use_decay=self.use_decay,
                 use_multi_decay=self.use_multi_decay,
             )
@@ -199,7 +202,8 @@ class TNO(nn.Module):
                 n=self.max_l, 
                 d=self.dpb_embedding, 
                 causal=self.causal, 
-                use_exp=self.use_exp, 
+                use_exp=self.use_exp,
+                use_neg_exp=self.use_neg_exp,
                 use_decay=self.use_decay, 
                 use_multi_decay=self.use_multi_decay,
                 act=self.dpb_act,
@@ -210,6 +214,7 @@ class TNO(nn.Module):
         print(f"self.num_heads {self.num_heads}")
         print(f"self.max_l {self.max_l}")
         print(f"self.use_exp {self.use_exp}")
+        print(f"self.use_neg_exp {self.use_neg_exp}")
         print(f"self.use_decay {self.use_decay}")
         print(f"self.use_multi_decay {self.use_multi_decay}")
         print(f"self.use_dynamic {self.use_dynamic}")

@@ -9,12 +9,13 @@ import numpy as np
 from .dpb_v2 import DynamicPosBiasV2
 
 class DynamicToepliztMultiheadV2(nn.Module):
-    def __init__(self, h, n, d, causal=False, use_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False):
+    def __init__(self, h, n, d, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False):
         super().__init__()
         self.h = h
         self.n = n
         self.causal = causal
         self.use_exp = use_exp
+        self.use_neg_exp = use_neg_exp
         self.use_pad = use_pad
         if self.use_exp:
             self.zero_value = float("-inf")
@@ -92,6 +93,8 @@ class DynamicToepliztMultiheadV2(nn.Module):
         # print("================")
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero, neg], dim=-1), max=30, min=-60))
+            if self.use_neg_exp:
+                a = torch.exp(-a)
         else:
             a = torch.cat([zero, pos, zero, neg], dim=-1)
         # h, n
@@ -168,6 +171,9 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = torch.flip(gamma, dims=[1]) * neg
         c = torch.exp(torch.cat([zero, pos], dim=-1))
         r = torch.exp(torch.cat([zero, neg.flip(1)], dim=-1))
+        if self.use_neg_exp:
+            c = -c
+            r = -r
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T
@@ -210,6 +216,9 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = torch.flip(gamma, dims=[1]) * neg
         c = torch.cat([zero, pos], dim=-1)
         r = torch.cat([zero, neg.flip(1)], dim=-1)
+        if self.use_neg_exp:
+            c = -c
+            r = -r
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T

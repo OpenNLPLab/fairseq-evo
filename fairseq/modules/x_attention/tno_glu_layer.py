@@ -83,6 +83,7 @@ class TNOGLUEncoderLayer(nn.Module):
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
             # Toeplizt
             use_exp=getattr(args, "use_exp", False),
+            use_neg_exp=getattr(args, "use_neg_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
@@ -268,6 +269,7 @@ class TNOGLUDecoderLayer(nn.Module):
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
             # Toeplizt
             use_exp=getattr(args, "use_exp", False),
+            use_neg_exp=getattr(args, "use_neg_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
@@ -303,6 +305,7 @@ class TNOGLUDecoderLayer(nn.Module):
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
             # Toeplizt
             use_exp=getattr(args, "use_exp", False),
+            use_neg_exp=getattr(args, "use_neg_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
