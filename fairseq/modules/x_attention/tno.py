@@ -21,6 +21,7 @@ from fairseq.modules import ToepliztMultihead
 from fairseq.modules import SEBlock
 from fairseq.modules import DynamicToepliztMultihead
 from fairseq.modules import DynamicToepliztMultiheadV2
+from fairseq.modules import DynamicToepliztMultiheadV3
 from einops import rearrange
 
 @with_incremental_state
@@ -67,6 +68,8 @@ class TNO(nn.Module):
         dpb_act="relu",
         dpb_use_pad=True,
         normalize=False,
+        use_dynamic_v3=False,
+        par_type=1,
         # SE
         use_se=False,
         se_ratio=16,
@@ -107,7 +110,7 @@ class TNO(nn.Module):
         d1 = int(self.expand_ratio * embed_dim)
         d1 = (d1 // self.num_heads) * self.num_heads
         d2 = embed_dim
-        self.head_dim = d2 // num_heads
+        self.head_dim = d1 // num_heads
         if self.toep_type == 1:
             # d^2
             self.v_proj = quant_noise(
@@ -185,6 +188,8 @@ class TNO(nn.Module):
         self.dpb_act = dpb_act
         self.dpb_use_pad = dpb_use_pad
         self.normalize = normalize
+        self.use_dynamic_v3 = use_dynamic_v3
+        self.par_type = par_type
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -209,6 +214,20 @@ class TNO(nn.Module):
                 act=self.dpb_act,
                 use_pad=self.dpb_use_pad,
             )
+        elif self.use_dynamic_v3:
+            self.toep = DynamicToepliztMultiheadV3(
+                h=self.num_heads, 
+                n=self.max_l, 
+                dim=self.head_dim,
+                dpb_dim=self.dpb_embedding, 
+                causal=self.causal, 
+                use_exp=self.use_exp,
+                use_neg_exp=self.use_neg_exp,
+                use_decay=self.use_decay, 
+                use_multi_decay=self.use_multi_decay,
+                use_pad=self.dpb_use_pad,
+                par_type=self.par_type
+            )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
         print(f"self.num_heads {self.num_heads}")
@@ -223,6 +242,8 @@ class TNO(nn.Module):
         print(f"self.dpb_act {self.dpb_act}")
         print(f"self.dpb_use_pad {self.dpb_use_pad}")
         print(f"self.normalize {self.normalize}")
+        print(f"self.use_dynamic_v3 {self.use_dynamic_v3}")
+        print(f"self.par_type {self.par_type}")
         
         # norm
         self.norm_type = norm_type

@@ -73,10 +73,6 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = neg_index.transpose(0, 1)
             else:
                 neg = self.dpb(neg_index).transpose(0, 1)
-        # print("================")
-        # print(pos.shape)
-        # t1 = pos[0][:10]
-        # print(t1)
         if self.use_exp and self.use_neg_exp:
             zero = -torch.exp(zero)
             pos = -torch.exp(pos)
@@ -92,10 +88,6 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
-        #         t2 = pos[0][:10]
-        #         print(t2)
-        #         print(t2 / t1)
-        # print("================")
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero, neg], dim=-1), max=30, min=-60))
         else:
@@ -133,7 +125,7 @@ class DynamicToepliztMultiheadV2(nn.Module):
         # x: b, h, n, 1
         # y: h, n
         y = torch.fft.rfft(x, 2 * n, dim=dim, norm="ortho")
-        v = torch.fft.rfft(a, dim=1).unsqueeze(0).unsqueeze(-1)
+        v = torch.fft.rfft(a, dim=dim).unsqueeze(0).unsqueeze(-1)
         u = v * y
         output = torch.fft.irfft(u, 2 * n, dim=dim, norm="ortho")[:, :, :n, :]
 

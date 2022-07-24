@@ -1800,3 +1800,321 @@ def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_v2_no_norm_no_pos
     args.no_token_positional_embeddings = True
 ##### v2
 ########## no pos
+
+########## multi dim
+########## no pos
+##### v1
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+##### v1
+########## no pos
+
+########## no pos decay
+##### v1
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # decay
+    args.use_decay = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # decay
+    args.use_decay = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # decay
+    args.use_decay = True
+    
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # decay
+    args.use_decay = True
+##### v1
+########## no pos decay
+
+########## no pos multi_decay
+##### v1
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # multi_decay
+    args.use_multi_decay = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # multi_decay
+    args.use_multi_decay = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = True
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # multi_decay
+    args.use_multi_decay = True
+    
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_dpb_no_norm_no_pos_with_multi_decay_multi_dim_par_1(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.use_dynamic_v3 = True
+    args.par_type = 1
+    args.dpb_embedding = args.decoder_embed_dim
+    # pos
+    args.no_token_positional_embeddings = True
+    # multi_decay
+    args.use_multi_decay = True
+##### v1
+########## no pos multi_decay
+########## multi dim
