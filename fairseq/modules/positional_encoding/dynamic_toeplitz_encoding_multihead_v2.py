@@ -77,6 +77,11 @@ class DynamicToepliztMultiheadV2(nn.Module):
         # print(pos.shape)
         # t1 = pos[0][:10]
         # print(t1)
+        if self.use_exp and self.use_neg_exp:
+            zero = -torch.exp(zero)
+            pos = -torch.exp(pos)
+            if not self.causal:
+                neg = -torch.exp(neg)
         if self.use_decay or self.use_multi_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
@@ -93,8 +98,6 @@ class DynamicToepliztMultiheadV2(nn.Module):
         # print("================")
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero, neg], dim=-1), max=30, min=-60))
-            if self.use_neg_exp:
-                a = torch.exp(-a)
         else:
             a = torch.cat([zero, pos, zero, neg], dim=-1)
         # h, n
@@ -159,6 +162,11 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = neg_index.transpose(0, 1)
             else:
                 neg = self.dpb(neg_index).transpose(0, 1)
+        if self.use_exp and self.use_neg_exp:
+            zero = -torch.exp(zero)
+            pos = -torch.exp(pos)
+            if not self.causal:
+                neg = -torch.exp(neg)
         if self.use_decay or self.use_multi_decay:
             coef = torch.arange(1, n).reshape(1, -1)
             if self.use_exp:
@@ -171,9 +179,6 @@ class DynamicToepliztMultiheadV2(nn.Module):
                 neg = torch.flip(gamma, dims=[1]) * neg
         c = torch.exp(torch.cat([zero, pos], dim=-1))
         r = torch.exp(torch.cat([zero, neg.flip(1)], dim=-1))
-        if self.use_neg_exp:
-            c = -c
-            r = -r
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T

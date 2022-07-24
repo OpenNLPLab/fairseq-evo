@@ -53,10 +53,16 @@ class DynamicToepliztMultihead(nn.Module):
             neg_dpb = self.neg[:, -l1:]
         else:
             neg_dpb = self.dpb(self.pos[-l1:]).transpose(0, 1)
-        zero_dpb = self.dpb(self.zero).transpose(0, 1)
+        zero = self.dpb(self.zero).transpose(0, 1)
+        
         # padding to seq len
         pos = torch.cat([pos_dpb, torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
         neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, neg_dpb], dim=-1)
+        if self.use_exp and self.use_neg_exp:
+            zero = -torch.exp(zero)
+            pos = -torch.exp(pos)
+            if not self.causal:
+                neg = -torch.exp(neg)
         if self.use_decay:
             coef = torch.arange(1, n).reshape(1, -1).to(x)
             if self.use_exp:
@@ -68,11 +74,9 @@ class DynamicToepliztMultihead(nn.Module):
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
         if self.use_exp:
-            a = torch.exp(torch.clamp(torch.cat([zero_dpb, pos, zero_dpb, neg], dim=-1), max=30, min=-60))
-            if self.use_neg_exp:
-                a = torch.exp(-a)
+            a = torch.exp(torch.clamp(torch.cat([zero, pos, zero, neg], dim=-1), max=30, min=-60))
         else:
-            a = torch.cat([zero_dpb, pos, zero_dpb, neg], dim=-1)
+            a = torch.cat([zero, pos, zero, neg], dim=-1)
         # h, n
         output = self.compute(x, a, dim, n)
 
@@ -122,12 +126,17 @@ class DynamicToepliztMultihead(nn.Module):
             neg_dpb = self.neg[:, -l1:]
         else:
             neg_dpb = self.dpb(self.pos[-l1:]).transpose(0, 1)
-        zero_dpb = self.dpb(self.zero).transpose(0, 1)
+        zero = self.dpb(self.zero).transpose(0, 1)
         # padding to seq len
-        pos = torch.cat([pos_dpb, torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
-        neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, neg_dpb], dim=-1)
+        pos = torch.cat([pos_dpb, torch.ones(self.h, l2) * self.zero_value], dim=-1)
+        neg = torch.cat([torch.ones(self.h, l2) * self.zero_value, neg_dpb], dim=-1)
+        if self.use_exp and self.use_neg_exp:
+            zero = -torch.exp(zero)
+            pos = -torch.exp(pos)
+            if not self.causal:
+                neg = -torch.exp(neg)
         if self.use_decay:
-            coef = torch.arange(1, n).reshape(1, -1).to(x)
+            coef = torch.arange(1, n).reshape(1, -1)
             if self.use_exp:
                 gamma = torch.log(torch.sigmoid(self.gamma)) * coef
                 pos = gamma + pos
@@ -136,11 +145,8 @@ class DynamicToepliztMultihead(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
-        c = torch.exp(torch.cat([zero_dpb, pos], dim=-1))
-        r = torch.exp(torch.cat([zero_dpb, neg.flip(1)], dim=-1))
-        if self.use_neg_exp:
-            c = -c
-            r = -r
+        c = torch.exp(torch.cat([zero, pos], dim=-1))
+        r = torch.exp(torch.cat([zero, neg.flip(1)], dim=-1))
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T
@@ -158,12 +164,12 @@ class DynamicToepliztMultihead(nn.Module):
             neg_dpb = self.neg[:, -l1:]
         else:
             neg_dpb = self.dpb(self.pos[-l1:]).transpose(0, 1)
-        zero_dpb = self.dpb(self.zero).transpose(0, 1)
+        zero = self.dpb(self.zero).transpose(0, 1)
         # padding to seq len
-        pos = torch.cat([pos_dpb, torch.ones(self.h, l2).to(x) * self.zero_value], dim=-1)
-        neg = torch.cat([torch.ones(self.h, l2).to(x) * self.zero_value, neg_dpb], dim=-1)
+        pos = torch.cat([pos_dpb, torch.ones(self.h, l2) * self.zero_value], dim=-1)
+        neg = torch.cat([torch.ones(self.h, l2) * self.zero_value, neg_dpb], dim=-1)
         if self.use_decay:
-            coef = torch.arange(1, n).reshape(1, -1).to(x)
+            coef = torch.arange(1, n).reshape(1, -1)
             if self.use_exp:
                 gamma = torch.log(torch.sigmoid(self.gamma)) * coef
                 pos = gamma + pos
@@ -172,11 +178,8 @@ class DynamicToepliztMultihead(nn.Module):
                 gamma = torch.sigmoid(self.gamma) ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
-        c = torch.cat([zero_dpb, pos], dim=-1)
-        r = torch.cat([zero_dpb, neg.flip(1)], dim=-1)
-        if self.use_neg_exp:
-            c = -c
-            r = -r
+        c = torch.cat([zero, pos], dim=-1)
+        r = torch.cat([zero, neg.flip(1)], dim=-1)
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = self.h, c.shape[-1], r.shape[-1]
         i, j = torch.ones(*(shape[1:])).nonzero().T
