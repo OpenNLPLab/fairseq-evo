@@ -109,10 +109,10 @@ class DynamicToepliztMultihead(nn.Module):
     def compute(self, x, a, dim, n):
         # x: b, h, n, 1
         # y: h, n
-        y = torch.fft.rfft(x, 2 * n, dim=dim, norm="ortho")
-        v = torch.fft.rfft(a, dim=dim).unsqueeze(0).unsqueeze(-1)
+        y = torch.fft.rfft(x, 2 * n, dim=dim)
+        v = torch.fft.rfft(a, dim=-1).unsqueeze(0).unsqueeze(-1)
         u = v * y
-        output = torch.fft.irfft(u, 2 * n, dim=dim, norm="ortho")[:, :, :n, :]
+        output = torch.fft.irfft(u, 2 * n, dim=dim)[:, :, :n, :]
 
         return output
 
