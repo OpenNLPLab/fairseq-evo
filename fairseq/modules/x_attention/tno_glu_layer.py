@@ -96,6 +96,7 @@ class TNOGLUEncoderLayer(nn.Module):
             normalize=getattr(args, "normalize", False),
             use_dynamic_v3=getattr(args, "use_dynamic_v3", False),
             par_type=getattr(args, "par_type", 1),
+            dpb_type=getattr(args, "dpb_type", 1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -284,6 +285,7 @@ class TNOGLUDecoderLayer(nn.Module):
             normalize=getattr(args, "normalize", False),
             use_dynamic_v3=getattr(args, "use_dynamic_v3", False),
             par_type=getattr(args, "par_type", 1),
+            dpb_type=getattr(args, "dpb_type", 1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -322,6 +324,7 @@ class TNOGLUDecoderLayer(nn.Module):
             normalize=getattr(args, "normalize", False),
             use_dynamic_v3=getattr(args, "use_dynamic_v3", False),
             par_type=getattr(args, "par_type", 1),
+            dpb_type=getattr(args, "dpb_type", 1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

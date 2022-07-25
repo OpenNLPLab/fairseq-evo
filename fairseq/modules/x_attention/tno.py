@@ -70,6 +70,7 @@ class TNO(nn.Module):
         normalize=False,
         use_dynamic_v3=False,
         par_type=1,
+        dpb_type=1,
         # SE
         use_se=False,
         se_ratio=16,
@@ -190,6 +191,7 @@ class TNO(nn.Module):
         self.normalize = normalize
         self.use_dynamic_v3 = use_dynamic_v3
         self.par_type = par_type
+        self.dpb_type = dpb_type
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -226,7 +228,8 @@ class TNO(nn.Module):
                 use_decay=self.use_decay, 
                 use_multi_decay=self.use_multi_decay,
                 use_pad=self.dpb_use_pad,
-                par_type=self.par_type
+                par_type=self.par_type,
+                dpb_type=self.dpb_type,
             )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
@@ -244,6 +247,7 @@ class TNO(nn.Module):
         print(f"self.normalize {self.normalize}")
         print(f"self.use_dynamic_v3 {self.use_dynamic_v3}")
         print(f"self.par_type {self.par_type}")
+        print(f"self.dpb_type {self.dpb_type}")
         
         # norm
         self.norm_type = norm_type

@@ -197,7 +197,7 @@ from .dpb_v3 import SimpleDynamicPosBias
 #         return res
 
 class DynamicToepliztMultiheadV3(nn.Module):
-    def __init__(self, h, n, dim, dpb_dim, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, use_pad=False, par_type=1):
+    def __init__(self, h, n, dim, dpb_dim, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, use_pad=False, par_type=1, dpb_type=1):
         super().__init__()
         self.h = h
         self.n = n
@@ -207,6 +207,7 @@ class DynamicToepliztMultiheadV3(nn.Module):
         self.use_neg_exp = use_neg_exp
         self.use_pad = use_pad
         self.par_type = par_type
+        self.dpb_type = dpb_type
         if self.use_exp:
             self.zero_value = float("-inf")
         else:
@@ -219,8 +220,12 @@ class DynamicToepliztMultiheadV3(nn.Module):
         if self.use_multi_decay:
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
-        # self.dpb = DynamicPosBiasV3(dpb_dim, h)
-        self.dpb = SimpleDynamicPosBias(h)
+        if self.dpb_type == 1:
+            self.dpb = DynamicPosBiasV3(dpb_dim, h)
+        elif self.dpb_type == 2:
+            self.dpb = SimpleDynamicPosBias(h)
+        else:
+            self.dpb = SimpleDynamicPosBias(h)
         # index
         self.pos = nn.Parameter(self.get_pos(self.n), requires_grad=False)
         self.neg = nn.Parameter(self.get_neg(self.n), requires_grad=False)
