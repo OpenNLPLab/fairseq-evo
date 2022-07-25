@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.functional as F
 import numpy as np
-from einops import rearrange
+from einops import rearrange, repeat
 from .dpb import DynamicPosBias
 from .dpb_v3 import DynamicPosBiasV3
 
@@ -60,9 +60,17 @@ class DynamicToepliztMultiheadV3(nn.Module):
     def dpb_transform(self, x):
         # n, d, 1 -> n, d, h
         res = self.dpb(x)
+        # res = repeat(res, 'n d h -> n d (repeat h)', repeat=self.h)
         # n, d, h -> h, n, d
         res = rearrange(res, 'n d h -> h n d')
         return res
+
+    # def dpb_transform(self, x):
+    #     # n, d, 1 -> n, d, h
+    #     res = repeat(x, 'n d h -> n d (repeat h)', repeat=self.h)
+    #     # n, d, h -> h, n, d
+    #     res = rearrange(res, 'n d h -> h n d')
+    #     return res
 
     def forward(self, x, dim=-2, normalize=False):
         # shape of x: b, h, n, e
@@ -216,7 +224,7 @@ class DynamicToepliztMultiheadV3(nn.Module):
 #         if self.use_multi_decay:
 #             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
-#         self.dpb = DynamicPosBias(dpb_dim, h, residual)
+#         self.dpb = DynamicPosBiasV3(dpb_dim, h)
 #         # index
 #         self.pos = nn.Parameter(self.get_pos(self.n), requires_grad=False)
 #         self.neg = nn.Parameter(self.get_neg(self.n), requires_grad=False)
