@@ -33,3 +33,13 @@ class DynamicPosBiasV3(nn.Module):
         pos = self.pos2(self.pos1(self.pos_proj(biases)))
         
         return pos
+    
+class SimpleDynamicPosBias(nn.Module):
+    def __init__(self, num_heads):
+        super().__init__()
+        self.num_heads = num_heads
+        self.index = nn.Parameter(torch.arange(1, self.num_heads + 1).reshape(1, -1), requires_grad=False)
+
+    def forward(self, biases):
+        res = biases * self.index
+        return res

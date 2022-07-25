@@ -9,6 +9,7 @@ import numpy as np
 from einops import rearrange, repeat
 from .dpb import DynamicPosBias
 from .dpb_v3 import DynamicPosBiasV3
+from .dpb_v3 import SimpleDynamicPosBias
 
 class DynamicToepliztMultiheadV3(nn.Module):
     def __init__(self, h, n, dim, dpb_dim, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, use_pad=False, par_type=1):
@@ -34,7 +35,8 @@ class DynamicToepliztMultiheadV3(nn.Module):
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
         # self.dpb = DynamicPosBias(dpb_dim, h, residual)
-        self.dpb = DynamicPosBiasV3(dpb_dim, h)
+        # self.dpb = DynamicPosBiasV3(dpb_dim, h)
+        self.dpb = SimpleDynamicPosBias(h)
 
     def get_pos(self, n):
         if self.par_type == 1:
@@ -60,17 +62,10 @@ class DynamicToepliztMultiheadV3(nn.Module):
     def dpb_transform(self, x):
         # n, d, 1 -> n, d, h
         res = self.dpb(x)
-        # res = repeat(res, 'n d h -> n d (repeat h)', repeat=self.h)
         # n, d, h -> h, n, d
         res = rearrange(res, 'n d h -> h n d')
-        return res
 
-    # def dpb_transform(self, x):
-    #     # n, d, 1 -> n, d, h
-    #     res = repeat(x, 'n d h -> n d (repeat h)', repeat=self.h)
-    #     # n, d, h -> h, n, d
-    #     res = rearrange(res, 'n d h -> h n d')
-    #     return res
+        return res
 
     def forward(self, x, dim=-2, normalize=False):
         # shape of x: b, h, n, e
