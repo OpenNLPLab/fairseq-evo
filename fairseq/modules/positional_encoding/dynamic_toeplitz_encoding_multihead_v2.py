@@ -44,7 +44,7 @@ class DynamicToepliztMultiheadV2(nn.Module):
             res = torch.ones(n, self.h) * self.zero_value
         else:
             res = -torch.arange(1, n + 1).flip(0).reshape(-1, 1) * 1.0
-            
+
         return res
 
     def forward(self, x, dim=-2, normalize=False):

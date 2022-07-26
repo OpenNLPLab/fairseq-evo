@@ -22,6 +22,7 @@ from fairseq.modules import SEBlock
 from fairseq.modules import DynamicToepliztMultihead
 from fairseq.modules import DynamicToepliztMultiheadV2
 from fairseq.modules import DynamicToepliztMultiheadV3
+from fairseq.modules import DynamicToepliztMultiheadV4
 from einops import rearrange
 
 @with_incremental_state
@@ -71,6 +72,8 @@ class TNO(nn.Module):
         use_dynamic_v3=False,
         par_type=1,
         dpb_type=1,
+        dynamic_type=1,
+        residual=False,
         # SE
         use_se=False,
         se_ratio=16,
@@ -192,6 +195,8 @@ class TNO(nn.Module):
         self.use_dynamic_v3 = use_dynamic_v3
         self.par_type = par_type
         self.dpb_type = dpb_type
+        self.dynamic_type = dynamic_type
+        self.residual = residual
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -231,6 +236,22 @@ class TNO(nn.Module):
                 par_type=self.par_type,
                 dpb_type=self.dpb_type,
             )
+        elif self.dynamic_type == 4:
+            self.toep = DynamicToepliztMultiheadV4(
+                h=self.num_heads, 
+                n=self.max_l, 
+                dim=self.head_dim,
+                dpb_dim=self.dpb_embedding, 
+                causal=self.causal, 
+                use_exp=self.use_exp,
+                use_neg_exp=self.use_neg_exp,
+                use_decay=self.use_decay, 
+                use_multi_decay=self.use_multi_decay,
+                use_pad=self.dpb_use_pad,
+                act=self.dpb_act,
+                par_type=self.par_type,
+                residual=self.residual
+            )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
         print(f"self.num_heads {self.num_heads}")
@@ -248,6 +269,8 @@ class TNO(nn.Module):
         print(f"self.use_dynamic_v3 {self.use_dynamic_v3}")
         print(f"self.par_type {self.par_type}")
         print(f"self.dpb_type {self.dpb_type}")
+        print(f"self.dynamic_type {self.dynamic_type}")
+        print(f"self.residual {self.residual}")
         
         # norm
         self.norm_type = norm_type

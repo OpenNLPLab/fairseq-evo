@@ -10,7 +10,6 @@ class DynamicPosBiasV3(nn.Module):
         self.num_heads = num_heads
         self.pos_dim = dim // 8
         self.act = act
-        # self.pos_dim = 64
         self.pos_proj = nn.Linear(1, self.pos_dim)
         self.pos1 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
