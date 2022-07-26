@@ -4,7 +4,7 @@
 
 import torch
 import torch.nn as nn
-import torch.functional as F
+import torch.nn.functional as F
 import numpy as np
 from einops import rearrange, repeat
 from .dpb import DynamicPosBias
@@ -35,6 +35,11 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
 
+        if self.causal:
+            self.forward = self.forward_causal
+        else:
+            self.forward = self.forward_non_causal
+
     def get_pos(self, n):
         if self.par_type == 1:
             index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0
@@ -63,8 +68,60 @@ class DynamicToepliztMultiheadV4(nn.Module):
         res = rearrange(res, 'n (h d) -> h n d', h=self.h)
 
         return res
+    
+    def forward_causal(self, x, dim=-2, normalize=False):
+        # shape of x: b, h, n, e
+        n = x.shape[dim]
+        # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
+        ##### coef
+        # 1, d, 1 -> h, 1, d
+        zero = self.dpb_transform(self.get_zero().to(x))
+        if self.use_pad:
+            l1 = min(n - 1, self.n - 1)
+            l2 = max(0, n - 1 - l1)
+            # n, d, 1 -> h, n, d
+            pos_dpb = self.dpb_transform(self.get_pos(l1).to(x))
+            # padding to seq len
+            pos = torch.cat([pos_dpb, torch.ones(self.h, l2, self.dim).to(x) * self.zero_value], dim=-2)
+        else:
+            pos = self.dpb_transform(self.get_pos(n - 1).to(x))
 
-    def forward(self, x, dim=-2, normalize=False):
+        if self.use_exp and self.use_neg_exp:
+            zero = -torch.exp(zero)
+            pos = -torch.exp(pos)
+
+        if self.use_decay or self.use_multi_decay:
+            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
+            if self.use_exp:
+                gamma = torch.log(torch.sigmoid(self.gamma)) * coef
+                pos = gamma + pos
+            else:
+                gamma = torch.sigmoid(self.gamma) ** coef
+                pos = gamma * pos
+        if self.use_exp:
+            a = torch.exp(torch.clamp(torch.cat([zero, pos, zero], dim=1), max=30, min=-60))
+        else:
+            a = torch.cat([zero, pos, zero], dim=1)
+            
+        # a = F.pad(a, (0, 0, 0, n - 1, 0, 0, ))
+        # a: h, n, d
+        # x: ..., h, n, d
+        output = self.compute(x, a, dim, n)
+
+        if normalize:
+            size = list(x.shape[:-1]) + [1]
+            ones = torch.ones(size).to(x)
+            denorm = self.compute(ones, a, dim, n)
+            output = output / denorm
+
+        return output
+        ##### for test
+        # matrix = self.toeplizt_matrix(n)
+        # res = torch.einsum('...nme,...me->...ne', matrix, x)
+        # print(torch.norm(res - output))
+        ##### for test
+        
+    def forward_non_causal(self, x, dim=-2, normalize=False):
         # shape of x: b, h, n, e
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
@@ -133,7 +190,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         # x: b, h, n, d
         # a: h, n, d
         y = torch.fft.rfft(x, 2 * n, dim=dim)
-        v = torch.fft.rfft(a, dim=dim).unsqueeze(0)
+        v = torch.fft.rfft(a, 2 * n, dim=dim).unsqueeze(0)
         u = v * y
         output = torch.fft.irfft(u, 2 * n, dim=dim)[:, :, :n, :]
 
@@ -155,6 +212,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 neg_dpb = self.dpb_transform(neg_index)
             # padding to seq len
             pos = torch.cat([pos_dpb, torch.ones(self.h, l2, self.dim) * self.zero_value], dim=-2)
+            print(neg_dpb.shape)
             neg = torch.cat([torch.ones(self.h, l2, self.dim) * self.zero_value, neg_dpb], dim=-2)
         else:
             pos = self.dpb_transform(self.get_pos(n - 1))

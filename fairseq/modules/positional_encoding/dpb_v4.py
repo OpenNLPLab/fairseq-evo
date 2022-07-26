@@ -11,7 +11,6 @@ class DynamicPosBiasV4(nn.Module):
         self.outdim = outdim
         self.pos_dim = dim
         self.act = act
-        print(self.pos_dim, self.outdim)
         self.pos_proj = nn.Linear(1, self.pos_dim)
         self.pos1 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
