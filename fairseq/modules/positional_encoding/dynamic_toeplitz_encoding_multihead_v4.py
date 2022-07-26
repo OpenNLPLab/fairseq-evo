@@ -9,9 +9,28 @@ import numpy as np
 from einops import rearrange, repeat
 from .dpb import DynamicPosBias
 from .dpb_v4 import DynamicPosBiasV4
+from .dpb_v5 import DynamicPosBiasV5
 
 class DynamicToepliztMultiheadV4(nn.Module):
-    def __init__(self, h, n, dim, dpb_dim, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False, par_type=1, dpb_type=4):
+    def __init__(
+        self, 
+        h, 
+        n, 
+        dim, 
+        dpb_dim, 
+        causal=False, 
+        use_exp=False, 
+        use_neg_exp=False, 
+        use_decay=False, 
+        use_multi_decay=False, 
+        residual=False, 
+        act="relu", 
+        use_pad=False, 
+        par_type=1, 
+        dpb_type=4,
+        l=10,
+        transform_type=1,
+    ):
         super().__init__()
         self.h = h
         self.n = n
@@ -36,6 +55,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         if self.dpb_type == 4:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
+        elif self.dpb_type == 5:
+            self.dpb = DynamicPosBiasV5(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type)
         else:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
 
