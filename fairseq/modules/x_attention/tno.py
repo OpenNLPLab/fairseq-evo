@@ -250,7 +250,8 @@ class TNO(nn.Module):
                 use_pad=self.dpb_use_pad,
                 act=self.dpb_act,
                 par_type=self.par_type,
-                residual=self.residual
+                residual=self.residual,
+                dpb_type=self.dpb_type,
             )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)

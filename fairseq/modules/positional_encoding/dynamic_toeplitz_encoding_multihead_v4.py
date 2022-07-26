@@ -11,7 +11,7 @@ from .dpb import DynamicPosBias
 from .dpb_v4 import DynamicPosBiasV4
 
 class DynamicToepliztMultiheadV4(nn.Module):
-    def __init__(self, h, n, dim, dpb_dim, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False, par_type=1):
+    def __init__(self, h, n, dim, dpb_dim, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False, par_type=1, dpb_type=4):
         super().__init__()
         self.h = h
         self.n = n
@@ -21,6 +21,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         self.use_neg_exp = use_neg_exp
         self.use_pad = use_pad
         self.par_type = par_type
+        self.dpb_type = dpb_type
         if self.use_exp:
             self.zero_value = float("-inf")
         else:
@@ -33,7 +34,10 @@ class DynamicToepliztMultiheadV4(nn.Module):
         if self.use_multi_decay:
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
-        self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
+        if self.dpb_type == 4:
+            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
+        else:
+            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
 
         if self.causal:
             self.forward = self.forward_causal
@@ -43,21 +47,25 @@ class DynamicToepliztMultiheadV4(nn.Module):
     def get_pos(self, n):
         if self.par_type == 1:
             index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0
+        elif self.par_type == 2:
+            print("a")
+            index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n
         
         return index
         
     def get_zero(self):
-        if self.par_type == 1:
-            index = torch.zeros(1).reshape(1, -1) * 1.0
+        index = torch.zeros(1).reshape(1, -1) * 1.0
             
         return index
 
     def get_neg(self, n):
-        if self.par_type == 1:
-            if self.causal:
-                index = torch.ones(self.h * n * self.dim).reshape(self.h, n, self.dim) * self.zero_value
-            else:
+        if self.causal:
+            index = torch.ones(self.h * n * self.dim).reshape(self.h, n, self.dim) * self.zero_value
+        else:
+            if self.par_type == 1:
                 index = -torch.arange(1, 1 + n).flip(0).reshape(n, -1) * 1.0
+            elif self.par_type == 2:
+                index = -torch.arange(1, 1 + n).flip(0).reshape(n, -1) * 1.0 / n
 
         return index
     
@@ -212,7 +220,6 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 neg_dpb = self.dpb_transform(neg_index)
             # padding to seq len
             pos = torch.cat([pos_dpb, torch.ones(self.h, l2, self.dim) * self.zero_value], dim=-2)
-            print(neg_dpb.shape)
             neg = torch.cat([torch.ones(self.h, l2, self.dim) * self.zero_value, neg_dpb], dim=-2)
         else:
             pos = self.dpb_transform(self.get_pos(n - 1))
