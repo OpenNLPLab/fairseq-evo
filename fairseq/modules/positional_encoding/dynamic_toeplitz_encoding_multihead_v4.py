@@ -48,7 +48,6 @@ class DynamicToepliztMultiheadV4(nn.Module):
         if self.par_type == 1:
             index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0
         elif self.par_type == 2:
-            print("a")
             index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n
         
         return index
