@@ -363,3 +363,23 @@ def transformer_1_elu_wmt_en_de_1d_3_no_abs(args):
     ##### add
     args.no_encoder_token_positional_embeddings = True
 ##### urpe
+
+########## rebuttal
+@register_model_architecture("encoder_linear", "relu_wmt_en_de")
+def transformer_1_elu_wmt_en_de(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = False
+    args.kernel_type = "relu"
+
+@register_model_architecture("encoder_linear", "relu_wmt_en_de_3_3")
+def transformer_relu_wmt_en_de_3_3(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "relu"
+    args.core_matrix = 3
+    args.p_matrix = 3
+########## rebuttal

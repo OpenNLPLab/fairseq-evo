@@ -107,3 +107,48 @@ class PerformerDecoder(TransformerDecoder):
         )
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
+
+@register_model("encoder_performer")
+class PerformerModel(TransformerModel):
+    """
+    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
+    <https://arxiv.org/abs/1706.03762>`_.
+
+    Args:
+        encoder (TransformerEncoder): the encoder
+        decoder (TransformerDecoder): the decoder
+
+    The Transformer model provides the following named architectures and
+    command-line arguments:
+
+    .. argparse::
+        :ref: fairseq.models.transformer_parser
+        :prog:
+    """
+
+    def __init__(self, args, encoder, decoder):
+        super().__init__(args, encoder, decoder)
+
+    @classmethod
+    def build_encoder(cls, args, src_dict, embed_tokens):
+        return PerformerEncoder(args, src_dict, embed_tokens)
+
+########## rebuttal
+@register_model_architecture("encoder_performer", "performer_wmt_en_de")
+def transformer_performer_wmt_en_de(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = False
+    args.approx_attn_dim = 64
+
+@register_model_architecture("encoder_performer", "performer_wmt_en_de_3_3")
+def transformer_relu_wmt_en_de_3_3(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.approx_attn_dim = 64
+    args.core_matrix = 3
+    args.p_matrix = 3
+########## rebuttal
