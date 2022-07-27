@@ -971,3 +971,23 @@ def transformer_1_elu_1_1_wiki_base_no_abs(args):
     ##### add
     args.no_token_positional_embeddings = True
 ########## small model
+
+########## rebuttal
+@register_model_architecture("linear_urpe_lm", "relu")
+def transformer_relu(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.kernel_type = "relu"
+
+@register_model_architecture("linear_urpe_lm", "relu_1d_3_wiki_base")
+def transformer_relu_1d_3_wiki_base(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "relu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+########## rebuttal

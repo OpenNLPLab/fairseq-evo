@@ -93,7 +93,20 @@ class PerformerLanguageModel(TransformerLanguageModel):
         return cls(decoder)
 
 @register_model_architecture("performer_lm", "performer_lm_wiki_base")
-def transformer_lm_big(args):
+def performer_lm_wiki_base(args):
     base_lm_architecture(args)
     args.approx_attn_dim = 64
     args.causal = True
+    
+########## rebuttal
+@register_model_architecture("performer_lm", "performer_lm_wiki_1d_3_base")
+def performer_lm_wiki_1d_3_base(args):
+    base_lm_architecture(args)
+    args.approx_attn_dim = 64
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+########## rebuttal
