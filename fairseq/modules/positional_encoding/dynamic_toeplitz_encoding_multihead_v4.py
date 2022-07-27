@@ -30,6 +30,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         dpb_type=4,
         l=10,
         transform_type=1,
+        gamma=0.999,
     ):
         super().__init__()
         self.h = h
@@ -48,7 +49,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         self.use_decay = use_decay
         if self.use_decay:
-            self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
+            self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma)
         self.use_multi_decay = use_multi_decay
         if self.use_multi_decay:
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
@@ -120,11 +121,15 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         if self.use_decay or self.use_multi_decay:
             coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
+            if self.use_decay:
+                gamma = self.gamma
+            else:
+                gamma = torch.sigmoid(self.gamma)
             if self.use_exp:
-                gamma = torch.log(torch.sigmoid(self.gamma)) * coef
+                gamma = torch.log(gamma) * coef
                 pos = gamma + pos
             else:
-                gamma = torch.sigmoid(self.gamma) ** coef
+                gamma = gamma ** coef
                 pos = gamma * pos
         if self.use_exp:
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero], dim=1), max=30, min=-60))
@@ -143,7 +148,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
             output = output / denorm
 
         return output
-        ##### for test
+        #### for test
         # matrix = self.toeplizt_matrix(n)
         # res = torch.einsum('...nme,...me->...ne', matrix, x)
         # print(torch.norm(res - output))
@@ -185,12 +190,16 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         if self.use_decay or self.use_multi_decay:
             coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
+            if self.use_decay:
+                gamma = self.gamma
+            else:
+                gamma = torch.sigmoid(self.gamma)
             if self.use_exp:
-                gamma = torch.log(torch.sigmoid(self.gamma)) * coef
+                gamma = torch.log(gamma) * coef
                 pos = gamma + pos
                 neg = torch.flip(gamma, dims=[1]) + neg
             else:
-                gamma = torch.sigmoid(self.gamma) ** coef
+                gamma = gamma ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
         if self.use_exp:
@@ -257,12 +266,16 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 
         if self.use_decay or self.use_multi_decay:
             coef = torch.arange(1, n).reshape(1, -1, 1)
+            if self.use_decay:
+                gamma = self.gamma
+            else:
+                gamma = torch.sigmoid(self.gamma)
             if self.use_exp:
-                gamma = torch.log(torch.sigmoid(self.gamma)) * coef
+                gamma = torch.log(gamma) * coef
                 pos = gamma + pos
                 neg = torch.flip(gamma, dims=[1]) + neg
             else:
-                gamma = torch.sigmoid(self.gamma) ** coef
+                gamma = gamma ** coef
                 pos = gamma * pos
                 neg = torch.flip(gamma, dims=[1]) * neg
         if self.use_exp:

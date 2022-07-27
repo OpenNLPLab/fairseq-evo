@@ -30,7 +30,7 @@ class DynamicToepliztMultiheadV2(nn.Module):
             self.gamma = nn.Parameter(torch.randn(self.h, 1))
 
         self.dpb = DynamicPosBiasV2(d, h, residual, act)
-        
+
     def get_pos(self, n):
         tmp = torch.arange(1, n + 1).reshape(-1, 1) * 1.0
         return tmp

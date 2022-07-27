@@ -101,6 +101,7 @@ class TNOGLUEncoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             l=getattr(args, "l", 1),
             transform_type=getattr(args, "transform_type", 1),
+            gamma=getattr(args, "gamma", 0.999),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -294,6 +295,7 @@ class TNOGLUDecoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             l=getattr(args, "l", 1),
             transform_type=getattr(args, "transform_type", 1),
+            gamma=getattr(args, "gamma", 0.999),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -337,6 +339,7 @@ class TNOGLUDecoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             l=getattr(args, "l", 1),
             transform_type=getattr(args, "transform_type", 1),
+            gamma=getattr(args, "gamma", 0.999),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

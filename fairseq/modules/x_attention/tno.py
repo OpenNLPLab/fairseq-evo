@@ -76,6 +76,7 @@ class TNO(nn.Module):
         residual=False,
         l=1, 
         transform_type=1,
+        gamma=0.999,
         # SE
         use_se=False,
         se_ratio=16,
@@ -201,6 +202,7 @@ class TNO(nn.Module):
         self.residual = residual
         self.l = l
         self.transform_type = transform_type
+        self.gamma = gamma
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -257,7 +259,8 @@ class TNO(nn.Module):
                 residual=self.residual,
                 dpb_type=self.dpb_type,
                 l=self.l,
-                transform_type=self.transform_type
+                transform_type=self.transform_type,
+                gamma=self.gamma
             )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
@@ -280,6 +283,7 @@ class TNO(nn.Module):
         print(f"self.residual {self.residual}")
         print(f"self.l {self.l}")
         print(f"self.transform_type {self.transform_type}")
+        print(f"self.gamma {self.gamma}")
         
         # norm
         self.norm_type = norm_type
