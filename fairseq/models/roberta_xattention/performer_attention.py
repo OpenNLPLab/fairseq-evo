@@ -62,3 +62,25 @@ def roberta_base_architecture_performer(args):
     base_architecture(args)
     args.approx_attn_dim = 64
     args.causal = False
+    
+########## rebuttal
+@register_model_architecture("roberta_performer", "roberta_performer_prenorm")
+def roberta_base_architecture_performer_prenorm(args):
+    base_architecture(args)
+    args.approx_attn_dim = 64
+    args.causal = False
+    args.encoder_normalize_before = True
+    
+@register_model_architecture("roberta_performer", "roberta_performer_prenorm_1d_1")
+def roberta_base_architecture_performer_prenorm(args):
+    base_architecture(args)
+    args.approx_attn_dim = 64
+    args.causal = False
+    args.encoder_normalize_before = True
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "relu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True

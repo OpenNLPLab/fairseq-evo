@@ -29,6 +29,14 @@ class PerformerEncoderLayer(TransformerEncoderLayer):
             # add
             approx_attn_dim=getattr(args, 'approx_attn_dim', 64),
             causal=getattr(args, 'causal', False),
+            # urpe
+            use_urpe=getattr(args, "use_urpe", False),
+            core_matrix=getattr(args, "core_matrix", 1),
+            p_matrix=getattr(args, "p_matrix", 1),
+            max_positions=getattr(args, "max_positions", 512),
+            theta_type=getattr(args, "theta_type", "a"),
+            theta_learned=getattr(args, "theta_learned", False), 
+            householder_learned=getattr(args, "householder_learned", False),
         )
 
 class PerformerDecoderLayer(TransformerDecoderLayer):
@@ -52,6 +60,14 @@ class PerformerDecoderLayer(TransformerDecoderLayer):
             # add
             approx_attn_dim=getattr(args, 'approx_attn_dim', 64),
             causal=getattr(args, 'causal', True),
+            # urpe
+            use_urpe=getattr(args, "use_urpe", False),
+            core_matrix=getattr(args, "core_matrix", 1),
+            p_matrix=getattr(args, "p_matrix", 1),
+            max_positions=getattr(args, "max_positions", 512),
+            theta_type=getattr(args, "theta_type", "a"),
+            theta_learned=getattr(args, "theta_learned", False), 
+            householder_learned=getattr(args, "householder_learned", False),
         )
     
     def build_encoder_attention(self, embed_dim, args):
@@ -67,4 +83,12 @@ class PerformerDecoderLayer(TransformerDecoderLayer):
             # add
             approx_attn_dim=getattr(args, 'approx_attn_dim', 64),
             causal=getattr(args, 'causal', False),
+            # urpe
+            use_urpe=getattr(args, "use_urpe", False),
+            core_matrix=getattr(args, "core_matrix", 1),
+            p_matrix=getattr(args, "p_matrix", 1),
+            max_positions=getattr(args, "max_positions", 512),
+            theta_type=getattr(args, "theta_type", "a"),
+            theta_learned=getattr(args, "theta_learned", False), 
+            householder_learned=getattr(args, "householder_learned", False),
         )

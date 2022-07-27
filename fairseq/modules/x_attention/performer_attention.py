@@ -16,6 +16,7 @@ from torch import Tensor, nn
 from torch.nn import Parameter
 from einops import rearrange
 from functools import partial
+from fairseq.modules import Urpe
 
 def orthogonal_matrix_chunk(cols, device = None, dtype=None):
     unstructured_block = torch.randn((cols, cols), device=device)
@@ -117,6 +118,14 @@ class PerformerAttention(nn.Module):
         # add
         approx_attn_dim=64,
         causal=False,
+        # urpe
+        use_urpe=False,
+        core_matrix=1, 
+        p_matrix=1, 
+        max_positions=512,
+        theta_type="a",
+        theta_learned=False, 
+        householder_learned=False,
     ):
         '''
         dim = embed_dim
@@ -148,9 +157,14 @@ class PerformerAttention(nn.Module):
             ortho=True
             )
         )
+        
+        self.use_urpe = use_urpe
+        if self.use_urpe:
+            self.urpe = Urpe(core_matrix, p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         print(f"self.approx_attn_dim {self.approx_attn_dim}")
         print(f"self.causal {self.causal}")
+        print(f"self.use_urpe {self.use_urpe}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -183,12 +197,23 @@ class PerformerAttention(nn.Module):
         q = self.q_proj(query)
         k = self.k_proj(key)
         v = self.v_proj(value)
-        # (B, H, L, D)
-        q = rearrange(q, 'b n (h d) -> b h n d', h=self.num_heads)
-        k = rearrange(k, 'b n (h d) -> b h n d', h=self.num_heads)
-        v = rearrange(v, 'b n (h d) -> b h n d', h=self.num_heads)
-        # print("========================")
-        # print(q.shape)
+
+        # urpe
+        if self.use_urpe:
+            q = rearrange(q, 'b n (h d) -> b h n d', h=self.num_heads)
+            k = rearrange(k, 'b n (h d) -> b h n d', h=self.num_heads)
+            q = rearrange(q, 'b h n d -> (b h) n d')
+            k = rearrange(k, 'b h n d -> (b h) n d')
+            q = self.urpe(q)
+            k = self.urpe(k)
+            q = rearrange(q, '(b h) n d -> b h n d', h=self.num_heads)
+            k = rearrange(k, '(b h) n d -> b h n d', h=self.num_heads)
+            v = rearrange(v, 'b n (h d) -> b h n d', h=self.num_heads)
+        else:
+            # (B, H, L, D)
+            q = rearrange(q, 'b n (h d) -> b h n d', h=self.num_heads)
+            k = rearrange(k, 'b n (h d) -> b h n d', h=self.num_heads)
+            v = rearrange(v, 'b n (h d) -> b h n d', h=self.num_heads)
 
         if self.training:
             projection_matrix = create_proj_matrix(
@@ -196,7 +221,6 @@ class PerformerAttention(nn.Module):
         else:
             projection_matrix = self.eval_proj
         q_prime, k_prime = self.q_k_projection(q, k, projection_matrix)
-        # print(q_prime.shape)
 
         eps = 1e-2
         if self.causal:
@@ -214,9 +238,7 @@ class PerformerAttention(nn.Module):
             qkv = torch.einsum('...nm,...md->...nd', q_prime, kv)
             normalizer = torch.einsum('...nm,...m->...n', q_prime, k_prime.sum(dim=-2))
             output = qkv / normalizer.unsqueeze(-1).clamp(min=eps)
-            # print(output.shape)
 
-        # attn_output = output.contiguous().view(B, N, self.num_heads, self.head_dim)
         attn_output = rearrange(output, 'b h n d -> b n (h d)', h=self.num_heads)
         attn_output = self.out_proj(attn_output).transpose(0, 1)
         return attn_output, None
