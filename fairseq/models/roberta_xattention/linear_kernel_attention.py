@@ -421,3 +421,24 @@ def roberta_base_architecture_1_elu_1d_3_no_abs(args):
     args.theta_learned = True
     ##### add
     args.no_token_positional_embeddings = True
+
+##### rebuttal experiments
+@register_model_architecture("roberta_linear_kernel", "roberta_relu")
+def roberta_base_architecture_relu(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = False
+    args.kernel_type = "relu"
+
+@register_model_architecture("roberta_linear_kernel", "roberta_relu_1d_1")
+def roberta_base_architecture_relu_1d_1(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "relu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+##### rebuttal experiments
