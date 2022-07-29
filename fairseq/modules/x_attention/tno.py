@@ -357,7 +357,7 @@ class TNO(nn.Module):
         elif act_fun == "elu":
             return F.elu
         elif act_fun == "sigmoid":
-            return F.sigmoid
+            return torch.sigmoid
         elif act_fun == "exp":
             return torch.exp
         elif act_fun == "leak":
