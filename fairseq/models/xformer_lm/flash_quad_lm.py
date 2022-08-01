@@ -118,7 +118,8 @@ def flash_wiki_ada_v1(args):
 
 @register_model_architecture("flash_quad_lm", "flash_wiki")
 def flash_wiki(args):
-    transformer_lm_big(args)
+    # transformer_lm_big(args)
+    base_lm_architecture(args)
     args.decoder_layers = 10
     args.s = 128
     # args.s = 512
@@ -130,7 +131,8 @@ def flash_wiki(args):
 
 @register_model_architecture("flash_quad_lm", "flash_wiki_one_head")
 def flash_wiki_one_head(args):
-    transformer_lm_big(args)
+    # transformer_lm_big(args)
+    base_lm_architecture(args)
     args.decoder_layers = 10
     args.s = 128
     # args.s = 512

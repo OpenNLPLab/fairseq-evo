@@ -63,7 +63,7 @@ class FlashLinearAttention(nn.Module):
         self.lin_k_weight = nn.Parameter(torch.randn(1, self.s))
         self.lin_k_bias = nn.Parameter(torch.zeros(1, self.s))
         self.o = nn.Linear(self.e, self.embed_dim)
-        self.norm = nn.LayerNorm(self.embed_dim, eps=eps) if norm_type == "layer_norm" else ScaleNorm(eps=eps)
+        self.norm = nn.LayerNorm(self.embed_dim, eps=eps) if norm_type == "layer_norm" else ScaleNorm(d=embed_dim, eps=eps)
         self.w = nn.Parameter(torch.randn(2 * max_position_embeddings - 1))
         self.a = nn.Parameter(torch.randn(1, self.s))
         self.b = nn.Parameter(torch.randn(1, self.s))

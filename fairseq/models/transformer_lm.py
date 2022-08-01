@@ -576,3 +576,8 @@ def transformer_lm_wiki103_single_head(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.decoder_attention_heads = 1
+    
+##### transformer lm small
+@register_model_architecture("transformer_lm", "transformer_lm_base")
+def transformer_lm_base(args):
+    base_lm_architecture(args)
