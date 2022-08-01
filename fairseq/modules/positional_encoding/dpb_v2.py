@@ -5,27 +5,27 @@ import torch.nn as nn
 from ..norm import SimpleRMSNorm
 
 class DynamicPosBiasV2(nn.Module):
-    def __init__(self, dim, num_heads, residual, act="relu"):
+    def __init__(self, dim, num_heads, residual, act="relu", bias=True):
         super().__init__()
         self.residual = residual
         self.num_heads = num_heads
         self.pos_dim = dim
         self.act = act
-        self.pos_proj = nn.Linear(1, self.pos_dim)
+        self.pos_proj = nn.Linear(1, self.pos_dim, bias=bias)
         self.pos1 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.pos_dim),
+            nn.Linear(self.pos_dim, self.pos_dim, bias=bias),
         )
         self.pos2 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.pos_dim)
+            nn.Linear(self.pos_dim, self.pos_dim, bias=bias)
         )
         self.pos3 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.num_heads)
+            nn.Linear(self.pos_dim, self.num_heads, bias=bias)
         )
         
     def get_act(self):

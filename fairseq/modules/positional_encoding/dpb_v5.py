@@ -6,7 +6,7 @@ import numpy as np
 from ..norm import SimpleRMSNorm
 
 class DynamicPosBiasV5(nn.Module):
-    def __init__(self, dim, outdim, residual, act="relu", l=10, transform_type=1):
+    def __init__(self, dim, outdim, residual, act="relu", l=10, transform_type=1, bias=True):
         super().__init__()
         self.residual = residual
         self.outdim = outdim
@@ -20,21 +20,21 @@ class DynamicPosBiasV5(nn.Module):
             print("a")
             d = 2 * self.l
             self.freq = nn.Parameter(1. / (10000 ** (torch.arange(0, d, 2).float().reshape(1, -1) / d)), requires_grad=False)
-        self.pos_proj = nn.Linear(2 * self.l, self.pos_dim)
+        self.pos_proj = nn.Linear(2 * self.l, self.pos_dim, bias=bias)
         self.pos1 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.pos_dim),
+            nn.Linear(self.pos_dim, self.pos_dim, bias=bias),
         )
         self.pos2 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.pos_dim)
+            nn.Linear(self.pos_dim, self.pos_dim, bias=bias)
         )
         self.pos3 = nn.Sequential(
             SimpleRMSNorm(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.outdim)
+            nn.Linear(self.pos_dim, self.outdim, bias=bias)
         )
         
     def transform(self, x):

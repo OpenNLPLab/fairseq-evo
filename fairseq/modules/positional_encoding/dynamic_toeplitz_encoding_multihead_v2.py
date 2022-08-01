@@ -9,7 +9,7 @@ import numpy as np
 from .dpb_v2 import DynamicPosBiasV2
 
 class DynamicToepliztMultiheadV2(nn.Module):
-    def __init__(self, h, n, d, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False):
+    def __init__(self, h, n, d, causal=False, use_exp=False, use_neg_exp=False, use_decay=False, use_multi_decay=False, residual=False, act="relu", use_pad=False, bias=True):
         super().__init__()
         self.h = h
         self.n = n
@@ -29,7 +29,7 @@ class DynamicToepliztMultiheadV2(nn.Module):
         if self.use_multi_decay:
             self.gamma = nn.Parameter(torch.randn(self.h, 1))
 
-        self.dpb = DynamicPosBiasV2(d, h, residual, act)
+        self.dpb = DynamicPosBiasV2(d, h, residual, act, bias=bias)
 
     def get_pos(self, n):
         tmp = torch.arange(1, n + 1).reshape(-1, 1) * 1.0

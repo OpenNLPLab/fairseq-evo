@@ -31,6 +31,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         l=10,
         transform_type=1,
         gamma=0.999,
+        bias=True
     ):
         super().__init__()
         self.h = h
@@ -55,11 +56,11 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
         if self.dpb_type == 4:
-            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
+            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
         elif self.dpb_type == 5:
-            self.dpb = DynamicPosBiasV5(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type)
+            self.dpb = DynamicPosBiasV5(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias)
         else:
-            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual)
+            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
 
         if self.causal:
             self.forward = self.forward_causal

@@ -206,6 +206,7 @@ class TNO(nn.Module):
         self.l = l
         self.transform_type = transform_type
         self.gamma = gamma
+        self.bias = bias
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -216,6 +217,7 @@ class TNO(nn.Module):
                 use_neg_exp=self.use_neg_exp,
                 use_decay=self.use_decay,
                 use_multi_decay=self.use_multi_decay,
+                bias=self.bias,
             )
         elif self.use_dynamic_v2:
             self.toep = DynamicToepliztMultiheadV2(
@@ -229,6 +231,7 @@ class TNO(nn.Module):
                 use_multi_decay=self.use_multi_decay,
                 act=self.dpb_act,
                 use_pad=self.dpb_use_pad,
+                bias=self.bias,
             )
         elif self.use_dynamic_v3:
             self.toep = DynamicToepliztMultiheadV3(
@@ -244,6 +247,7 @@ class TNO(nn.Module):
                 use_pad=self.dpb_use_pad,
                 par_type=self.par_type,
                 dpb_type=self.dpb_type,
+                bias=self.bias,
             )
         elif self.dynamic_type == 4:
             self.toep = DynamicToepliztMultiheadV4(
@@ -263,7 +267,8 @@ class TNO(nn.Module):
                 dpb_type=self.dpb_type,
                 l=self.l,
                 transform_type=self.transform_type,
-                gamma=self.gamma
+                gamma=self.gamma,
+                bias=self.bias,
             )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
@@ -287,6 +292,7 @@ class TNO(nn.Module):
         print(f"self.l {self.l}")
         print(f"self.transform_type {self.transform_type}")
         print(f"self.gamma {self.gamma}")
+        print(f"bias {bias}")
         
         # norm
         self.norm_type = norm_type
@@ -311,18 +317,24 @@ class TNO(nn.Module):
     def par_init(self):
         if self.toep_type == 1 or self.toep_type == 5:
             nn.init.normal_(self.u_proj.weight, std=0.02)
-            nn.init.normal_(self.u_proj.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.u_proj.bias, std=0.02)
             nn.init.normal_(self.v_proj.weight, std=0.02)
-            nn.init.normal_(self.v_proj.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.v_proj.bias, std=0.02)
             nn.init.normal_(self.o.weight, std=0.02)
-            nn.init.normal_(self.o.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.o.bias, std=0.02)
         elif self.toep_type == 3:
             nn.init.normal_(self.u_proj.weight, std=0.02)
-            nn.init.normal_(self.u_proj.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.u_proj.bias, std=0.02)
             nn.init.normal_(self.v_proj.weight, std=0.02)
-            nn.init.normal_(self.v_proj.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.v_proj.bias, std=0.02)
             nn.init.normal_(self.o.weight, std=0.02)
-            nn.init.normal_(self.o.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.o.bias, std=0.02)
         elif self.toep_type == 4:
             return
             # nn.init.normal_(self.u_proj.weight, std=0.02)

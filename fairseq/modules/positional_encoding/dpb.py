@@ -4,26 +4,26 @@ import torch
 import torch.nn as nn
 
 class DynamicPosBias(nn.Module):
-    def __init__(self, dim, num_heads, residual):
+    def __init__(self, dim, num_heads, residual, bias=True):
         super().__init__()
         self.residual = residual
         self.num_heads = num_heads
         self.pos_dim = dim // 4
-        self.pos_proj = nn.Linear(1, self.pos_dim)
+        self.pos_proj = nn.Linear(1, self.pos_dim, bias=bias)
         self.pos1 = nn.Sequential(
             nn.LayerNorm(self.pos_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.pos_dim, self.pos_dim),
+            nn.Linear(self.pos_dim, self.pos_dim, bias=bias),
         )
         self.pos2 = nn.Sequential(
             nn.LayerNorm(self.pos_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.pos_dim, self.pos_dim)
+            nn.Linear(self.pos_dim, self.pos_dim, bias=bias)
         )
         self.pos3 = nn.Sequential(
             nn.LayerNorm(self.pos_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.pos_dim, self.num_heads)
+            nn.Linear(self.pos_dim, self.num_heads, bias=bias)
         )
 
     def forward(self, biases):

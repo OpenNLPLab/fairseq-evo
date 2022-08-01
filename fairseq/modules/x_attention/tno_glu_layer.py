@@ -50,15 +50,18 @@ class TNOGLUEncoderLayer(nn.Module):
         self.glu_dim = getattr(args, "glu_dim", -1)
         if self.glu_dim == -1:
             self.glu_dim = self.embed_dim
+        # bias
+        bias = getattr(args, "bias", True)
         print("=============================")
         print("Encoder")
         print(f"self.glu_act {self.glu_act}")
         print(f"self.fina_act {self.fina_act}")
         print(f"self.glu_dropout {self.glu_dropout}")
         print(f"self.glu_dim {self.glu_dim}")
+        print(f"bias {bias}")
         print("=============================")
 
-        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout)
+        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
 
         if attn_type == "simplermsnorm":
             self.final_layer_norm = SimpleRMSNorm(self.embed_dim)
@@ -105,6 +108,8 @@ class TNOGLUEncoderLayer(nn.Module):
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
+            # bias
+            bias=getattr(args, "bias", True),
         )
         
     def residual_connection(self, x, residual):
@@ -218,12 +223,14 @@ class TNOGLUDecoderLayer(nn.Module):
         self.glu_dim = getattr(args, "glu_dim", -1)
         if self.glu_dim == -1:
             self.glu_dim = self.embed_dim
+        bias = getattr(args, "bias", True)
         print("=============================")
         print("Decoder")
         print(f"self.glu_act {self.glu_act}")
         print(f"self.fina_act {self.fina_act}")
         print(f"self.glu_dropout {self.glu_dropout}")
         print(f"self.glu_dim {self.glu_dim}")
+        print(f"bias {bias}")
         print("=============================")
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
@@ -244,7 +251,7 @@ class TNOGLUDecoderLayer(nn.Module):
             self.encoder_attn = self.build_encoder_attention(self.embed_dim, args)
             self.encoder_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
 
-        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout)
+        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
 
         # self.final_layer_norm = LayerNorm(self.embed_dim, export=export)
         if attn_type == "simplermsnorm":
@@ -299,6 +306,8 @@ class TNOGLUDecoderLayer(nn.Module):
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
+            # bias
+            bias=getattr(args, "bias", True),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -343,6 +352,8 @@ class TNOGLUDecoderLayer(nn.Module):
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
+            # bias
+            bias=getattr(args, "bias", True),
         )
         
     def prepare_for_onnx_export_(self):
