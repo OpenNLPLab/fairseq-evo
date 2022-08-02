@@ -80,6 +80,8 @@ class TNO(nn.Module):
         # SE
         use_se=False,
         se_ratio=16,
+        # token shift
+        token_shift_type=-1,
     ):
         # add
         self.index = index
@@ -311,6 +313,12 @@ class TNO(nn.Module):
             self.se = SEBlock(d1, self.se_ratio, self.causal)
         print(f"se_ratio {self.se_ratio}")
         print(f"use_se {self.use_se}")
+        
+        # token shift
+        self.token_shift_type = token_shift_type
+        print(f"self.token_shift_type {self.token_shift_type}")
+        if self.token_shift_type == 1:
+            self.token_shift = nn.ZeroPad2d((0, 0, 1, -1))
 
         self.par_init()
         
@@ -462,6 +470,9 @@ class TNO(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -529,6 +540,9 @@ class TNO(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -608,6 +622,9 @@ class TNO(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -674,6 +691,9 @@ class TNO(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -740,6 +760,9 @@ class TNO(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
         eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
 
         shortcut, x = query, query
         if self.resi_param:
