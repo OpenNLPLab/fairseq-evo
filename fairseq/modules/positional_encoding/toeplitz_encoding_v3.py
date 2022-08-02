@@ -46,7 +46,7 @@ class ToepliztV3(nn.Module):
         # else:
         #     self.neg = nn.Parameter(torch.rand(n - 1))
 
-    def forward(self, x, dim=1, normalize=False):
+    def forward(self, x, dim=-2, normalize=False):
         # shape of x: b, n, e
         b = x.shape[0]
         n = x.shape[dim]
@@ -61,10 +61,14 @@ class ToepliztV3(nn.Module):
             a = torch.exp(torch.clamp(torch.cat([self.zero, pos, self.zero, neg]), max=30, min=-60))
         else:
             a = torch.cat([self.zero, pos, self.zero, neg])
+        # 1, 1, n, 1
+        a = a.unsqueeze(0).unsqueeze(0).unsqueeze(-1)
         output = self.compute(x, a, dim, n)
 
         if normalize:
-            ones = torch.ones(b, n, 1).to(x)
+            # ones = torch.ones(b, n, 1).to(x)
+            size = list(x.shape[:-1]) + [1]
+            ones = torch.ones(size).to(x)
             denorm = self.compute(ones, a, dim, n)
             output = output / denorm
 
@@ -72,14 +76,14 @@ class ToepliztV3(nn.Module):
         ##### for test
         # no exp
         # matrix = self.toeplizt_matrix_no_exp(n)
-        # res = torch.einsum('nm,bme->bne', matrix, x)
+        # res = torch.einsum('nm,...me->...ne', matrix, x)
         # print(torch.norm(res - output))
         # ones = torch.ones(b, n, 1).to(x)
         # denorm = self.compute(ones, a, dim, n)
         # print(torch.sum(matrix / denorm, dim=-1))
         # exp
         # matrix = self.toeplizt_matrix_exp(n)
-        # res = torch.einsum('nm,bme->bne', matrix, x)
+        # res = torch.einsum('nm,...me->...ne', matrix, x)
         # print(torch.norm(res - output))
         # ones = torch.ones(b, n, 1).to(x)
         # denorm = self.compute(ones, a, dim, n)
@@ -87,10 +91,10 @@ class ToepliztV3(nn.Module):
         ##### for test
     
     def compute(self, x, a, dim, n):
-        y = torch.fft.rfft(x, 2 * n, dim=dim, norm="ortho")
-        v = torch.fft.rfft(a).unsqueeze(0).unsqueeze(-1)
+        y = torch.fft.rfft(x, 2 * n, dim=dim)
+        v = torch.fft.rfft(a, 2 * n, dim=dim)
         u = v * y
-        output = torch.fft.irfft(u, 2 * n, dim=dim, norm="ortho")[:, :n, :]
+        output = torch.fft.irfft(u, 2 * n, dim=dim)[:, :, :n, :]
 
         return output
 

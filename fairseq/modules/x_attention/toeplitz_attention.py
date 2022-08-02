@@ -471,15 +471,18 @@ class ToeplitzAttention(nn.Module):
 
         l = max(src_len, tgt_len)
 
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # b, h, n, d
+        v = rearrange(v, "n b (h d) -> b h n d", h=num_heads)
 
         if self.dynamic_type == 4:
             output = self.toeplizt(v, dim=-2, normalize=self.normalize)
         else:
-            output = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+            output = self.toeplizt(v, dim=-2, normalize=not self.attention_use_layer_norm)
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        output = rearrange(output, 'b h n d -> n b (h d)')
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
@@ -556,17 +559,18 @@ class ToeplitzAttention(nn.Module):
 
         l = max(src_len, tgt_len)
 
-        # (N * h, L, d)
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # (N * h, S, d)
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # # (N * h, L, d)
+        # q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # # (N * h, S, d)
+        # k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
 
         if self.toep_type == 1:
             if self.dynamic_type == 4:
                 v = self.toeplizt(v, dim=-2, normalize=self.normalize)
             else:
-                v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+                v = self.toeplizt(v, dim=-2, normalize=not self.attention_use_layer_norm)
             # # print("ATV")
             # v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
 
@@ -581,25 +585,31 @@ class ToeplitzAttention(nn.Module):
             if (attn_mask == None):
                 attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
                 attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            weights = torch.bmm(q, k.transpose(1, 2))
+            # weights = torch.bmm(q, k.transpose(1, 2))
+            weights = torch.einsum('...nd,...md->...nm', q, k)
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             if not self.attention_use_layer_norm:
                 denorm = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
                 weights = weights / denorm
-            output = torch.bmm(weights, v)
+            # output = torch.bmm(weights, v)
+            output = torch.einsum('...nm,...md->...nd', weights, v)
         else:
-            o1 = torch.matmul(k.transpose(1, 2), v)
-            output = torch.bmm(q, o1)
+            # o1 = torch.matmul(k.transpose(1, 2), v)
+            # output = torch.bmm(q, o1)
+            o1 = torch.einsum('...nd,...ne->...de', k, v)
+            output = torch.einsum('...nd,...de->...ne', q, o1)
             if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
+                # denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
+                denorm = torch.clamp_min(torch.einsum('...ld,...d->...l', q, torch.sum(k, axis=-2)), eps)
                 output = output / denorm
 
         if self.toep_type == 2:
             # print("TAV")
-            output = self.toeplizt(output, dim=1, normalize=not self.attention_use_layer_norm)
+            output = self.toeplizt(output, dim=-2, normalize=not self.attention_use_layer_norm)
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        output = rearrange(output, 'b h n d -> n b (h d)')
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
@@ -676,17 +686,18 @@ class ToeplitzAttention(nn.Module):
 
         l = max(src_len, tgt_len)
 
-        # (N * h, L, d)
-        q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        # (N * h, S, d)
-        k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-        v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # # (N * h, L, d)
+        # q = q.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # # (N * h, S, d)
+        # k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        # v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
+        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
 
         # toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
         if self.dynamic_type == 4:
             toeplizt_part = self.toeplizt(v, dim=-2, normalize=self.normalize)
         else:
-            toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+            toeplizt_part = self.toeplizt(v, dim=-2, normalize=not self.attention_use_layer_norm)
 
         q = self.act(q)
         k = self.act(k)
@@ -699,22 +710,30 @@ class ToeplitzAttention(nn.Module):
             if (attn_mask == None):
                 attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
                 attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
-            weights = torch.bmm(q, k.transpose(1, 2))
+            # weights = torch.bmm(q, k.transpose(1, 2))
+            weights = torch.einsum('...nd,...md->...nm', q, k)
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             if not self.attention_use_layer_norm:
                 denorm = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
                 weights = weights / denorm
-            output = torch.bmm(weights, v)
+            # output = torch.bmm(weights, v)
+            output = torch.einsum('...nm,...md->...nd', weights, v)
         else:
-            o1 = torch.matmul(k.transpose(1, 2), v)
-            output = torch.bmm(q, o1)
+            # o1 = torch.matmul(k.transpose(1, 2), v)
+            # output = torch.bmm(q, o1)
+            o1 = torch.einsum('...nd,...ne->...de', k, v)
+            output = torch.einsum('...nd,...de->...ne', q, o1)
             if not self.attention_use_layer_norm:
-                denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps).unsqueeze(-1)
+                # denorm = torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps).unsqueeze(-1)
+                denorm = torch.clamp_min(torch.einsum('...ld,...d->...l', q, torch.sum(k, axis=-2)), eps)
                 output = output / denorm
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
-        output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-        toeplizt_part = toeplizt_part.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # toeplizt_part = toeplizt_part.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        output = rearrange(output, 'b h n d -> n b (h d)')
+        toeplizt_part = rearrange(toeplizt_part, 'b h n d -> n b (h d)')
+
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
