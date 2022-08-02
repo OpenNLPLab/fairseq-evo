@@ -20,6 +20,10 @@ from fairseq.modules import Urpe
 from fairseq.modules import UrpeV2
 from fairseq.modules import ToepliztV2
 from fairseq.modules import ToepliztV3
+from fairseq.modules import DynamicToepliztMultihead
+from fairseq.modules import DynamicToepliztMultiheadV2
+from fairseq.modules import DynamicToepliztMultiheadV3
+from fairseq.modules import DynamicToepliztMultiheadV4
 from einops import rearrange
 
 @with_incremental_state
@@ -92,7 +96,25 @@ class ToeplitzAttention(nn.Module):
         # Toeplizt
         type_num=-1,
         toep_type=-1,
-        use_exp=True
+        use_exp=True,
+        use_neg_exp=False, 
+        use_decay=False,
+        use_multi_decay=False,
+        use_dynamic=False,
+        dpb_embedding=512,
+        use_dynamic_v2=False,
+        dpb_act="relu",
+        dpb_use_pad=True,
+        normalize=False,
+        use_dynamic_v3=False,
+        par_type=1,
+        dpb_type=1,
+        dynamic_type=1,
+        residual=False,
+        l=1, 
+        transform_type=1,
+        gamma=0.999,
+        resi_param=False,
     ):
         # add
         self.index = index
@@ -154,6 +176,7 @@ class ToeplitzAttention(nn.Module):
         self.max_l = max_l
         self.toep_type = toep_type
         self.use_exp = use_exp
+        self.dynamic_type = dynamic_type
         print(f"self.teop_type {self.toep_type}")
         if self.toep_type == 1:
             print("ATV")
@@ -173,7 +196,72 @@ class ToeplitzAttention(nn.Module):
         if self.toep_type:
             self.toeplizt_norm = self.get_norm_fun(self.norm_type, embed_dim)
 
-        self.toeplizt = ToepliztV3(self.max_l, self.causal, self.use_exp)
+        # toep
+        self.max_l = max_l
+        self.use_exp = use_exp
+        self.use_neg_exp = use_neg_exp
+        self.use_decay = use_decay
+        self.use_multi_decay = use_multi_decay
+        self.use_dynamic = use_dynamic
+        self.dpb_embedding = dpb_embedding
+        self.use_dynamic_v2 = use_dynamic_v2
+        self.dpb_act = dpb_act
+        self.dpb_use_pad = dpb_use_pad
+        self.normalize = normalize
+        self.use_dynamic_v3 = use_dynamic_v3
+        self.par_type = par_type
+        self.dpb_type = dpb_type
+        self.dynamic_type = dynamic_type
+        self.residual = residual
+        self.l = l
+        self.transform_type = transform_type
+        self.gamma = gamma
+        self.bias = bias
+        if self.dynamic_type == 4:
+            self.toeplizt = DynamicToepliztMultiheadV4(
+                h=self.num_heads, 
+                n=self.max_l, 
+                dim=self.head_dim,
+                dpb_dim=self.dpb_embedding, 
+                causal=self.causal, 
+                use_exp=self.use_exp,
+                use_neg_exp=self.use_neg_exp,
+                use_decay=self.use_decay, 
+                use_multi_decay=self.use_multi_decay,
+                use_pad=self.dpb_use_pad,
+                act=self.dpb_act,
+                par_type=self.par_type,
+                residual=self.residual,
+                dpb_type=self.dpb_type,
+                l=self.l,
+                transform_type=self.transform_type,
+                gamma=self.gamma,
+                bias=self.bias,
+            )
+        else:
+            self.toeplizt = ToepliztV3(self.max_l, self.causal, self.use_exp)
+
+        print(f"self.num_heads {self.num_heads}")
+        print(f"self.max_l {self.max_l}")
+        print(f"self.use_exp {self.use_exp}")
+        print(f"self.use_neg_exp {self.use_neg_exp}")
+        print(f"self.use_decay {self.use_decay}")
+        print(f"self.use_multi_decay {self.use_multi_decay}")
+        print(f"self.use_dynamic {self.use_dynamic}")
+        print(f"self.dpb_embedding {self.dpb_embedding}")
+        print(f"self.use_dynamic_v2 {self.use_dynamic_v2}")
+        print(f"self.dpb_act {self.dpb_act}")
+        print(f"self.dpb_use_pad {self.dpb_use_pad}")
+        print(f"self.normalize {self.normalize}")
+        print(f"self.use_dynamic_v3 {self.use_dynamic_v3}")
+        print(f"self.par_type {self.par_type}")
+        print(f"self.dpb_type {self.dpb_type}")
+        print(f"self.dynamic_type {self.dynamic_type}")
+        print(f"self.residual {self.residual}")
+        print(f"self.l {self.l}")
+        print(f"self.transform_type {self.transform_type}")
+        print(f"self.gamma {self.gamma}")
+        print(f"bias {bias}")
 
         if self.toep_type == 1 or self.toep_type == 2 or self.toep_type == 3:
             self.k_proj = quant_noise(
@@ -251,6 +339,7 @@ class ToeplitzAttention(nn.Module):
         print(f"self.final_dropout {final_dropout}")
         print(f"self.type_num {self.type_num}")
         print(f"self.use_exp {self.use_exp}")
+        print(f"self.dynamic_type {self.dynamic_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
@@ -384,14 +473,16 @@ class ToeplitzAttention(nn.Module):
 
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        output = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+        if self.dynamic_type == 4:
+            output = self.toeplizt(v, dim=-2, normalize=self.normalize)
+        else:
+            output = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
 
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # B, N, e2
         if self.attention_use_layer_norm:
             output = self.layer_norm(output)
-
 
         if self.use_dropout:
             output = self.dropout_module(output)
@@ -472,8 +563,12 @@ class ToeplitzAttention(nn.Module):
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
         if self.toep_type == 1:
-            # print("ATV")
-            v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+            if self.dynamic_type == 4:
+                v = self.toeplizt(v, dim=-2, normalize=self.normalize)
+            else:
+                v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+            # # print("ATV")
+            # v = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
 
         q = self.act(q)
         k = self.act(k)
@@ -587,7 +682,11 @@ class ToeplitzAttention(nn.Module):
         k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
         v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
 
-        toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+        # toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
+        if self.dynamic_type == 4:
+            toeplizt_part = self.toeplizt(v, dim=-2, normalize=self.normalize)
+        else:
+            toeplizt_part = self.toeplizt(v, dim=1, normalize=not self.attention_use_layer_norm)
 
         q = self.act(q)
         k = self.act(k)

@@ -346,3 +346,22 @@ def transofrmer_toeplitz_lm_pure_norm_linear_1_elu_AV_TV_no_exp_urpe_1d_3(args):
     args.decoder_p_matrix = 3
     args.decoder_theta_learned = True
 ########## urpe + toeplizt AV + TV
+
+@register_model_architecture("toeplitz_lm", "toeplitz_lm_pure_norm_linear_1+elu_AV+TV_exp_dpb_v4")
+def transofrmer_toeplitz_lm_pure_norm_linear_1_elu_AV_TV_exp(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    ##### topelitz
+    args.type_num = -1
+    args.toep_type = 3
+    args.use_exp = True
+    # toep, dpb
+    args.max_l = 512
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
