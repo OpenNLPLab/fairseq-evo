@@ -166,6 +166,7 @@ class TNO(nn.Module):
             d2 = embed_dim // self.shrink_ratio
             d2 = (d2 // self.num_heads) * self.num_heads
             print(f"self.shrik_ratio {self.shrink_ratio}")
+            self.head_dim = d2 // self.num_heads
             # d^2
             self.v_proj = quant_noise(
                 nn.Linear(embed_dim, d2, bias=bias), q_noise, qn_block_size

@@ -136,7 +136,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero], dim=1), max=30, min=-60))
         else:
             a = torch.cat([zero, pos, zero], dim=1)
-            
+
         # a = F.pad(a, (0, 0, 0, n - 1, 0, 0, ))
         # a: h, n, d
         # x: ..., h, n, d
