@@ -319,6 +319,9 @@ class TNO(nn.Module):
         print(f"self.token_shift_type {self.token_shift_type}")
         if self.token_shift_type == 1:
             self.token_shift = nn.ZeroPad2d((0, 0, 1, -1))
+        elif self.token_shift_type == 2:
+            self.token_shift = nn.ZeroPad2d((0, 0, 1, -1))
+            self.coef = 0.5
 
         self.par_init()
         
@@ -473,6 +476,9 @@ class TNO(nn.Module):
         
         if self.token_shift_type == 1:
             query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -543,6 +549,9 @@ class TNO(nn.Module):
         
         if self.token_shift_type == 1:
             query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -625,6 +634,9 @@ class TNO(nn.Module):
         
         if self.token_shift_type == 1:
             query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
@@ -694,6 +706,9 @@ class TNO(nn.Module):
         
         if self.token_shift_type == 1:
             query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
 
         shortcut, x = query, self.pre_norm(query)
         if self.resi_param:
