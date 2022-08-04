@@ -120,7 +120,7 @@ class TNO(nn.Module):
         d1 = (d1 // self.num_heads) * self.num_heads
         d2 = embed_dim
         self.head_dim = d1 // num_heads
-        if self.toep_type == 1 or self.toep_type == 5:
+        if self.toep_type == 1 or self.toep_type == 5 or self.toep_type == 7:
             # d^2
             self.v_proj = quant_noise(
                 nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
@@ -135,6 +135,8 @@ class TNO(nn.Module):
             )
             if self.toep_type == 5:
                 self.forward = self.forward5
+            elif self.toep_type == 7:
+                self.forward = self.forward7
             else:
                 self.forward = self.forward1
         elif self.toep_type == 2:
@@ -183,6 +185,29 @@ class TNO(nn.Module):
                 nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
             )
             self.forward = self.forward4
+        elif self.toep_type == 6:
+            self.shrink_ratio = shrink_ratio
+            d2 = embed_dim // self.shrink_ratio
+            d2 = (d2 // self.num_heads) * self.num_heads
+            print(f"self.shrik_ratio {self.shrink_ratio}")
+            self.head_dim = d2 // self.num_heads
+            d3 = d1 // self.num_heads
+            # d^2
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, d2, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.u_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.o1 = quant_noise(
+                nn.Linear(self.head_dim, d3, bias=bias), q_noise, qn_block_size
+            )
+            self.o2 = quant_noise(
+                nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            self.forward = self.forward6
             
         self.causal = causal
         self.act = self.get_act_fun(act_fun)
@@ -796,6 +821,153 @@ class TNO(nn.Module):
             output = self.norm(output)
             
         output = self.pre_norm(self.o(output)) + shortcut
+        
+        return output, None
+    
+    # forward4的完全的多头版本
+    def forward6(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
+
+        shortcut, x = query, self.pre_norm(query)
+        if self.resi_param:
+            shortcut = shortcut * self.d
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        # reshape
+        u, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [u, v])
+        output = self.toep(v, dim=-2, normalize=self.normalize)
+        output = self.o1(output)
+        output = u * output
+        output = rearrange(output, 'b h n d -> n b (h d)')
+        if self.use_norm:
+            output = self.norm(output)
+            
+        output = self.o2(output) + shortcut
+        
+        return output, None
+    
+    # forward 1多头版本
+    def forward7(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
+
+        shortcut, x = query, self.pre_norm(query)
+        if self.resi_param:
+            shortcut = shortcut * self.d
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        # reshape
+        u, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [u, v])
+        output = self.toep(v, dim=-2, normalize=self.normalize)
+        if self.use_se:
+            output = self.se(output)
+        output = u * output
+        output = rearrange(output, 'b h n d -> n b (h d)')
+        if self.use_norm:
+            output = self.norm(output)
+            
+        output = self.o(output) + shortcut
         
         return output, None
 
