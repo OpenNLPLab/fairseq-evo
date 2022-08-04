@@ -47,6 +47,7 @@ from .positional_encoding import UrpeV2
 from .positional_encoding import Toeplizt
 from .positional_encoding import ToepliztV2
 from .positional_encoding import ToepliztV3
+from .positional_encoding import ToepliztV4
 from .positional_encoding import ToepliztMultihead
 from .positional_encoding import DynamicPosBias
 from .positional_encoding import DynamicPosBiasV2

@@ -23,7 +23,7 @@ from fairseq.modules import ToepliztV3
 from fairseq.modules import DynamicToepliztMultihead
 from fairseq.modules import DynamicToepliztMultiheadV2
 from fairseq.modules import DynamicToepliztMultiheadV3
-from fairseq.modules import DynamicToepliztMultiheadV4
+from fairseq.modules import ToepliztV4
 from einops import rearrange
 
 @with_incremental_state
@@ -101,18 +101,10 @@ class ToeplitzAttention(nn.Module):
         use_decay=False,
         use_multi_decay=False,
         use_dynamic=False,
-        dpb_embedding=512,
         use_dynamic_v2=False,
-        dpb_act="relu",
-        dpb_use_pad=True,
         normalize=False,
         use_dynamic_v3=False,
-        par_type=1,
-        dpb_type=1,
         dynamic_type=1,
-        residual=False,
-        l=1, 
-        transform_type=1,
         gamma=0.999,
         resi_param=False,
     ):
@@ -203,40 +195,23 @@ class ToeplitzAttention(nn.Module):
         self.use_decay = use_decay
         self.use_multi_decay = use_multi_decay
         self.use_dynamic = use_dynamic
-        self.dpb_embedding = dpb_embedding
         self.use_dynamic_v2 = use_dynamic_v2
-        self.dpb_act = dpb_act
-        self.dpb_use_pad = dpb_use_pad
         self.normalize = normalize
         self.use_dynamic_v3 = use_dynamic_v3
-        self.par_type = par_type
-        self.dpb_type = dpb_type
         self.dynamic_type = dynamic_type
-        self.residual = residual
-        self.l = l
-        self.transform_type = transform_type
         self.gamma = gamma
         self.bias = bias
         if self.dynamic_type == 4:
-            self.toeplizt = DynamicToepliztMultiheadV4(
+            self.toeplizt = ToepliztV4(
                 h=self.num_heads, 
                 n=self.max_l, 
                 dim=self.head_dim,
-                dpb_dim=self.dpb_embedding, 
                 causal=self.causal, 
                 use_exp=self.use_exp,
                 use_neg_exp=self.use_neg_exp,
                 use_decay=self.use_decay, 
                 use_multi_decay=self.use_multi_decay,
-                use_pad=self.dpb_use_pad,
-                act=self.dpb_act,
-                par_type=self.par_type,
-                residual=self.residual,
-                dpb_type=self.dpb_type,
-                l=self.l,
-                transform_type=self.transform_type,
                 gamma=self.gamma,
-                bias=self.bias,
             )
         else:
             self.toeplizt = ToepliztV3(self.max_l, self.causal, self.use_exp)
@@ -248,18 +223,10 @@ class ToeplitzAttention(nn.Module):
         print(f"self.use_decay {self.use_decay}")
         print(f"self.use_multi_decay {self.use_multi_decay}")
         print(f"self.use_dynamic {self.use_dynamic}")
-        print(f"self.dpb_embedding {self.dpb_embedding}")
         print(f"self.use_dynamic_v2 {self.use_dynamic_v2}")
-        print(f"self.dpb_act {self.dpb_act}")
-        print(f"self.dpb_use_pad {self.dpb_use_pad}")
         print(f"self.normalize {self.normalize}")
         print(f"self.use_dynamic_v3 {self.use_dynamic_v3}")
-        print(f"self.par_type {self.par_type}")
-        print(f"self.dpb_type {self.dpb_type}")
         print(f"self.dynamic_type {self.dynamic_type}")
-        print(f"self.residual {self.residual}")
-        print(f"self.l {self.l}")
-        print(f"self.transform_type {self.transform_type}")
         print(f"self.gamma {self.gamma}")
         print(f"bias {bias}")
 
