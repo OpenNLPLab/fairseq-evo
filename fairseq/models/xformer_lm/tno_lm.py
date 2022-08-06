@@ -885,7 +885,7 @@ def tno_silu_simplermsnorm_toep_use_exp_1_rate_3_layer_8_dpb_v4_no_norm_no_pos_f
     args.max_l = 512
     # model
     args.expand_ratio = 3
-    args.decoder_layers = 9
+    args.decoder_layers = 8
     # dpb
     args.dynamic_type = 4
     args.dpb_type = 4
