@@ -46,27 +46,40 @@ class TNOEncoderLayer(nn.Module):
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", True),
             expand_ratio=getattr(args, "expand_ratio", 2),
-            shrink_ratio=getattr(args, "shrink_ratio", 1),
-            resi_param=getattr(args, "resi_param", False),
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
             # Toeplizt
             use_exp=getattr(args, "use_exp", False),
+            use_neg_exp=getattr(args, "use_neg_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            use_multi_decay=getattr(args, "use_multi_decay", False),
             use_dynamic=getattr(args, "use_dynamic", False),
             dpb_embedding=getattr(args, "dpb_embedding", 512),
             use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
             dpb_act=getattr(args, "dpb_act", "relu"),
             dpb_use_pad=getattr(args, "dpb_use_pad", True),
             normalize=getattr(args, "normalize", False),
+            use_dynamic_v3=getattr(args, "use_dynamic_v3", False),
+            par_type=getattr(args, "par_type", 1),
+            dpb_type=getattr(args, "dpb_type", 1),
+            dynamic_type=getattr(args, "dynamic_type", 1),
+            residual=getattr(args, "residual", False),
+            l=getattr(args, "l", 1),
+            transform_type=getattr(args, "transform_type", 1),
+            gamma=getattr(args, "gamma", 0.999),
+            resi_param=getattr(args, "resi_param", False),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
+            # bias
+            bias=getattr(args, "bias", True),
+            # token shift
+            token_shift_type=getattr(args, "token_shift_type", -1),
         )
-
+        
     def residual_connection(self, x, residual):
         return residual + x
 
@@ -185,25 +198,38 @@ class TNODecoderLayer(nn.Module):
             act_fun=getattr(args, "act_fun", "silu"),
             causal=True,
             expand_ratio=getattr(args, "expand_ratio", 2),
-            shrink_ratio=getattr(args, "shrink_ratio", 1),
-            resi_param=getattr(args, "resi_param", False),
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
             # Toeplizt
             use_exp=getattr(args, "use_exp", False),
+            use_neg_exp=getattr(args, "use_neg_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            use_multi_decay=getattr(args, "use_multi_decay", False),
             use_dynamic=getattr(args, "use_dynamic", False),
             dpb_embedding=getattr(args, "dpb_embedding", 512),
             use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
             dpb_act=getattr(args, "dpb_act", "relu"),
             dpb_use_pad=getattr(args, "dpb_use_pad", True),
             normalize=getattr(args, "normalize", False),
+            use_dynamic_v3=getattr(args, "use_dynamic_v3", False),
+            par_type=getattr(args, "par_type", 1),
+            dpb_type=getattr(args, "dpb_type", 1),
+            dynamic_type=getattr(args, "dynamic_type", 1),
+            residual=getattr(args, "residual", False),
+            l=getattr(args, "l", 1),
+            transform_type=getattr(args, "transform_type", 1),
+            gamma=getattr(args, "gamma", 0.999),
+            resi_param=getattr(args, "resi_param", False),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
+            # bias
+            bias=getattr(args, "bias", True),
+            # token shift
+            token_shift_type=getattr(args, "token_shift_type", -1),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -221,27 +247,40 @@ class TNODecoderLayer(nn.Module):
             act_fun=getattr(args, "act_fun", "silu"),
             causal=False,
             expand_ratio=getattr(args, "expand_ratio", 2),
-            shrink_ratio=getattr(args, "shrink_ratio", 1),
-            resi_param=getattr(args, "resi_param", False),
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
             # Toeplizt
             use_exp=getattr(args, "use_exp", False),
+            use_neg_exp=getattr(args, "use_neg_exp", False),
             toep_type=getattr(args, "toep_type", 1),
             max_l=getattr(args, "max_l", 512),
             use_decay=getattr(args, "use_decay", False),
+            use_multi_decay=getattr(args, "use_multi_decay", False),
             use_dynamic=getattr(args, "use_dynamic", False),
             dpb_embedding=getattr(args, "dpb_embedding", 512),
             use_dynamic_v2=getattr(args, "use_dynamic_v2", False),
             dpb_act=getattr(args, "dpb_act", "relu"),
             dpb_use_pad=getattr(args, "dpb_use_pad", True),
             normalize=getattr(args, "normalize", False),
+            use_dynamic_v3=getattr(args, "use_dynamic_v3", False),
+            par_type=getattr(args, "par_type", 1),
+            dpb_type=getattr(args, "dpb_type", 1),
+            dynamic_type=getattr(args, "dynamic_type", 1),
+            residual=getattr(args, "residual", False),
+            l=getattr(args, "l", 1),
+            transform_type=getattr(args, "transform_type", 1),
+            gamma=getattr(args, "gamma", 0.999),
+            resi_param=getattr(args, "resi_param", False),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
+            # bias
+            bias=getattr(args, "bias", True),
+            # token shift
+            token_shift_type=getattr(args, "token_shift_type", -1),
         )
-
+        
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
