@@ -79,7 +79,7 @@ class TNOGLUEncoderLayer(nn.Module):
             # add
             index=args.index,
             act_fun=getattr(args, "act_fun", "silu"),
-            causal=getattr(args, "causal", True),
+            causal=getattr(args, "causal", False),
             expand_ratio=getattr(args, "expand_ratio", 2),
             # norm
             use_norm=getattr(args, "use_norm", False),
