@@ -9509,3 +9509,209 @@ def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_5_2_dpb_v4_no_norm_n
     # pos
     args.no_token_positional_embeddings = True
 ##### 2 2.5 large
+
+##### act test
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_cos")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_cos(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "cos"
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_cos")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_cos(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "cos"
+    # model
+    args.expand_ratio = 3
+    args.decoder_attention_heads = 1
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_relu")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_relu(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "relu"
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_relu")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_relu(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "relu"
+    # model
+    args.expand_ratio = 3
+    args.decoder_attention_heads = 1
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_relu2")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_relu2(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "relu2"
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_relu2")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_relu2(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "relu2"
+    # model
+    args.expand_ratio = 3
+    args.decoder_attention_heads = 1
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_leak")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_leak(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "leak"
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_leak")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_4_3_dpb_v4_no_norm_no_pos_forward1_large_one_head_leak(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.tno_act_type = "leak"
+    # model
+    args.expand_ratio = 3
+    args.decoder_attention_heads = 1
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+##### act test

@@ -77,6 +77,7 @@ class TNO(nn.Module):
         l=1, 
         transform_type=1,
         gamma=0.999,
+        tno_act_type="none",
         # SE
         use_se=False,
         se_ratio=16,
@@ -235,6 +236,7 @@ class TNO(nn.Module):
         self.transform_type = transform_type
         self.gamma = gamma
         self.bias = bias
+        self.tno_act_type = tno_act_type
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -297,6 +299,7 @@ class TNO(nn.Module):
                 transform_type=self.transform_type,
                 gamma=self.gamma,
                 bias=self.bias,
+                act_type=self.tno_act_type,
             )
         else:
             self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
@@ -321,6 +324,7 @@ class TNO(nn.Module):
         print(f"self.transform_type {self.transform_type}")
         print(f"self.gamma {self.gamma}")
         print(f"bias {bias}")
+        print(f"tno_act_type {self.tno_act_type}")
         
         # norm
         self.norm_type = norm_type

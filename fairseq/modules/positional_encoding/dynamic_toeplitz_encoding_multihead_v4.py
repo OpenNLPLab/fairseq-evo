@@ -31,7 +31,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
         l=10,
         transform_type=1,
         gamma=0.999,
-        bias=True
+        bias=True,
+        act_type="none",
     ):
         super().__init__()
         self.h = h
@@ -66,6 +67,42 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.forward = self.forward_causal
         else:
             self.forward = self.forward_non_causal
+            
+        self.act_type = act_type
+        self.act_fun = self.get_act_fun(self.act_type)
+
+    def get_act_fun(self, act_fun):
+        print(act_fun)
+        if act_fun == "gelu":
+            return F.gelu
+        elif act_fun == "relu":
+            return F.relu
+        elif act_fun == "elu":
+            return F.elu
+        elif act_fun == "sigmoid":
+            return torch.sigmoid
+        elif act_fun == "exp":
+            return torch.exp
+        elif act_fun == "leak":
+            def f(x):
+                return F.leaky_relu(x)
+            return f
+        elif act_fun == "1+elu":
+            def f(x):
+                return 1 + F.elu(x)
+            return f
+        elif act_fun == "silu":
+            return F.silu
+        elif act_fun == "relu2":
+            def f(x):
+                return torch.square(torch.relu(x))
+            return f
+        elif act_fun == "cos":
+            return torch.cos
+        elif act_fun == "sin":
+            return torch.sin
+        else:
+            return lambda x: x
 
     def get_pos(self, n):
         if self.par_type == 1:
@@ -136,6 +173,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero], dim=1), max=30, min=-60))
         else:
             a = torch.cat([zero, pos, zero], dim=1)
+            a = self.act_fun(a)
 
         # a = F.pad(a, (0, 0, 0, n - 1, 0, 0, ))
         # a: h, n, d
@@ -207,6 +245,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
             a = torch.exp(torch.clamp(torch.cat([zero, pos, zero, neg], dim=1), max=30, min=-60))
         else:
             a = torch.cat([zero, pos, zero, neg], dim=1)
+            a = self.act_fun(a)
         # a: h, n, d
         # x: ..., h, n, d
         output = self.compute(x, a, dim, n)
@@ -283,6 +322,10 @@ class DynamicToepliztMultiheadV4(nn.Module):
             c = torch.exp(torch.cat([zero, pos], dim=-2))
             r = torch.exp(torch.cat([zero, neg.flip(1)], dim=-2))
         else:
+            zero = self.act_fun(zero)
+            pos = self.act_fun(pos)
+            if not self.causal:
+                neg = self.act_fun(neg)
             c = torch.cat([zero, pos], dim=-2)
             r = torch.cat([zero, neg.flip(1)], dim=-2)
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-2)
