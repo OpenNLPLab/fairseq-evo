@@ -325,6 +325,7 @@ class TNO(nn.Module):
         print(f"self.gamma {self.gamma}")
         print(f"bias {bias}")
         print(f"tno_act_type {self.tno_act_type}")
+        print(f"shrink_ratio {self.shrink_ratio}")
         
         # norm
         self.norm_type = norm_type

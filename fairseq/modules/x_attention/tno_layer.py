@@ -71,6 +71,8 @@ class TNOEncoderLayer(nn.Module):
             transform_type=getattr(args, "transform_type", 1),
             gamma=getattr(args, "gamma", 0.999),
             resi_param=getattr(args, "resi_param", False),
+            tno_act_type=getattr(args, "tno_act_type", "none"),
+            shrink_ratio=getattr(args, "shrink_ratio", 1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -223,6 +225,8 @@ class TNODecoderLayer(nn.Module):
             transform_type=getattr(args, "transform_type", 1),
             gamma=getattr(args, "gamma", 0.999),
             resi_param=getattr(args, "resi_param", False),
+            tno_act_type=getattr(args, "tno_act_type", "none"),
+            shrink_ratio=getattr(args, "shrink_ratio", 1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -272,6 +276,8 @@ class TNODecoderLayer(nn.Module):
             transform_type=getattr(args, "transform_type", 1),
             gamma=getattr(args, "gamma", 0.999),
             resi_param=getattr(args, "resi_param", False),
+            tno_act_type=getattr(args, "tno_act_type", "none"),
+            shrink_ratio=getattr(args, "shrink_ratio", 1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

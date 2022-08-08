@@ -961,3 +961,52 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_rate_3_layer_8_dpb_v4_no_norm_no_po
     # pos
     args.no_token_positional_embeddings = True
 ##### 3 8
+
+##### expand 4 shrink 4
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_rate_4_dpb_v4_no_norm_no_pos_forward1_shrink4_large")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_rate_4_dpb_v4_no_norm_no_pos_forward1_shrink4_large(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 4
+    args.decoder_layers = 9
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_rate_4_dpb_v4_no_norm_no_pos_forward1_shrink4_large_one_head")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_rate_4_dpb_v4_no_norm_no_pos_forward1_shrink4_large_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 4
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 9
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+##### expand 4 shrink 4
