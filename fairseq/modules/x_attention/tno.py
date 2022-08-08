@@ -120,6 +120,7 @@ class TNO(nn.Module):
         d1 = int(self.expand_ratio * embed_dim)
         d1 = (d1 // self.num_heads) * self.num_heads
         d2 = embed_dim
+        self.shrink_ratio = shrink_ratio
         self.head_dim = d1 // num_heads
         if self.toep_type == 1 or self.toep_type == 5 or self.toep_type == 7:
             # d^2
@@ -165,7 +166,6 @@ class TNO(nn.Module):
             )
             self.forward = self.forward3
         elif self.toep_type == 4:
-            self.shrink_ratio = shrink_ratio
             d2 = embed_dim // self.shrink_ratio
             d2 = (d2 // self.num_heads) * self.num_heads
             print(f"self.shrik_ratio {self.shrink_ratio}")
