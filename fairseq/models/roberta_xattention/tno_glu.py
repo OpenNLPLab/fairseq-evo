@@ -140,6 +140,27 @@ def roberta_tno_no_exp_base_2_2(args):
     args.dpb_type = 4
     args.dpb_embedding = 128
     # args.dpb_embedding = args.encoder_embed_dim // 4
+
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_e4_s4")
+def roberta_tno_no_exp_base_e4_s4(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 4
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 3 * args.encoder_embed_dim // 2
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = 128
 ##### base
 
 ##### no pos
@@ -188,9 +209,49 @@ def roberta_tno_no_exp_base_2_2_no_pos(args):
     args.no_token_positional_embeddings = True
 ##### no pos
 
-##### f4
-@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_e4_s4")
-def roberta_tno_no_exp_base_e4_s4(args):
+##### standard
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_3_1_standard")
+def roberta_tno_no_exp_base_3_1_standard(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.encoder_embed_dim // 4
+      
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_2_2_standard")
+def roberta_tno_no_exp_base_2_2_standard(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.encoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.encoder_embed_dim // 4
+    
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_e4_s4_standard")
+def roberta_tno_no_exp_base_e4_s4_standard(args):
     base_architecture(args)
     # norm
     args.use_norm = False
@@ -208,5 +269,5 @@ def roberta_tno_no_exp_base_e4_s4(args):
     # dpb
     args.dynamic_type = 4
     args.dpb_type = 4
-    args.dpb_embedding = 128
-##### f4
+    args.dpb_embedding = args.encoder_embed_dim // 4
+###### standard
