@@ -229,7 +229,7 @@ def roberta_tno_no_exp_base_3_1_standard(args):
     args.dynamic_type = 4
     args.dpb_type = 4
     args.dpb_embedding = args.encoder_embed_dim // 4
-      
+
 @register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_2_2_standard")
 def roberta_tno_no_exp_base_2_2_standard(args):
     base_architecture(args)
