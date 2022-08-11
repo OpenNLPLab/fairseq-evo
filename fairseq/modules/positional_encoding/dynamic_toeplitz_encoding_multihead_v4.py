@@ -10,6 +10,7 @@ from einops import rearrange, repeat
 from .dpb import DynamicPosBias
 from .dpb_v4 import DynamicPosBiasV4
 from .dpb_v5 import DynamicPosBiasV5
+from .dpb_v6 import DynamicPosBiasV6
 
 class DynamicToepliztMultiheadV4(nn.Module):
     def __init__(
@@ -60,6 +61,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
         elif self.dpb_type == 5:
             self.dpb = DynamicPosBiasV5(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias)
+        elif self.dpb_type == 6:
+            self.dpb = DynamicPosBiasV6(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias, act=act_type)
         else:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
 
@@ -109,11 +112,15 @@ class DynamicToepliztMultiheadV4(nn.Module):
             index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0
         elif self.par_type == 2:
             index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n
+        elif self.par_type == 3:
+            index = torch.exp(torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n)
         
         return index
         
     def get_zero(self):
         index = torch.zeros(1).reshape(1, -1) * 1.0
+        if self.par_type == 3:
+            index = torch.exp(index)
             
         return index
 
