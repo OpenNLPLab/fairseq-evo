@@ -114,7 +114,64 @@ def tno_glu_silu_e3_g1_large_no_exp(args):
     args.decoder_input_dim = args.decoder_embed_dim
     # glu
     args.glu_act = "silu"
-    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_e2_g2_large_no_exp")
+def tno_glu_silu_e2_g2_large_no_exp(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 1024
+    args.decoder_output_dim = args.decoder_embed_dim
+    args.decoder_input_dim = args.decoder_embed_dim
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.decoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_e4s4_g1_large_no_exp")
+def tno_glu_silu_e4s4_g1_large_no_exp(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 4
+    args.max_l = 512
+    # model
+    args.expand_ratio = 4
+    args.shrink_ratio = 4
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 1024
+    args.decoder_output_dim = args.decoder_embed_dim
+    args.decoder_input_dim = args.decoder_embed_dim
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
     # dpb
     args.dynamic_type = 4
     args.dpb_type = 4
