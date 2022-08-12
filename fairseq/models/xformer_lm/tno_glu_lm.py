@@ -92,7 +92,37 @@ class TNOGLULanguageModel(TransformerLanguageModel):
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
-    
+
+########## large test
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_e3_g1_large_no_exp")
+def tno_glu_silu_e3_g1_large_no_exp(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 1024
+    args.decoder_output_dim = args.decoder_embed_dim
+    args.decoder_input_dim = args.decoder_embed_dim
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 4 * args.decoder_embed_dim // 3
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    # pos
+    args.no_token_positional_embeddings = True
+########## large test
+
 ########## large model
 @register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_ada")
 def tno_glu_silu_simplermsnorm_toep_use_exp_1_rate_3_glu_1_dpb_no_norm_no_pos_with_multi_decay_ada(args):
