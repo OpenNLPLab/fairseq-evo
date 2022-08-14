@@ -118,7 +118,7 @@ class RobertaClassificationNoClsHead(nn.Module):
 
     def forward(self, features, **kwargs):
         # x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
-        x = features.dim(dim=1, keepdims=True)
+        x = features.mean(dim=1, keepdims=True)
         x = self.dropout(x)
         x = self.dense(x)
         x = self.activation_fn(x)

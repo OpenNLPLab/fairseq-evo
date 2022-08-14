@@ -10763,3 +10763,32 @@ def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_2_glu_2_5_dpb_v4_no_norm_n
     # pos
     args.no_token_positional_embeddings = True
 ##### head test
+
+##### more layers
+@register_model_architecture("tno_glu_lm", "tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_v4_no_norm_no_pos_forward1_large_one_head")
+def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_v4_no_norm_no_pos_forward1_large_one_head(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 4
+    args.dpb_embedding = args.decoder_embed_dim // 4
+    args.dpb_use_pad = False
+    # pos
+    args.no_token_positional_embeddings = True
+##### more layers
