@@ -13,3 +13,4 @@ from .double_fusion import *
 from .toeplitz_attention import *
 from .weight_linear import *
 from .tno_glu import *
+from .tno_glu_no_cls import *
