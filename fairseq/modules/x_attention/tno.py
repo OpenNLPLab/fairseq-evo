@@ -95,10 +95,10 @@ class TNO(nn.Module):
 
         self.num_heads = num_heads
 
-        self.head_dim = embed_dim // num_heads
-        assert (
-            self.head_dim * num_heads == self.embed_dim
-        ), "embed_dim must be divisible by num_heads"
+        # self.head_dim = embed_dim // num_heads
+        # assert (
+        #     self.head_dim * num_heads == self.embed_dim
+        # ), "embed_dim must be divisible by num_heads"
         
 
         self.self_attention = self_attention
