@@ -78,6 +78,8 @@ class TNO(nn.Module):
         transform_type=1,
         gamma=0.999,
         tno_act_type="none",
+        dpb_h=-1,
+        dpb_dim=-1,
         # SE
         use_se=False,
         se_ratio=16,
@@ -280,10 +282,16 @@ class TNO(nn.Module):
                 bias=self.bias,
             )
         elif self.dynamic_type == 4:
+            if dpb_h == -1:
+                dpb_h = self.num_heads
+            if dpb_dim == -1:
+                dpb_dim = self.head_dim
+            print(f"dpb_h {dpb_h}")
+            print(f"dpb_dim {dpb_dim}")
             self.toep = DynamicToepliztMultiheadV4(
-                h=self.num_heads, 
+                h=dpb_h, 
                 n=self.max_l, 
-                dim=self.head_dim,
+                dim=dpb_dim,
                 dpb_dim=self.dpb_embedding, 
                 causal=self.causal, 
                 use_exp=self.use_exp,
