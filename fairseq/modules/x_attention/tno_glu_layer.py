@@ -110,6 +110,7 @@ class TNOGLUEncoderLayer(nn.Module):
             shrink_ratio=getattr(args, "shrink_ratio", 1),
             dpb_h=getattr(args, "dpb_h", -1),
             dpb_dim=getattr(args, "dpb_dim", -1),
+            dpb_layers=getattr(args, "dpb_layers", 3),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -315,6 +316,7 @@ class TNOGLUDecoderLayer(nn.Module):
             shrink_ratio=getattr(args, "shrink_ratio", 1),
             dpb_h=getattr(args, "dpb_h", -1),
             dpb_dim=getattr(args, "dpb_dim", -1),
+            dpb_layers=getattr(args, "dpb_layers", 3),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -368,6 +370,7 @@ class TNOGLUDecoderLayer(nn.Module):
             shrink_ratio=getattr(args, "shrink_ratio", 1),
             dpb_h=getattr(args, "dpb_h", -1),
             dpb_dim=getattr(args, "dpb_dim", -1),
+            dpb_layers=getattr(args, "dpb_layers", 3),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

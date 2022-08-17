@@ -12,6 +12,7 @@ from .dpb_v4 import DynamicPosBiasV4
 from .dpb_v5 import DynamicPosBiasV5
 from .dpb_v6 import DynamicPosBiasV6
 from .dpb_v7 import DynamicPosBiasV7
+from .dpb_v8 import DynamicPosBiasV8
 
 class DynamicToepliztMultiheadV4(nn.Module):
     def __init__(
@@ -35,6 +36,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         gamma=0.999,
         bias=True,
         act_type="none",
+        layers=3,
     ):
         super().__init__()
         self.h = h
@@ -66,6 +68,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.dpb = DynamicPosBiasV6(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias, act=act_type)
         elif self.dpb_type == 7:
             self.dpb = DynamicPosBiasV7(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
+        elif self.dpb_type == 8:
+            self.dpb = DynamicPosBiasV8(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers)
         else:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
 

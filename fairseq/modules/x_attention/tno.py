@@ -80,6 +80,7 @@ class TNO(nn.Module):
         tno_act_type="none",
         dpb_h=-1,
         dpb_dim=-1,
+        dpb_layers=3,
         # SE
         use_se=False,
         se_ratio=16,
@@ -239,6 +240,7 @@ class TNO(nn.Module):
         self.gamma = gamma
         self.bias = bias
         self.tno_act_type = tno_act_type
+        self.dpb_layers = dpb_layers
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -303,6 +305,7 @@ class TNO(nn.Module):
                 par_type=self.par_type,
                 residual=self.residual,
                 dpb_type=self.dpb_type,
+                layers=self.dpb_layers,
                 l=self.l,
                 transform_type=self.transform_type,
                 gamma=self.gamma,
@@ -334,6 +337,8 @@ class TNO(nn.Module):
         print(f"bias {bias}")
         print(f"tno_act_type {self.tno_act_type}")
         print(f"shrink_ratio {self.shrink_ratio}")
+        print(f"dpb_layers {dpb_layers}")
+        print(f"dpb_resi {residual}")
         
         # norm
         self.norm_type = norm_type
