@@ -55,7 +55,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         self.use_decay = use_decay
         if self.use_decay:
-            self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma)
+            self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
         self.use_multi_decay = use_multi_decay
         if self.use_multi_decay:
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
