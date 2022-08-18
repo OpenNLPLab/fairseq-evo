@@ -366,7 +366,6 @@ class LinearKernelAttention(nn.Module):
             attn_output = torch.einsum('nld,ndm,nl->nlm', q, kv, z)
             # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
             attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
-
         # L, N, E
         attn_output = self.out_proj(attn_output)
 

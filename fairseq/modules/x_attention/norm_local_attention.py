@@ -299,6 +299,10 @@ class NormLocalAttention(nn.Module):
             return self.forward_linear_chunk(query, key, value, key_padding_mask, 
                                       incremental_state, need_weights, static_kv,
                                       attn_mask, before_softmax, need_head_weights)
+        elif self.group_type == "vanilla_linear_chunk":
+            return self.forward_vanilla_linear_chunk(query, key, value, key_padding_mask, 
+                                      incremental_state, need_weights, static_kv,
+                                      attn_mask, before_softmax, need_head_weights)
 
     def transform(self, q):
         q = rearrange(q, 'l b (h e) -> l (b h) e', h=self.num_heads)
@@ -595,7 +599,7 @@ class NormLocalAttention(nn.Module):
 
         return output, prob
 
-    # 分组版本
+    # norm linear attention计算分组
     def forward_linear_chunk(
         self,
         query,
@@ -733,6 +737,148 @@ class NormLocalAttention(nn.Module):
 
         # output = output
         return output, prob
+
+    def forward_vanilla_linear_chunk(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        # self.cnt += 1
+        # if self.cnt == 10:
+        #     sys.exit(0)
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        head_dim = embed_dim // num_heads
+
+        tgt_len, bsz, embed_dim = query.size()
+
+        scaling = float(head_dim) ** -0.5
+        # L, N, E1
+        q = self.q_proj(query)
+        # scale
+        q *= scaling
+        # S, N, E1
+        k = self.k_proj(key)
+        # S, N, E2
+        v = self.v_proj(value)
+
+        # 保持q, k, v seq_len维度相同
+        if tgt_len < src_len:
+            q = F.pad(q, (0, 0, 0, 0, 0, src_len - tgt_len))
+        else:
+            k = F.pad(k, (0, 0, 0, 0, 0, tgt_len - src_len))
+            v = F.pad(v, (0, 0, 0, 0, 0, tgt_len - src_len))
+        
+        d = max(tgt_len, src_len)
+        len_pad = (self.chunk_size - d % self.chunk_size) % self.chunk_size
+        q = F.pad(q, (0, 0, 0, 0, 0, len_pad))
+        k = F.pad(k, (0, 0, 0, 0, 0, len_pad))
+        v = F.pad(v, (0, 0, 0, 0, 0, len_pad))
+
+        q = self.transform(q)
+        k = self.transform(k)
+        v = self.transform(v)
+        # n, l, c, d
+
+        # act fun
+        # eps = 1e-3
+        q = self.act(q)
+        k = self.act(k)
+
+        if self.use_urpe:
+            q = self.urpe(q)
+            k = self.urpe(k)
+
+        if self.weight_type == 1:
+            # print("local laplace")
+            m = self.chunk_size
+            index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
+            q_index = index / m
+            k_index = index / m
+            q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
+            k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
+        elif self.weight_type == 2:
+            # print("local guassian")
+            m = self.chunk_size
+            index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
+            q_index = index / m
+            k_index = index / m
+            q = (self.r ** (q_index ** 2)) * q
+            k = (self.r ** (k_index ** 2)) * k
+            q = torch.cat([q, self.c * q], dim=-1)
+            k = torch.cat([k, k], dim=-1)
+
+        # (N * h, g, l, e1), (N * h, g, s, e1) -> (N * h, g, l, s)
+        prob = torch.einsum("bgle,bgse->bgls", q, k)
+
+        if self.causal:
+            attn_mask = (torch.triu(torch.ones(self.chunk_size, self.chunk_size)) == 1).transpose(0, 1).to(q)
+            prob = prob.masked_fill(attn_mask==0, 0)
+        
+        denom = torch.sum(prob, dim=-1, keepdims=True)
+        prob = prob / denom
+        
+        weights = self.dropout_module(prob)
+
+        # (N * h, g, l, s), (N * h, g, s, e2) -> (N * h, g, l, e2)
+        output = torch.einsum("bgls,bgsd->bgld", weights, v)
+        # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
+        # output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
+        output = rearrange(output, 'n l c e -> n (l c) e', c=self.chunk_size)
+        output = rearrange(output, 'n l e -> l n e')
+        output = rearrange(output, 'l (b h) e -> l b (h e)', h=self.num_heads)
+        output = output[:tgt_len, ...]
+        # perform RMSNorm to stabilize running
+        if not self.use_softmax:
+            output = self.gated_rms_norm(output)
+        # outprojection
+        output = self.out_proj(output)
+        if self.use_final_dropout:
+            # print("local_use_final")
+            output = self.final_dropout_module(output)
+
+        # output = output
+        return output, prob
+
 
     @staticmethod
     def _append_prev_key_padding_mask(

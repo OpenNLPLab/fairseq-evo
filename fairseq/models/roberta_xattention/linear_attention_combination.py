@@ -229,3 +229,28 @@ def roberta_base_architecture_local_1elu(args):
     args.glu_act = "swish"
     args.attn_type = "simplermsnorm"
 ##### local relu + other linear
+
+##### abl
+@register_model_architecture("roberta_linear_combination", "roberta_linear_chunk_linear_1+elu")
+def roberta_linear_chunk_linear_1_elu(args):
+    base_architecture(args)
+    args.encoder_attention_types = [5 for _ in range(args.encoder_layers // 2)] + [3 for _ in range(args.encoder_layers // 2)]
+    args.kernel_type = "1+elu"
+    ##### add
+    args.local_act_fun = "1+elu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.encoder_attention_heads = 12
+    args.encoder_use_urpe = False
+    args.group_type = "vanilla_linear_chunk"
+    args.encoder_chunk_size = 64
+    args.local_norm_type = "simplermsnorm"
+    args.norm_type = "simplermsnorm"
+    args.use_urpe = False
+    ##### glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    args.attn_type = "simplermsnorm"
+    ##### softmax
+    args.use_softmax = True
+##### abl
