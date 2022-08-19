@@ -58,6 +58,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
         self.use_multi_decay = use_multi_decay
         if self.use_multi_decay:
+            self.lambda_ = gamma
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
         if self.dpb_type == 4:
@@ -177,6 +178,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 gamma = self.gamma
             else:
                 gamma = torch.sigmoid(self.gamma)
+                gamma = self.lambda_ + (1 - self.lambda_) * gamma
             if self.use_exp:
                 gamma = torch.log(gamma) * coef
                 pos = gamma + pos
@@ -247,6 +249,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 gamma = self.gamma
             else:
                 gamma = torch.sigmoid(self.gamma)
+                gamma = self.lambda_ + (1 - self.lambda_) * gamma
             if self.use_exp:
                 gamma = torch.log(gamma) * coef
                 pos = gamma + pos
@@ -324,6 +327,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 gamma = self.gamma
             else:
                 gamma = torch.sigmoid(self.gamma)
+                gamma = self.lambda_ + (1 - self.lambda_) * gamma
             if self.use_exp:
                 gamma = torch.log(gamma) * coef
                 pos = gamma + pos
