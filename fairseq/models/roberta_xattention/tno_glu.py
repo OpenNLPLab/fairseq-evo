@@ -466,3 +466,117 @@ def roberta_tno_no_exp_base_2_2_standard_no_pos_one_head_dpb_v8_64_l6(args):
     # pos
     args.no_token_positional_embeddings = True
 ##### dpb 64 l6
+
+##### dpb 64 l6 decay
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_3_1_standard_no_pos_one_head_dpb_v8_64_l6_decay_99")
+def roberta_tno_no_exp_base_3_1_standard_no_pos_one_head_dpb_v8_64_l6_decay_99(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 8 
+    args.dpb_embedding = 64
+    args.dpb_use_pad = False
+    args.dpb_layers = 6
+    args.residual = False
+    # pos
+    args.no_token_positional_embeddings = True
+      
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_2_2_standard_no_pos_one_head_dpb_v8_64_l6_decay_99")
+def roberta_tno_no_exp_base_2_2_standard_no_pos_one_head_dpb_v8_64_l6_decay_99(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.encoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 8 
+    args.dpb_embedding = 64
+    args.dpb_use_pad = False
+    args.dpb_layers = 6
+    args.residual = False
+    # pos
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_3_1_standard_no_pos_one_head_dpb_v8_64_l6_decay_999")
+def roberta_tno_no_exp_base_3_1_standard_no_pos_one_head_dpb_v8_64_l6_decay_999(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.999
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 8 
+    args.dpb_embedding = 64
+    args.dpb_use_pad = False
+    args.dpb_layers = 6
+    args.residual = False
+    # pos
+    args.no_token_positional_embeddings = True
+      
+@register_model_architecture("roberta_tno_glu", "roberta_tno_no_exp_base_2_2_standard_no_pos_one_head_dpb_v8_64_l6_decay_999")
+def roberta_tno_no_exp_base_2_2_standard_no_pos_one_head_dpb_v8_64_l6_decay_999(args):
+    base_architecture(args)
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    # model
+    args.expand_ratio = 2
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.999
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = 2 * args.encoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 8 
+    args.dpb_embedding = 64
+    args.dpb_use_pad = False
+    args.dpb_layers = 6
+    args.residual = False
+    # pos
+    args.no_token_positional_embeddings = True
+##### dpb 64 l6 decay
