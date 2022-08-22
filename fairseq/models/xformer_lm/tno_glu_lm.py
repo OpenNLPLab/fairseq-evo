@@ -13578,7 +13578,7 @@ def tno_glu_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_v8_64_no_norm_
     args.dynamic_type = 4
     args.dpb_type = 8 
     args.dpb_embedding = 64
-    args.dpb_use_pad = Falsew
+    args.dpb_use_pad = False
     args.dpb_layers = 1
     args.residual = False
     # pos
