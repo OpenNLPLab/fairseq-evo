@@ -62,17 +62,17 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
 
         if self.dpb_type == 4:
-            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
+            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
         elif self.dpb_type == 5:
-            self.dpb = DynamicPosBiasV5(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias)
+            self.dpb = DynamicPosBiasV5(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias, act=act)
         elif self.dpb_type == 6:
-            self.dpb = DynamicPosBiasV6(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias, act=act_type)
+            self.dpb = DynamicPosBiasV6(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, l=l, transform_type=transform_type, bias=bias, act=act)
         elif self.dpb_type == 7:
-            self.dpb = DynamicPosBiasV7(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
+            self.dpb = DynamicPosBiasV7(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
         elif self.dpb_type == 8:
-            self.dpb = DynamicPosBiasV8(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers)
+            self.dpb = DynamicPosBiasV8(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers, act=act)
         else:
-            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias)
+            self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
 
         if self.causal:
             self.forward = self.forward_causal
