@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 from ..norm import SimpleRMSNorm
+from .act_layer import ActLayer
 
 class DynamicPosBiasV8(nn.Module):
     def __init__(self, dim, outdim, residual, act="relu", bias=True, layers=3):
@@ -30,8 +31,10 @@ class DynamicPosBiasV8(nn.Module):
     def get_act(self):
         if self.act == "silu":
             return nn.SiLU(inplace=True)
-        else:
+        elif self.act == "relu":
             return nn.ReLU(inplace=True)
+        else:
+            return ActLayer(self.act)
 
     def forward(self, biases):
         x = self.pos_proj(biases)

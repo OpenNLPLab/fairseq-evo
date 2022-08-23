@@ -440,7 +440,7 @@ class TNO(nn.Module):
             return f
         elif act_fun == "silu":
             return F.silu
-        elif self.act_fun == "relu2":
+        elif act_fun == "relu2":
             def f(x):
                 return torch.square(torch.relu(x))
             return f
