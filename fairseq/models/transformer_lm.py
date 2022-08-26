@@ -581,3 +581,9 @@ def transformer_lm_wiki103_single_head(args):
 @register_model_architecture("transformer_lm", "transformer_lm_base")
 def transformer_lm_base(args):
     base_lm_architecture(args)
+
+@register_model_architecture("transformer_lm", "transformer_lm_base_alibi")
+def transformer_lm_base_alibi(args):
+    base_lm_architecture(args)
+    args.use_alibi = True
+    args.no_token_positional_embeddings = True

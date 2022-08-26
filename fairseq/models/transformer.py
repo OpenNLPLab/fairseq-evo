@@ -860,6 +860,34 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             if self.output_projection is None:
                 self.build_output_projection(args, dictionary, embed_tokens)
 
+        ##### alibi
+        self.use_alibi = getattr(args, 'use_alibi', False)
+        print(f"use_alibi {self.use_alibi}")
+        if self.use_alibi:
+            def get_slopes(n):
+                def get_slopes_power_of_2(n):
+                    start = (2**(-2**-(math.log2(n)-3)))
+                    ratio = start
+                    return [start*ratio**i for i in range(n)]
+
+                if math.log2(n).is_integer():
+                    return get_slopes_power_of_2(n)                   #In the paper, we only train models that have 2^a heads for some a. This function has
+                else:                                                 #some good properties that only occur when the input is a power of 2. To maintain that even
+                    closest_power_of_2 = 2**math.floor(math.log2(n))  #when the number of heads is not a power of 2, we use this workaround. 
+                    return get_slopes_power_of_2(closest_power_of_2) + get_slopes(2*closest_power_of_2)[0::2][:n-closest_power_of_2]
+
+            maxpos = args.tokens_per_sample
+            attn_heads = args.decoder_attention_heads
+            self.slopes = torch.Tensor(get_slopes(attn_heads))
+            #In the next line, the part after the * is what constructs the diagonal matrix (right matrix in Figure 3 in the paper). 
+            #If you run it you'll see that it doesn't exactly print out the same matrix as we have in Figure 3, but one where all rows are identical.
+            #This works because the softmax operation is invariant to translation, and our bias functions are always linear. 
+            self.alibi = self.slopes.unsqueeze(1).unsqueeze(1) * torch.arange(maxpos).unsqueeze(0).unsqueeze(0).expand(attn_heads, -1, -1)
+            self.alibi = self.alibi.view(attn_heads, 1, maxpos)
+            self.alibi = self.alibi.repeat(args.max_tokens//maxpos, 1, 1)  # batch_size, 1, 1
+            self.buffered_future_mask = self.buffered_future_mask_alibi
+        ##### alibi
+
     def build_output_projection(self, args, dictionary, embed_tokens):
         if args.adaptive_softmax_cutoff is not None:
             self.adaptive_softmax = AdaptiveSoftmax(
@@ -1052,7 +1080,11 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         x = self.dropout_module(x)
         #print(x.shape)
 
-
+        if self.use_alibi:
+            if incremental_state is None and not full_context_alignment:
+                self_attn_mask = self.buffered_future_mask(x)
+            else:
+                self_attn_mask = None
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
         #print(x.shape)
@@ -1065,10 +1097,11 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
         for idx, layer in enumerate(self.layers):
-            if incremental_state is None and not full_context_alignment:
-                self_attn_mask = self.buffered_future_mask(x)
-            else:
-                self_attn_mask = None
+            if not self.use_alibi:
+                if incremental_state is None and not full_context_alignment:
+                    self_attn_mask = self.buffered_future_mask(x)
+                else:
+                    self_attn_mask = None
 
             #print(idx, 'x: ', x.shape)
             x, layer_attn, _ = layer(
@@ -1135,6 +1168,23 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             )
         self._future_mask = self._future_mask.to(tensor)
         return self._future_mask[:dim, :dim]
+
+    ##### alibi
+    def buffered_future_mask_alibi(self, tensor):
+        dim = tensor.size(1)
+        # self._future_mask.device != tensor.device is not working in TorchScript. This is a workaround.
+        if (
+            self._future_mask.size(0) == 0
+            or (not self._future_mask.device == tensor.device)
+            or self._future_mask.size(1) < self.args.tokens_per_sample
+        ):
+            self._future_mask = torch.triu(
+                utils.fill_with_neg_inf(torch.zeros([self.args.tokens_per_sample, self.args.tokens_per_sample])), 1
+            )
+            self._future_mask = self._future_mask.unsqueeze(0) + self.alibi
+        self._future_mask = self._future_mask.to(tensor)
+        return self._future_mask[:tensor.shape[0]*self.args.decoder_attention_heads, :dim, :dim]
+    ##### alibi
 
     def upgrade_state_dict_named(self, state_dict, name):
         """Upgrade a (possibly old) state dict for new versions of fairseq."""
