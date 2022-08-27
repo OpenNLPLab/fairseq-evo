@@ -111,6 +111,7 @@ class TNOGLUEncoderLayer(nn.Module):
             dpb_h=getattr(args, "dpb_h", -1),
             dpb_dim=getattr(args, "dpb_dim", -1),
             dpb_layers=getattr(args, "dpb_layers", 3),
+            decay_type=getattr(args, "decay_type", -1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -317,6 +318,7 @@ class TNOGLUDecoderLayer(nn.Module):
             dpb_h=getattr(args, "dpb_h", -1),
             dpb_dim=getattr(args, "dpb_dim", -1),
             dpb_layers=getattr(args, "dpb_layers", 3),
+            decay_type=getattr(args, "decay_type", -1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),
@@ -371,6 +373,7 @@ class TNOGLUDecoderLayer(nn.Module):
             dpb_h=getattr(args, "dpb_h", -1),
             dpb_dim=getattr(args, "dpb_dim", -1),
             dpb_layers=getattr(args, "dpb_layers", 3),
+            decay_type=getattr(args, "decay_type", -1),
             # se
             use_se=getattr(args, "use_se", False),
             se_ratio=getattr(args, "se_ratio", 16),

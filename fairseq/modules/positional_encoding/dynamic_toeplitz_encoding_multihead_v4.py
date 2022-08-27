@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import math
 from einops import rearrange, repeat
 from .dpb import DynamicPosBias
 from .dpb_v4 import DynamicPosBiasV4
@@ -13,6 +14,19 @@ from .dpb_v5 import DynamicPosBiasV5
 from .dpb_v6 import DynamicPosBiasV6
 from .dpb_v7 import DynamicPosBiasV7
 from .dpb_v8 import DynamicPosBiasV8
+
+def get_slopes(n):
+    def get_slopes_power_of_2(n):
+        start = (2**(-2**-(math.log2(n)-3)))
+        ratio = start
+        return [start*ratio**i for i in range(n)]
+
+    if math.log2(n).is_integer():
+        return get_slopes_power_of_2(n)                   #In the paper, we only train models that have 2^a heads for some a. This function has
+    else:                                                 #some good properties that only occur when the input is a power of 2. To maintain that even
+        closest_power_of_2 = 2**math.floor(math.log2(n))  #when the number of heads is not a power of 2, we use this workaround. 
+        return get_slopes_power_of_2(closest_power_of_2) + get_slopes(2*closest_power_of_2)[0::2][:n-closest_power_of_2]
+
 
 class DynamicToepliztMultiheadV4(nn.Module):
     def __init__(
@@ -37,6 +51,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         bias=True,
         act_type="none",
         layers=3,
+        decay_type=-1,
     ):
         super().__init__()
         self.h = h
@@ -55,7 +70,18 @@ class DynamicToepliztMultiheadV4(nn.Module):
 
         self.use_decay = use_decay
         if self.use_decay:
-            self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
+            if decay_type == 1:
+                print("alibi")
+                t = torch.exp(-torch.Tensor(get_slopes(self.h))).reshape(self.h, 1)
+                print(t)
+                t = repeat(t, 'h 1 -> h 1 d', d=self.dim)
+                self.gamma = nn.Parameter(t, requires_grad=False)
+            elif decay_type == -1:
+                print(f"gamma {self.gamma}")
+                self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
+            else:
+                print(f"gamma {self.gamma}")
+                self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
         self.use_multi_decay = use_multi_decay
         if self.use_multi_decay:
             self.lambda_ = gamma
