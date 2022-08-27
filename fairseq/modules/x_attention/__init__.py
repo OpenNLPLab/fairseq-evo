@@ -65,3 +65,7 @@ from .tno import TNO
 from .tno_layer import TNOEncoderLayer, TNODecoderLayer
 from .tno_ffn_layer import TNOFFNEncoderLayer, TNOFFNDecoderLayer
 from .tno_glu_layer import TNOGLUEncoderLayer, TNOGLUDecoderLayer
+
+from .gss import GSS
+from .gss_module import GSSModule
+from .gss_layer import GSSEncoderLayer, GSSDecoderLayer

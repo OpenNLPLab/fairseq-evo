@@ -21,3 +21,4 @@ from .weight_linear import WeightLinearEncoder, WeightLinearDecoder
 from .tno import TNOEncoder, TNODecoder
 from .tno_ffn import TNOFFNEncoder, TNOFFNDecoder
 from .tno_glu import TNOGLUEncoder, TNOGLUDecoder
+from .gss import GSSEncoder, GSSDecoder

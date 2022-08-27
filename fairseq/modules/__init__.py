@@ -145,6 +145,10 @@ from .x_attention import TNOEncoderLayer, TNODecoderLayer
 from .x_attention import TNOFFNEncoderLayer, TNOFFNDecoderLayer
 from .x_attention import TNOGLUEncoderLayer, TNOGLUDecoderLayer
 ##### tno
+##### GSS
+from .x_attention import GSS
+from .x_attention import GSSEncoderLayer, GSSDecoderLayer
+##### GSS
 ########## xattention
 
 ########## sparse
