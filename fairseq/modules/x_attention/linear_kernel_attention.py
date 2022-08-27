@@ -43,7 +43,7 @@ class LinearKernelAttention(nn.Module):
         qn_block_size=8,
         # add
         causal=False,
-        use_urpe=True,
+        use_urpe=False,
         kernel_type="1+elu",
         core_matrix=1, 
         p_matrix=1, 
