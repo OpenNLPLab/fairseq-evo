@@ -28,7 +28,7 @@ class LinearKernelAttentionEncoderLayer(TransformerEncoderLayer):
             qn_block_size=self.quant_noise_block_size,
             # add
             causal=getattr(args, "causal", False),
-            use_urpe=getattr(args, "use_urpe", True),
+            use_urpe=getattr(args, "use_urpe", False),
             kernel_type=getattr(args, "kernel_type", "1+elu"),
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
@@ -64,7 +64,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             qn_block_size=self.quant_noise_block_size,
             # add
             causal=getattr(args, "causal", False),
-            use_urpe=getattr(args, "use_urpe", True),
+            use_urpe=getattr(args, "use_urpe", False),
             kernel_type=getattr(args, "kernel_type", "1+elu"),
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
@@ -92,7 +92,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             qn_block_size=self.quant_noise_block_size,
             # add
             causal=getattr(args, "causal", False),
-            use_urpe=getattr(args, "use_urpe", True),
+            use_urpe=getattr(args, "use_urpe", False),
             kernel_type=getattr(args, "kernel_type", "1+elu"),
             core_matrix=getattr(args, "core_matrix", 1),
             p_matrix=getattr(args, "p_matrix", 1),
