@@ -34,12 +34,12 @@ from fairseq.models.transformer_lm import (
     transformer_lm_big,
 )
 
-from ..xformer import GSSDecoder
+from ..xformer import DSSDecoder
 
-@register_model("gss_lm", dataclass=TransformerLanguageModelConfig)
-class GSSLanguageModel(TransformerLanguageModel):
+@register_model("dss_lm", dataclass=TransformerLanguageModelConfig)
+class DSSLanguageModel(TransformerLanguageModel):
     def __init__(self, decoder):
-        super(GSSLanguageModel, self).__init__(decoder)
+        super(DSSLanguageModel, self).__init__(decoder)
 
     @classmethod
     def build_model(cls, args, task):
@@ -87,16 +87,16 @@ class GSSLanguageModel(TransformerLanguageModel):
             )
             assert args.decoder_input_dim == args.decoder_output_dim
 
-        decoder = GSSDecoder(
+        decoder = DSSDecoder(
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
 
-@register_model_architecture("gss_lm", "gss_lm_base")
-def gss_lm_base(args):
+@register_model_architecture("dss_lm", "dss_lm_base")
+def dss_lm_base(args):
     base_lm_architecture(args)
-    args.dim_expansion_factor = 4
-    args.dss_kernel_N = 512
-    args.dss_kernel_H = 256
-    args.dss_kernel_lambda_imag_exp = True
-    args.no_token_positional_embeddings = True
+    args.d_state = 64
+    args.bidirectional = False
+    args.decoder_embed_dim = 1024
+    args.decoder_layers = 12
+    args.decoder_layers = 16

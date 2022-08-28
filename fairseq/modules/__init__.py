@@ -146,9 +146,13 @@ from .x_attention import TNOFFNEncoderLayer, TNOFFNDecoderLayer
 from .x_attention import TNOGLUEncoderLayer, TNOGLUDecoderLayer
 ##### tno
 ##### GSS
-from .x_attention import GSS
-from .x_attention import GSSEncoderLayer, GSSDecoderLayer
+from .state_space import GSS
+from .state_space import GSSEncoderLayer, GSSDecoderLayer
 ##### GSS
+##### DSS
+from .state_space import DSS
+from .state_space import DSSEncoderLayer, DSSDecoderLayer
+##### DSS
 ########## xattention
 
 ########## sparse

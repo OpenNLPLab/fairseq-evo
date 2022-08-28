@@ -76,6 +76,9 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 print(t)
                 t = repeat(t, 'h 1 -> h 1 d', d=self.dim)
                 self.gamma = nn.Parameter(t, requires_grad=False)
+            elif decay_type == 2:
+                print("double decay")
+                
             elif decay_type == -1:
                 print(f"gamma {self.gamma}")
                 self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
