@@ -63,6 +63,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         self.use_pad = use_pad
         self.par_type = par_type
         self.dpb_type = dpb_type
+        self.gamma = gamma
         if self.use_exp:
             self.zero_value = float("-inf")
         else:
@@ -78,7 +79,6 @@ class DynamicToepliztMultiheadV4(nn.Module):
                 self.gamma = nn.Parameter(t, requires_grad=False)
             elif decay_type == 2:
                 print("double decay")
-                
             elif decay_type == -1:
                 print(f"gamma {self.gamma}")
                 self.gamma = nn.Parameter(torch.ones(self.h, 1, self.dim) * gamma, requires_grad=False)
