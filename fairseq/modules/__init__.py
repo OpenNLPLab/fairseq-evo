@@ -153,6 +153,9 @@ from .state_space import GSSEncoderLayer, GSSDecoderLayer
 from .state_space import DSS
 from .state_space import DSSEncoderLayer, DSSDecoderLayer
 ##### DSS
+##### S4
+from .state_space import S4EncoderLayer, S4DecoderLayer
+##### S4
 ########## xattention
 
 ########## sparse

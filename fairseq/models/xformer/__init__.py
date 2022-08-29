@@ -23,3 +23,4 @@ from .tno_ffn import TNOFFNEncoder, TNOFFNDecoder
 from .tno_glu import TNOGLUEncoder, TNOGLUDecoder
 from .gss import GSSEncoder, GSSDecoder
 from .dss import DSSEncoder, DSSDecoder
+from .s4 import S4Encoder, S4Decoder
