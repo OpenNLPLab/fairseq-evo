@@ -22,7 +22,6 @@ class SynthesizerDense(nn.Module):
                 mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             energy = energy.masked_fill(mask==float("-inf"), 0)
-
         prob = F.softmax(energy, dim=-1)
         output = torch.matmul(prob, x[:, :m, :])
 
@@ -46,7 +45,6 @@ class SynthesizerRandom(nn.Module):
                 mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             energy = energy.masked_fill(mask==float("-inf"), 0)
-
         prob = F.softmax(energy, dim=-1)
         output = torch.matmul(prob, x[:, :m, :])
         if m < n:

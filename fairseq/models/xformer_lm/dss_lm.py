@@ -98,5 +98,5 @@ def dss_lm_base(args):
     args.d_state = 64
     args.bidirectional = False
     args.decoder_embed_dim = 1024
-    args.decoder_layers = 12
     args.decoder_layers = 16
+    args.no_token_positional_embeddings = True
