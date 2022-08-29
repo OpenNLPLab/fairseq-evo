@@ -60,17 +60,19 @@ class Synthesizer(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        print("synthesizer_type {synthesizer_type}")
-        print("max_seq_len {max_seq_len}")
-        print("causal {causal}")
+        print(f"synthesizer_type {synthesizer_type}")
+        print(f"max_seq_len {max_seq_len}")
+        print(f"causal {causal}")
         if synthesizer_type == "dense":
             self.synthesizer = SynthesizerDense(
                 dim=embed_dim, 
                 max_seq_len=max_seq_len,
+                causal=causal,
             )
         else:
             self.synthesizer = SynthesizerRandom(
                 max_seq_len=max_seq_len,
+                causal=causal,
             )
 
     def prepare_for_onnx_export_(self):
@@ -119,7 +121,7 @@ class Synthesizer(nn.Module):
         - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
           the embedding dimension.
         '''
-        output, state = self.synthesizer(query.transpose(0, 1))
+        output = self.synthesizer(query.transpose(0, 1), mask=attn_mask)
         output = output.transpose(0, 1)
         
         return output, None

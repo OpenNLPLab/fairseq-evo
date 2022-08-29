@@ -21,6 +21,7 @@ from .weight_linear import WeightLinearEncoder, WeightLinearDecoder
 from .tno import TNOEncoder, TNODecoder
 from .tno_ffn import TNOFFNEncoder, TNOFFNDecoder
 from .tno_glu import TNOGLUEncoder, TNOGLUDecoder
+from .synthesizer import SynthesizerEncoder, SynthesizerDecoder
 from .gss import GSSEncoder, GSSDecoder
 from .dss import DSSEncoder, DSSDecoder
 from .s4 import S4Encoder, S4Decoder

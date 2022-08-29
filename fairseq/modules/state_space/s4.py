@@ -130,9 +130,9 @@ try: # Try pykeops
 except ImportError:
     has_pykeops = False
     if not has_cauchy_extension:
-        log.warning(
-            "Falling back on slow Cauchy kernel. Install at least one of pykeops or the CUDA extension for efficiency."
-        )
+        # log.warning(
+        #     "Falling back on slow Cauchy kernel. Install at least one of pykeops or the CUDA extension for efficiency."
+        # )
         def cauchy_naive(v, z, w):
             """
             v, w: (..., N)
@@ -143,9 +143,9 @@ except ImportError:
             return torch.sum(cauchy_matrix, dim=-2)
 
     # Vandermonde functions
-    log.warning(
-        "Falling back on slow Vandermonde kernel. Install pykeops for improved memory efficiency."
-    )
+    # log.warning(
+    #     "Falling back on slow Vandermonde kernel. Install pykeops for improved memory efficiency."
+    # )
     def log_vandermonde(v, x, L):
         """
         v: (..., N)

@@ -145,6 +145,13 @@ from .x_attention import TNOEncoderLayer, TNODecoderLayer
 from .x_attention import TNOFFNEncoderLayer, TNOFFNDecoderLayer
 from .x_attention import TNOGLUEncoderLayer, TNOGLUDecoderLayer
 ##### tno
+##### Synthesizer
+from .x_attention import Synthesizer
+from .x_attention import SynthesizerEncoderLayer, SynthesizerDecoderLayer
+##### Synthesizer
+########## xattention
+
+########## state space
 ##### GSS
 from .state_space import GSS
 from .state_space import GSSEncoderLayer, GSSDecoderLayer
@@ -156,7 +163,7 @@ from .state_space import DSSEncoderLayer, DSSDecoderLayer
 ##### S4
 from .state_space import S4EncoderLayer, S4DecoderLayer
 ##### S4
-########## xattention
+########## state space
 
 ########## sparse
 # from .sparse_multihead_attention import SparseMultiheadAttention
