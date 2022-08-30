@@ -165,6 +165,15 @@ from .state_space import S4EncoderLayer, S4DecoderLayer
 ##### S4
 ########## state space
 
+########## fourier
+##### fnet
+from .fourier import FNetEncoderLayer, FNetDecoderLayer
+##### fnet
+##### afno
+from .fourier import AFNOEncoderLayer, AFNODecoderLayer
+##### afno
+########## fourier
+
 ########## sparse
 # from .sparse_multihead_attention import SparseMultiheadAttention
 # from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
