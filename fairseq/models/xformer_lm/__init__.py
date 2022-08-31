@@ -28,3 +28,4 @@ from .gss_lm import *
 from .dss_lm import *
 from .s4_lm import *
 from .synthesizer_lm import *
+from .gmlp_lm import *

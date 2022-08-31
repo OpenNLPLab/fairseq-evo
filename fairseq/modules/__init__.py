@@ -177,6 +177,12 @@ from .fourier import GlobalFilterEncoderLayer, GlobalFilterDecoderLayer
 ##### gfn
 ########## fourier
 
+########## mlp
+##### gmlp
+from .mlp import GMLPEncoderLayer, GMLPDecoderLayer
+##### gmlp
+########## mlp
+
 ########## sparse
 # from .sparse_multihead_attention import SparseMultiheadAttention
 # from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
