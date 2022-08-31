@@ -25,7 +25,7 @@ class SpatialGatingUnit(nn.Module):
                 mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             weight = weight.masked_fill(mask==float("-inf"), 0)
-        v = torch.einsum('bnd,nm->bmd', v[:, :m], weight)
+        v = torch.einsum('bnd,mn->bmd', v[:, :m], weight)
         if m < n:
             v = F.pad(v, (0, 0, 0, n - m, 0, 0))
         return u * v
