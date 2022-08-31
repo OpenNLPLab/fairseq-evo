@@ -27,3 +27,4 @@ from .dss import DSSEncoder, DSSDecoder
 from .s4 import S4Encoder, S4Decoder
 from .fnet import FNetEncoder, FNetDecoder
 from .afno import AFNOEncoder, AFNODecoder
+from .gfn import GlobalFilterEncoder, GlobalFilterDecoder

@@ -172,6 +172,9 @@ from .fourier import FNetEncoderLayer, FNetDecoderLayer
 ##### afno
 from .fourier import AFNOEncoderLayer, AFNODecoderLayer
 ##### afno
+##### gfn
+from .fourier import GlobalFilterEncoderLayer, GlobalFilterDecoderLayer
+##### gfn
 ########## fourier
 
 ########## sparse
