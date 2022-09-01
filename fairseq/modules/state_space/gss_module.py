@@ -43,6 +43,7 @@ class GSSModule(nn.Module):
         dss_kernel_H=256,
         reverse_seq=False,
         dss_kernel_lambda_imag_exp=True,
+        causal=True,
     ):
         # add
         self.index = index
@@ -62,7 +63,8 @@ class GSSModule(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        self.gss = GSS(embed_dim, dim_expansion_factor, dss_kernel_N, dss_kernel_H, reverse_seq, dss_kernel_lambda_imag_exp)
+        print(f"gss causal {causal}")
+        self.gss = GSS(embed_dim, dim_expansion_factor, dss_kernel_N, dss_kernel_H, reverse_seq, dss_kernel_lambda_imag_exp, causal)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

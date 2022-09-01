@@ -50,6 +50,7 @@ class GSSEncoderLayer(nn.Module):
             dss_kernel_H=getattr(args, "dss_kernel_H", 256),
             reverse_seq=getattr(args, "reverse_seq", False),
             dss_kernel_lambda_imag_exp=getattr(args, "dss_kernel_lambda_imag_exp", True),
+            causal=getattr(args, "causal", True),
         )
 
     def residual_connection(self, x, residual):
@@ -171,6 +172,7 @@ class GSSDecoderLayer(nn.Module):
             dss_kernel_H=getattr(args, "dss_kernel_H", 256),
             reverse_seq=getattr(args, "reverse_seq", False),
             dss_kernel_lambda_imag_exp=getattr(args, "dss_kernel_lambda_imag_exp", True),
+            causal=getattr(args, "causal", True),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -189,6 +191,7 @@ class GSSDecoderLayer(nn.Module):
             dss_kernel_H=getattr(args, "dss_kernel_H", 256),
             reverse_seq=getattr(args, "reverse_seq", False),
             dss_kernel_lambda_imag_exp=getattr(args, "dss_kernel_lambda_imag_exp", True),
+            causal=getattr(args, "causal", True),
         )
 
     def prepare_for_onnx_export_(self):

@@ -65,3 +65,14 @@ def roberta_gss_base(args):
     args.dss_kernel_lambda_imag_exp = True
     args.no_token_positional_embeddings = True
     args.encoder_layers = 14
+    
+@register_model_architecture("roberta_gss", "roberta_gss_non_causal_base")
+def roberta_gss_non_causal_base(args):
+    base_architecture(args)
+    args.dim_expansion_factor = 4
+    args.dss_kernel_N = 512
+    args.dss_kernel_H = 256
+    args.dss_kernel_lambda_imag_exp = True
+    args.no_token_positional_embeddings = True
+    args.encoder_layers = 14
+    args.causal = False

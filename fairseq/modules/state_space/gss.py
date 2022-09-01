@@ -83,10 +83,12 @@ class GSS(nn.Module):
         dss_kernel_N = 512,
         dss_kernel_H = 256,
         reverse_seq = False,
-        dss_kernel_lambda_imag_exp = True
+        dss_kernel_lambda_imag_exp = True,
+        causal = True,
     ):
         super().__init__()
         self.reverse_seq = reverse_seq
+        self.causal = causal
         self.norm = nn.LayerNorm(dim)
 
         dim_hidden = int(dim_expansion_factor * dim)
@@ -107,7 +109,10 @@ class GSS(nn.Module):
         u = self.to_u(x)
         v = self.to_v(x)
 
-        v = self.dss(v)
+        if self.causal:
+            v = self.dss(v)
+        else:
+            v = self.dss(v) + torch.flip(self.dss(torch.flip(v, dims=(1,))), dims=(1,))
 
         uc = self.to_gate(v)
         out = self.to_out(uc * u)
