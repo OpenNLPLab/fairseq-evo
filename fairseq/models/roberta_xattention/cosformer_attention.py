@@ -58,8 +58,8 @@ class RobertaCosformerModel(RobertaModel):
         return cls(args, encoder)
 
 # cosformer
-@register_model_architecture("roberta_cosformer", "roberta_cosformer_v1")
-def roberta_cosformer_architecture_v1(args):
+@register_model_architecture("roberta_cosformer", "roberta_cosformer_base")
+def roberta_cosformer_base(args):
     base_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.causal = False
