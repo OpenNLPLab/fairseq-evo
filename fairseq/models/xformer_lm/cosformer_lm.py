@@ -161,3 +161,11 @@ def cosformer_lm_12_layers(args):
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 2048)
     args.causal = True
+    
+@register_model_architecture("cosformer_lm", "cosformer_lm_base")
+def cosformer_lm_base(args):
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True

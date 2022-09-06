@@ -1010,3 +1010,36 @@ def tno_silu_simplermsnorm_toep_no_use_exp_1_rate_4_dpb_v4_no_norm_no_pos_forwar
     # pos
     args.no_token_positional_embeddings = True
 ##### expand 4 shrink 4
+
+##### ablation
+@register_model_architecture("tno_lm", "tno_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_v8_64_no_norm_no_pos_forward1_large_dpb_l6_decay_99")
+def tno_silu_simplermsnorm_toep_no_use_exp_1_rate_3_glu_1_dpb_v8_64_no_norm_no_pos_forward1_large_dpb_l6_decay_99(args):
+    base_lm_architecture(args)
+    args.act_fun = "silu"
+    args.causal = True
+    # norm
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # Toeplizt
+    args.use_exp = False
+    args.toep_type = 1
+    args.max_l = 512
+    args.use_decay = True
+    args.gamma = 0.99
+    # model
+    args.expand_ratio = 3
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 9
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # dpb
+    args.dynamic_type = 4
+    args.dpb_type = 8 
+    args.dpb_embedding = 64
+    args.dpb_use_pad = False
+    args.dpb_layers = 6
+    args.residual = False
+    # pos
+    args.no_token_positional_embeddings = True
+##### ablation

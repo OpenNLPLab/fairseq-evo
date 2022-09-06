@@ -57,6 +57,7 @@ from .positional_encoding import DynamicToepliztMultihead
 from .positional_encoding import DynamicToepliztMultiheadV2
 from .positional_encoding import DynamicToepliztMultiheadV3
 from .positional_encoding import DynamicToepliztMultiheadV4
+from .positional_encoding import NonDynamicToepliztMultihead
 ########## positional encoding
 
 ########## norm

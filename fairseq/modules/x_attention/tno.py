@@ -23,6 +23,7 @@ from fairseq.modules import DynamicToepliztMultihead
 from fairseq.modules import DynamicToepliztMultiheadV2
 from fairseq.modules import DynamicToepliztMultiheadV3
 from fairseq.modules import DynamicToepliztMultiheadV4
+from fairseq.modules import NonDynamicToepliztMultihead
 from einops import rearrange
 
 @with_incremental_state
@@ -293,6 +294,36 @@ class TNO(nn.Module):
             print(f"dpb_h {dpb_h}")
             print(f"dpb_dim {dpb_dim}")
             self.toep = DynamicToepliztMultiheadV4(
+                h=dpb_h, 
+                n=self.max_l, 
+                dim=dpb_dim,
+                dpb_dim=self.dpb_embedding, 
+                causal=self.causal, 
+                use_exp=self.use_exp,
+                use_neg_exp=self.use_neg_exp,
+                use_decay=self.use_decay, 
+                use_multi_decay=self.use_multi_decay,
+                use_pad=self.dpb_use_pad,
+                act=self.dpb_act,
+                par_type=self.par_type,
+                residual=self.residual,
+                dpb_type=self.dpb_type,
+                layers=self.dpb_layers,
+                l=self.l,
+                transform_type=self.transform_type,
+                gamma=self.gamma,
+                bias=self.bias,
+                act_type=self.tno_act_type,
+                decay_type=self.decay_type,
+            )
+        elif self.dynamic_type == 5:
+            if dpb_h == -1:
+                dpb_h = self.num_heads
+            if dpb_dim == -1:
+                dpb_dim = self.head_dim
+            print(f"dpb_h {dpb_h}")
+            print(f"dpb_dim {dpb_dim}")
+            self.toep = NonDynamicToepliztMultihead(
                 h=dpb_h, 
                 n=self.max_l, 
                 dim=dpb_dim,
