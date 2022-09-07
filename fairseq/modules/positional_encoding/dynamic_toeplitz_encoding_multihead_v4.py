@@ -52,6 +52,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
         act_type="none",
         layers=3,
         decay_type=-1,
+        use_norm1=True, 
+        use_norm2=True,
     ):
         super().__init__()
         self.h = h
@@ -99,7 +101,7 @@ class DynamicToepliztMultiheadV4(nn.Module):
         elif self.dpb_type == 7:
             self.dpb = DynamicPosBiasV7(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
         elif self.dpb_type == 8:
-            self.dpb = DynamicPosBiasV8(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers, act=act)
+            self.dpb = DynamicPosBiasV8(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers, act=act, use_norm1=use_norm1, use_norm2=use_norm2)
         else:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
 

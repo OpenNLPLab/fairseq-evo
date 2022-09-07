@@ -88,6 +88,8 @@ class TNO(nn.Module):
         se_ratio=16,
         # token shift
         token_shift_type=-1,
+        use_norm1=True,
+        use_norm2=True,
     ):
         # add
         self.index = index
@@ -244,6 +246,8 @@ class TNO(nn.Module):
         self.tno_act_type = tno_act_type
         self.dpb_layers = dpb_layers
         self.decay_type = decay_type
+        self.use_norm1 = use_norm1
+        self.use_norm2 = use_norm2
         if self.use_dynamic:
             self.toep = DynamicToepliztMultihead(
                 h=self.num_heads, 
@@ -315,6 +319,8 @@ class TNO(nn.Module):
                 bias=self.bias,
                 act_type=self.tno_act_type,
                 decay_type=self.decay_type,
+                use_norm1=self.use_norm1, 
+                use_norm2=self.use_norm2,
             )
         elif self.dynamic_type == 5:
             if dpb_h == -1:

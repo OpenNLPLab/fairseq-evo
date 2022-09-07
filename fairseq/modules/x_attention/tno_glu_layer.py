@@ -119,6 +119,8 @@ class TNOGLUEncoderLayer(nn.Module):
             bias=getattr(args, "bias", True),
             # token shift
             token_shift_type=getattr(args, "token_shift_type", -1),
+            use_norm1=getattr(args, "use_norm1", True),
+            use_norm2=getattr(args, "use_norm2", True),
         )
         
     def residual_connection(self, x, residual):
@@ -326,6 +328,8 @@ class TNOGLUDecoderLayer(nn.Module):
             bias=getattr(args, "bias", True),
             # token shift
             token_shift_type=getattr(args, "token_shift_type", -1),
+            use_norm1=getattr(args, "use_norm1", True),
+            use_norm2=getattr(args, "use_norm2", True),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -381,6 +385,8 @@ class TNOGLUDecoderLayer(nn.Module):
             bias=getattr(args, "bias", True),
             # token shift
             token_shift_type=getattr(args, "token_shift_type", -1),
+            use_norm1=getattr(args, "use_norm1", True),
+            use_norm2=getattr(args, "use_norm2", True),
         )
         
     def prepare_for_onnx_export_(self):
