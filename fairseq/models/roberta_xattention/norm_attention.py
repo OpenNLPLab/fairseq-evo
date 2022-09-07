@@ -3199,3 +3199,31 @@ def roberta_no_norm_architecture(args):
     args.attention_use_layer_norm = False
     args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
 ##### norm(1 + elu)
+
+##### cos
+@register_model_architecture("roberta_norm_attention", "roberta_norm_cos")
+def roberta_base_elu_architecture(args):
+    base_architecture(args)
+    ##### add
+    args.linear_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.norm_type = "simplermsnorm"
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+    # cos
+    args.weight_type = 3
+    args.encoder_use_urpe = False
+
+@register_model_architecture("roberta_norm_attention", "roberta_norm_cos_urpe")
+def roberta_base_elu_architecture(args):
+    base_architecture(args)
+    ##### add
+    args.linear_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.norm_type = "simplermsnorm"
+    args.encoder_attention_types = [1 for _ in range(args.encoder_layers)]
+    # cos
+    args.weight_type = 3
+    args.encoder_use_urpe = True
+##### cos
