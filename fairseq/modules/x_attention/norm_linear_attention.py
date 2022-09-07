@@ -442,6 +442,14 @@ class NormLinearAttention(nn.Module):
             k = (self.r ** (k_index ** 2)) * k
             q = torch.cat([q, self.c * q], dim=-1)
             k = torch.cat([k, k], dim=-1)
+        elif self.weight_type == 3:
+            # print("cos")
+            m = max(tgt_len, src_len)
+            index = torch.arange(m).reshape(1, -1, 1).to(q)
+            q_index = np.pi / 2 * index[:, :tgt_len, :] / m
+            k_index = np.pi / 2 * index[:, :src_len, :] / m
+            q = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
+            k = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
 
         if self.causal:
             if (attn_mask == None):

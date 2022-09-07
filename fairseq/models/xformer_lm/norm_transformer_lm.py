@@ -1362,3 +1362,28 @@ def transofrmer_norm_lm_pure_linear_1_elu_toep_exp(args):
     args.use_toeplizt = True
     args.type_num = 1
 ########## norm linear + toeplizt
+
+##### cos
+@register_model_architecture("norm_attention_lm", "norm_lm_pure_linear_cosformer_urpe")
+def transofrmer_norm_lm_pure_linear_1_elu(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args.weight_type = 3
+    args.decoder_use_urpe = True
+    
+@register_model_architecture("norm_attention_lm", "norm_lm_pure_linear_cosformer")
+def transofrmer_norm_lm_pure_linear_1_elu(args):
+    base_lm_architecture(args)
+    ##### add
+    args.linear_act_fun = "relu"
+    args.max_l = getattr(args, "max_l", 512)
+    args.has_out = True
+    args.decoder_attention_types = [1 for _ in range(args.decoder_layers)]
+    args.norm_type = "simplermsnorm"
+    args.weight_type = 3
+##### cos
