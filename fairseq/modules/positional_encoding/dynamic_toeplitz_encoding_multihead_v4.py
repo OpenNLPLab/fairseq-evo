@@ -14,6 +14,7 @@ from .dpb_v5 import DynamicPosBiasV5
 from .dpb_v6 import DynamicPosBiasV6
 from .dpb_v7 import DynamicPosBiasV7
 from .dpb_v8 import DynamicPosBiasV8
+from .dpb_v9 import DynamicPosBiasV9
 
 def get_slopes(n):
     def get_slopes_power_of_2(n):
@@ -104,6 +105,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
             self.dpb = DynamicPosBiasV7(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
         elif self.dpb_type == 8:
             self.dpb = DynamicPosBiasV8(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers, act=act, use_norm1=use_norm1, use_norm2=use_norm2)
+        elif self.dpb_type == 9:
+            self.dpb = DynamicPosBiasV9(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, layers=layers, act=act, use_norm1=use_norm1, use_norm2=use_norm2, transform_type=transform_type, l=l)
         else:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
 
