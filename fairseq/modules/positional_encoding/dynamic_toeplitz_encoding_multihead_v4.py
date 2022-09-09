@@ -91,6 +91,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
         if self.use_multi_decay:
             self.lambda_ = gamma
             self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
+            print("learnable sigmoid")
+            print(f"self.lambda_ {self.lambda_}")
 
         if self.dpb_type == 4:
             self.dpb = DynamicPosBiasV4(dim=dpb_dim, outdim=self.h * self.dim, residual=residual, bias=bias, act=act)
