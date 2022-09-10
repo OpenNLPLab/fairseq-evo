@@ -216,6 +216,28 @@ class TNO(nn.Module):
                 nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
             )
             self.forward = self.forward6
+        elif self.toep_type == 8:
+            print("================")
+            self.q_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            self.k_proj = quant_noise(
+                nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.v_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.u_proj = quant_noise(
+                nn.Linear(embed_dim, d1, bias=bias), q_noise, qn_block_size
+            )
+            # d^2
+            self.o = quant_noise(
+                nn.Linear(d1, embed_dim, bias=bias), q_noise, qn_block_size
+            )
+            self.forward = self.forward8
+        
             
         self.causal = causal
         self.act = self.get_act_fun(act_fun)
@@ -248,112 +270,113 @@ class TNO(nn.Module):
         self.decay_type = decay_type
         self.use_norm1 = use_norm1
         self.use_norm2 = use_norm2
-        if self.use_dynamic:
-            self.toep = DynamicToepliztMultihead(
-                h=self.num_heads, 
-                n=self.max_l, 
-                d=self.dpb_embedding, 
-                causal=self.causal, 
-                use_exp=self.use_exp, 
-                use_neg_exp=self.use_neg_exp,
-                use_decay=self.use_decay,
-                use_multi_decay=self.use_multi_decay,
-                bias=self.bias,
-            )
-        elif self.use_dynamic_v2:
-            self.toep = DynamicToepliztMultiheadV2(
-                h=self.num_heads, 
-                n=self.max_l, 
-                d=self.dpb_embedding, 
-                causal=self.causal, 
-                use_exp=self.use_exp,
-                use_neg_exp=self.use_neg_exp,
-                use_decay=self.use_decay, 
-                use_multi_decay=self.use_multi_decay,
-                act=self.dpb_act,
-                use_pad=self.dpb_use_pad,
-                bias=self.bias,
-            )
-        elif self.use_dynamic_v3:
-            self.toep = DynamicToepliztMultiheadV3(
-                h=self.num_heads, 
-                n=self.max_l, 
-                dim=self.head_dim,
-                dpb_dim=self.dpb_embedding, 
-                causal=self.causal, 
-                use_exp=self.use_exp,
-                use_neg_exp=self.use_neg_exp,
-                use_decay=self.use_decay, 
-                use_multi_decay=self.use_multi_decay,
-                use_pad=self.dpb_use_pad,
-                par_type=self.par_type,
-                dpb_type=self.dpb_type,
-                bias=self.bias,
-            )
-        elif self.dynamic_type == 4:
-            if dpb_h == -1:
-                dpb_h = self.num_heads
-            if dpb_dim == -1:
-                dpb_dim = self.head_dim
-            print(f"dpb_h {dpb_h}")
-            print(f"dpb_dim {dpb_dim}")
-            self.toep = DynamicToepliztMultiheadV4(
-                h=dpb_h, 
-                n=self.max_l, 
-                dim=dpb_dim,
-                dpb_dim=self.dpb_embedding, 
-                causal=self.causal, 
-                use_exp=self.use_exp,
-                use_neg_exp=self.use_neg_exp,
-                use_decay=self.use_decay, 
-                use_multi_decay=self.use_multi_decay,
-                use_pad=self.dpb_use_pad,
-                act=self.dpb_act,
-                par_type=self.par_type,
-                residual=self.residual,
-                dpb_type=self.dpb_type,
-                layers=self.dpb_layers,
-                l=self.l,
-                transform_type=self.transform_type,
-                gamma=self.gamma,
-                bias=self.bias,
-                act_type=self.tno_act_type,
-                decay_type=self.decay_type,
-                use_norm1=self.use_norm1, 
-                use_norm2=self.use_norm2,
-            )
-        elif self.dynamic_type == 5:
-            if dpb_h == -1:
-                dpb_h = self.num_heads
-            if dpb_dim == -1:
-                dpb_dim = self.head_dim
-            print(f"dpb_h {dpb_h}")
-            print(f"dpb_dim {dpb_dim}")
-            self.toep = NonDynamicToepliztMultihead(
-                h=dpb_h, 
-                n=self.max_l, 
-                dim=dpb_dim,
-                dpb_dim=self.dpb_embedding, 
-                causal=self.causal, 
-                use_exp=self.use_exp,
-                use_neg_exp=self.use_neg_exp,
-                use_decay=self.use_decay, 
-                use_multi_decay=self.use_multi_decay,
-                use_pad=self.dpb_use_pad,
-                act=self.dpb_act,
-                par_type=self.par_type,
-                residual=self.residual,
-                dpb_type=self.dpb_type,
-                layers=self.dpb_layers,
-                l=self.l,
-                transform_type=self.transform_type,
-                gamma=self.gamma,
-                bias=self.bias,
-                act_type=self.tno_act_type,
-                decay_type=self.decay_type,
-            )
-        else:
-            self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
+        if self.toep_type != 7:
+            if self.use_dynamic:
+                self.toep = DynamicToepliztMultihead(
+                    h=self.num_heads, 
+                    n=self.max_l, 
+                    d=self.dpb_embedding, 
+                    causal=self.causal, 
+                    use_exp=self.use_exp, 
+                    use_neg_exp=self.use_neg_exp,
+                    use_decay=self.use_decay,
+                    use_multi_decay=self.use_multi_decay,
+                    bias=self.bias,
+                )
+            elif self.use_dynamic_v2:
+                self.toep = DynamicToepliztMultiheadV2(
+                    h=self.num_heads, 
+                    n=self.max_l, 
+                    d=self.dpb_embedding, 
+                    causal=self.causal, 
+                    use_exp=self.use_exp,
+                    use_neg_exp=self.use_neg_exp,
+                    use_decay=self.use_decay, 
+                    use_multi_decay=self.use_multi_decay,
+                    act=self.dpb_act,
+                    use_pad=self.dpb_use_pad,
+                    bias=self.bias,
+                )
+            elif self.use_dynamic_v3:
+                self.toep = DynamicToepliztMultiheadV3(
+                    h=self.num_heads, 
+                    n=self.max_l, 
+                    dim=self.head_dim,
+                    dpb_dim=self.dpb_embedding, 
+                    causal=self.causal, 
+                    use_exp=self.use_exp,
+                    use_neg_exp=self.use_neg_exp,
+                    use_decay=self.use_decay, 
+                    use_multi_decay=self.use_multi_decay,
+                    use_pad=self.dpb_use_pad,
+                    par_type=self.par_type,
+                    dpb_type=self.dpb_type,
+                    bias=self.bias,
+                )
+            elif self.dynamic_type == 4:
+                if dpb_h == -1:
+                    dpb_h = self.num_heads
+                if dpb_dim == -1:
+                    dpb_dim = self.head_dim
+                print(f"dpb_h {dpb_h}")
+                print(f"dpb_dim {dpb_dim}")
+                self.toep = DynamicToepliztMultiheadV4(
+                    h=dpb_h, 
+                    n=self.max_l, 
+                    dim=dpb_dim,
+                    dpb_dim=self.dpb_embedding, 
+                    causal=self.causal, 
+                    use_exp=self.use_exp,
+                    use_neg_exp=self.use_neg_exp,
+                    use_decay=self.use_decay, 
+                    use_multi_decay=self.use_multi_decay,
+                    use_pad=self.dpb_use_pad,
+                    act=self.dpb_act,
+                    par_type=self.par_type,
+                    residual=self.residual,
+                    dpb_type=self.dpb_type,
+                    layers=self.dpb_layers,
+                    l=self.l,
+                    transform_type=self.transform_type,
+                    gamma=self.gamma,
+                    bias=self.bias,
+                    act_type=self.tno_act_type,
+                    decay_type=self.decay_type,
+                    use_norm1=self.use_norm1, 
+                    use_norm2=self.use_norm2,
+                )
+            elif self.dynamic_type == 5:
+                if dpb_h == -1:
+                    dpb_h = self.num_heads
+                if dpb_dim == -1:
+                    dpb_dim = self.head_dim
+                print(f"dpb_h {dpb_h}")
+                print(f"dpb_dim {dpb_dim}")
+                self.toep = NonDynamicToepliztMultihead(
+                    h=dpb_h, 
+                    n=self.max_l, 
+                    dim=dpb_dim,
+                    dpb_dim=self.dpb_embedding, 
+                    causal=self.causal, 
+                    use_exp=self.use_exp,
+                    use_neg_exp=self.use_neg_exp,
+                    use_decay=self.use_decay, 
+                    use_multi_decay=self.use_multi_decay,
+                    use_pad=self.dpb_use_pad,
+                    act=self.dpb_act,
+                    par_type=self.par_type,
+                    residual=self.residual,
+                    dpb_type=self.dpb_type,
+                    layers=self.dpb_layers,
+                    l=self.l,
+                    transform_type=self.transform_type,
+                    gamma=self.gamma,
+                    bias=self.bias,
+                    act_type=self.tno_act_type,
+                    decay_type=self.decay_type,
+                )
+            else:
+                self.toep = ToepliztMultihead(h=self.num_heads, n=self.max_l, causal=self.causal, use_exp=self.use_exp, use_decay=self.use_decay)
         print(f"self.num_heads {self.num_heads}")
         print(f"self.max_l {self.max_l}")
         print(f"self.use_exp {self.use_exp}")
@@ -441,6 +464,22 @@ class TNO(nn.Module):
             # nn.init.normal_(self.o1.bias, std=0.02)
             # nn.init.normal_(self.o2.weight, std=0.02)
             # nn.init.normal_(self.o2.bias, std=0.02)
+        elif self.toep_type == 8:
+            nn.init.normal_(self.q_proj.weight, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.q_proj.bias, std=0.02)
+            nn.init.normal_(self.k_proj.weight, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.k_proj.bias, std=0.02)
+            nn.init.normal_(self.u_proj.weight, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.u_proj.bias, std=0.02)
+            nn.init.normal_(self.v_proj.weight, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.v_proj.bias, std=0.02)
+            nn.init.normal_(self.o.weight, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.o.bias, std=0.02)
 
     def get_norm_fun(self, norm_type, embed_dim):
         if norm_type == "rmsnorm":
@@ -1023,6 +1062,85 @@ class TNO(nn.Module):
             output = self.se(output)
         output = u * output
         output = rearrange(output, 'b h n d -> n b (h d)')
+        if self.use_norm:
+            output = self.norm(output)
+            
+        output = self.o(output) + shortcut
+        
+        return output, None
+    
+    # tno->attention
+    def forward8(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        eps = 1e-4
+        
+        if self.token_shift_type == 1:
+            query = self.token_shift(query)
+        elif self.token_shift_type == 2:
+            q1 = self.token_shift(query)
+            query = self.coef * q1 + (1 - self.coef) * query
+
+        shortcut, x = query, self.pre_norm(query)
+        if self.resi_param:
+            shortcut = shortcut * self.d
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        q = self.q_proj(x)
+        k = self.k_proj(x)
+        # reshape
+        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
+        scale = q.shape[-1] ** -0.5
+        score = torch.einsum('bhnd,bhmd->bhnm', q, k) * scale
+        prob = F.softmax(score, dim=-1)
+        output = torch.einsum('bhnm,bhmd->bhnd', prob, v)
+        output = rearrange(output, 'b h n d -> n b (h d)')
+        if self.use_se:
+            output = self.se(output)
+        output = u * output
         if self.use_norm:
             output = self.norm(output)
             
