@@ -465,18 +465,44 @@ class TNO(nn.Module):
             # nn.init.normal_(self.o2.weight, std=0.02)
             # nn.init.normal_(self.o2.bias, std=0.02)
         elif self.toep_type == 8:
-            nn.init.normal_(self.q_proj.weight, std=0.02)
+            ##### old
+            # nn.init.normal_(self.q_proj.weight, std=0.02)
+            # if self.bias:
+            #     nn.init.normal_(self.q_proj.bias, std=0.02)
+            # nn.init.normal_(self.k_proj.weight, std=0.02)
+            # if self.bias:
+            #     nn.init.normal_(self.k_proj.bias, std=0.02)
+            # nn.init.normal_(self.u_proj.weight, std=0.02)
+            # if self.bias:
+            #     nn.init.normal_(self.u_proj.bias, std=0.02)
+            # nn.init.normal_(self.v_proj.weight, std=0.02)
+            # if self.bias:
+            #     nn.init.normal_(self.v_proj.bias, std=0.02)
+            # nn.init.normal_(self.o.weight, std=0.02)
+            # if self.bias:
+            #     nn.init.normal_(self.o.bias, std=0.02)
+            ##### new
+            if self.qkv_same_dim:
+                # Empirically observed the convergence to be much better with
+                # the scaled initialization
+                nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
+                nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
+                nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
+            else:
+                nn.init.xavier_uniform_(self.k_proj.weight)
+                nn.init.xavier_uniform_(self.v_proj.weight)
+                nn.init.xavier_uniform_(self.q_proj.weight)
+
             if self.bias:
                 nn.init.normal_(self.q_proj.bias, std=0.02)
-            nn.init.normal_(self.k_proj.weight, std=0.02)
             if self.bias:
                 nn.init.normal_(self.k_proj.bias, std=0.02)
+            if self.bias:
+                nn.init.normal_(self.v_proj.bias, std=0.02)
+                
             nn.init.normal_(self.u_proj.weight, std=0.02)
             if self.bias:
                 nn.init.normal_(self.u_proj.bias, std=0.02)
-            nn.init.normal_(self.v_proj.weight, std=0.02)
-            if self.bias:
-                nn.init.normal_(self.v_proj.bias, std=0.02)
             nn.init.normal_(self.o.weight, std=0.02)
             if self.bias:
                 nn.init.normal_(self.o.bias, std=0.02)

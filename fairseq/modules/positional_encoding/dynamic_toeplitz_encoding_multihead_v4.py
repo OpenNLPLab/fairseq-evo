@@ -91,7 +91,8 @@ class DynamicToepliztMultiheadV4(nn.Module):
         self.use_multi_decay = use_multi_decay
         if self.use_multi_decay:
             self.lambda_ = gamma
-            self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
+            # self.gamma = nn.Parameter(torch.randn(self.h, 1, self.dim))
+            self.gamma = nn.Parameter(3 + torch.randn(self.h, 1, self.dim))
             print("learnable sigmoid")
             print(f"self.lambda_ {self.lambda_}")
 
