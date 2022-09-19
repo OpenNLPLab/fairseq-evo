@@ -16,13 +16,11 @@ class SynthesizerDense(nn.Module):
         # x: b, n, d
         b, n, d = x.shape
         m = min(n, self.max_seq_len)
-        energy = self.w2(self.act(self.w1(x)))[:, :, :m]
+        energy = self.w2(self.act(self.w1(x)))[:, :m, :m]
         if self.causal:
             if (mask == None) or (m < n):
                 mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
-            # mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
-            # mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             energy = energy.masked_fill(mask==float("-inf"), float('-inf'))
         prob = F.softmax(energy, dim=-1)
         output = torch.matmul(prob, x[:, :m, :])
@@ -44,14 +42,16 @@ class SynthesizerRandom(nn.Module):
         m = min(n, self.max_seq_len)
         energy = self.w[:m, :m]
         if self.causal:
-            if (mask == None):
-                mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+            if (mask == None) or (m < n):
+                mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
+            # print(energy.shape, mask.shape)
             energy = energy.masked_fill(mask==float("-inf"), float('-inf'))
         prob = F.softmax(energy, dim=-1)
-        # print(prob)
         output = torch.matmul(prob, x[:, :m, :])
-        if m < n:
-            output = F.pad(output, (0, 0, 0, n - m, 0, 0))
+        output = F.pad(output, (0, 0, 0, n - m, 0, 0))
+        # if m < n:
+            # output = torch.cat([output, x[:, m:]], dim=1)
+            # output = F.pad(output, (0, 0, 0, n - m, 0, 0))
         
         return output
