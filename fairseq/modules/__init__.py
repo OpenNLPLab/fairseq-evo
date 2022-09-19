@@ -146,10 +146,6 @@ from .x_attention import TNOEncoderLayer, TNODecoderLayer
 from .x_attention import TNOFFNEncoderLayer, TNOFFNDecoderLayer
 from .x_attention import TNOGLUEncoderLayer, TNOGLUDecoderLayer
 ##### tno
-##### Synthesizer
-from .x_attention import Synthesizer
-from .x_attention import SynthesizerEncoderLayer, SynthesizerDecoderLayer
-##### Synthesizer
 ########## xattention
 
 ########## state space
@@ -182,6 +178,10 @@ from .fourier import GlobalFilterEncoderLayer, GlobalFilterDecoderLayer
 ##### gmlp
 from .mlp import GMLPEncoderLayer, GMLPDecoderLayer
 ##### gmlp
+##### Synthesizer
+from .mlp import Synthesizer
+from .mlp import SynthesizerEncoderLayer, SynthesizerDecoderLayer
+##### Synthesizer
 ########## mlp
 
 ########## sparse

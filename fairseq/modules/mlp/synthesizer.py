@@ -23,8 +23,8 @@ class SynthesizerDense(nn.Module):
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             energy = energy.masked_fill(mask==float("-inf"), float('-inf'))
         prob = F.softmax(energy, dim=-1)
-        # print(prob[0])
         output = torch.matmul(prob, x[:, :m, :])
+        output = F.pad(output, (0, 0, 0, n - m, 0, 0))
 
         return output
     

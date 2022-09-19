@@ -3,6 +3,7 @@ import einops
 from einops import rearrange
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class SpatialGatingUnit(nn.Module):
     def __init__(self, d_ffn, seq_len, causal=False):
@@ -26,8 +27,9 @@ class SpatialGatingUnit(nn.Module):
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             weight = weight.masked_fill(mask==float("-inf"), 0)
         v = torch.einsum('bnd,mn->bmd', v[:, :m], weight)
-        if m < n:
-            v = F.pad(v, (0, 0, 0, n - m, 0, 0))
+        v = F.pad(v, (0, 0, 0, n - m, 0, 0))
+        print(v.shape)
+        
         return u * v
 
 class GatingMlpBlock(nn.Module):
