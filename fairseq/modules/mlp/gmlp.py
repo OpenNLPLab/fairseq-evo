@@ -22,13 +22,14 @@ class SpatialGatingUnit(nn.Module):
         v = self.norm(v)
         weight = self.proj.weight[:m, :m]
         if self.causal:
-            if (mask == None):
+            if (mask == None) or (m < n):
                 mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
+            # mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
+            # mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             weight = weight.masked_fill(mask==float("-inf"), 0)
         v = torch.einsum('bnd,mn->bmd', v[:, :m], weight)
         v = F.pad(v, (0, 0, 0, n - m, 0, 0))
-        print(v.shape)
         
         return u * v
 
