@@ -174,8 +174,11 @@ class FlashQuadAttention(nn.Module):
         # bsz, tgt_len, tgt_len
         qk = torch.bmm(q, k.transpose(1, 2))
         # add
-        bias = self.rel_pos_bias(self.max_position_embeddings)[:, :tgt_len, :tgt_len]
-        kernel = torch.square(torch.relu(qk / self.max_position_embeddings + bias))
+        if tgt_len > self.max_position_embeddings:
+            kernel = torch.square(torch.relu(qk / tgt_len))
+        else:
+            bias = self.rel_pos_bias(self.max_position_embeddings)[:, :tgt_len, :tgt_len]
+            kernel = torch.square(torch.relu(qk / self.max_position_embeddings + bias))
         if attn_mask is not None:
             kernel = kernel.masked_fill(attn_mask==float("-inf"), 0)
 
