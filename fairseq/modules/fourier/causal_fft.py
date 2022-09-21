@@ -22,8 +22,11 @@ class MatrixFFT(nn.Module):
         # cusal mask
         if causal:
             attn_mask = (torch.triu(torch.ones(n, n)) == 1).transpose(0, 1).to(x)
-            W = W.masked_fill(attn_mask == 0, 0)
-            # print(W)
+            real = W.real
+            imag = W.imag
+            real = real.masked_fill(attn_mask == 0, 0)
+            imag = imag.masked_fill(attn_mask == 0, 0)
+            W = torch.complex(real, imag)
         
         if dim == -1:
             output = torch.einsum('ij,...j->...i', W, x.to(W))
