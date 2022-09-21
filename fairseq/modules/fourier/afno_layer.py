@@ -27,7 +27,8 @@ class AFNOEncoderLayer(TransformerEncoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # index
-            index=args.index
+            index=args.index,
+            causal=getattr(args, "causal", False),
         )
 
 class AFNODecoderLayer(TransformerDecoderLayer):
@@ -49,7 +50,8 @@ class AFNODecoderLayer(TransformerDecoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # index
-            index=args.index
+            index=args.index,
+            causal=getattr(args, "causal", True),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -63,5 +65,6 @@ class AFNODecoderLayer(TransformerDecoderLayer):
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
             # index
-            index=args.index
+            index=args.index,
+            causal=getattr(args, "causal", False),
         )

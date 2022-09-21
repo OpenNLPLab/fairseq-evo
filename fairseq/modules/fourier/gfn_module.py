@@ -39,6 +39,7 @@ class GlobalFilterModule(nn.Module):
         # add
         index=0,
         seq_len=512,
+        causal=False,
     ):
         # add
         self.index = index
@@ -58,7 +59,8 @@ class GlobalFilterModule(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        self.gfn = GlobalFilter(seq_len // 2 + 1, embed_dim)
+        print(f"causal {causal}")
+        self.gfn = GlobalFilter(seq_len // 2 + 1, embed_dim, causal=causal)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

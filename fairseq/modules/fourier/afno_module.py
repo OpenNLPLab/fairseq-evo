@@ -38,6 +38,7 @@ class AFNO(nn.Module):
         qn_block_size=8,
         # add
         index=0,
+        causal=False,
     ):
         # add
         self.index = index
@@ -57,7 +58,7 @@ class AFNO(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        self.afno = AFNO1D(embed_dim)
+        self.afno = AFNO1D(embed_dim, causal=causal)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

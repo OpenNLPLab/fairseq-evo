@@ -109,7 +109,7 @@ class FNetDecoderLayer(nn.Module):
 
         configs = {
             "hidden_size": getattr(args, "hidden_size", 512),
-            "intermediate_size": getattr(args, "hidden_size", 512),
+            "intermediate_size": getattr(args, "intermediate_size", 512),
             "max_position_embeddings": getattr(args, "max_position_embeddings", 512),
             "fourier": getattr(args, "fourier", "matmul"),
             "dropout_rate": getattr(args, "dropout_rate", 0.0),
@@ -130,11 +130,11 @@ class FNetDecoderLayer(nn.Module):
         return quant_noise(nn.Linear(input_dim, output_dim), q_noise, qn_block_size)
 
     def build_self_attention(
-        self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
+        self, configs
     ):
         return FNetFairseqLayer(configs)
 
-    def build_encoder_attention(self, embed_dim, args):
+    def build_encoder_attention(self, configs):
         return FNetFairseqLayer(configs)
 
     def prepare_for_onnx_export_(self):
@@ -170,44 +170,6 @@ class FNetDecoderLayer(nn.Module):
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
         #print(x.shape)
-        if need_head_weights:
-            need_attn = True
-
-        if prev_self_attn_state is not None:
-            prev_key, prev_value = prev_self_attn_state[:2]
-            saved_state: Dict[str, Optional[Tensor]] = {
-                "prev_key": prev_key,
-                "prev_value": prev_value,
-            }
-            if len(prev_self_attn_state) >= 3:
-                saved_state["prev_key_padding_mask"] = prev_self_attn_state[2]
-            assert incremental_state is not None
-            self.self_attn._set_input_buffer(incremental_state, saved_state)
-        _self_attn_input_buffer = self.self_attn._get_input_buffer(incremental_state)
-        if self.cross_self_attention and not (
-            incremental_state is not None
-            and _self_attn_input_buffer is not None
-            and "prev_key" in _self_attn_input_buffer
-        ):
-            if self_attn_mask is not None:
-                assert encoder_out is not None
-                self_attn_mask = torch.cat(
-                    (x.new_zeros(x.size(0), encoder_out.size(0)), self_attn_mask), dim=1
-                )
-            if self_attn_padding_mask is not None:
-                if encoder_padding_mask is None:
-                    assert encoder_out is not None
-                    encoder_padding_mask = self_attn_padding_mask.new_zeros(
-                        encoder_out.size(1), encoder_out.size(0)
-                    )
-                self_attn_padding_mask = torch.cat(
-                    (encoder_padding_mask, self_attn_padding_mask), dim=1
-                )
-            assert encoder_out is not None
-            y = torch.cat((encoder_out, x), dim=0)
-        else:
-            y = x
-
         x, attn = self.self_attn(x)
 
         return x, attn, None
