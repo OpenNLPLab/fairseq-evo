@@ -22,7 +22,7 @@ class GlobalFilter(nn.Module):
         else:
             m = n // 2 + 1
         if m > self.seq_len:
-            complex_weight = F.pad(self.complex_weight, (0, 0, 0, 0, 0, m - seq_len))
+            complex_weight = F.pad(self.complex_weight, (0, 0, 0, 0, 0, m - self.seq_len))
         else:
             complex_weight = self.complex_weight[:m]
         x = x.to(torch.float32)
