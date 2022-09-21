@@ -97,4 +97,5 @@ def gfn_lm_base(args):
     base_lm_architecture(args)
     args.seq_len = 512
     args.decoder_layers = 9
+    args.max_seq = 512
     args.causal = True

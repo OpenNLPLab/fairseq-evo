@@ -39,6 +39,7 @@ class AFNO(nn.Module):
         # add
         index=0,
         causal=False,
+        max_seq=512,
     ):
         # add
         self.index = index
@@ -58,7 +59,7 @@ class AFNO(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        self.afno = AFNO1D(embed_dim, causal=causal)
+        self.afno = AFNO1D(embed_dim, causal=causal, max_seq=max_seq)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

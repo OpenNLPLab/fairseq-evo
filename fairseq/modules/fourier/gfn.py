@@ -7,13 +7,13 @@ import torch.nn.functional as F
 from .causal_fft import MatrixFFT
 
 class GlobalFilter(nn.Module):
-    def __init__(self, seq_len, dim, causal=False):
+    def __init__(self, seq_len, dim, causal=False, max_seq=512):
         super().__init__()
         self.complex_weight = nn.Parameter(torch.randn(seq_len, dim, 2, dtype=torch.float32) * 0.02)
         self.seq_len = seq_len
         self.causal = causal
         if self.causal:
-            self.fft = MatrixFFT()
+            self.fft = MatrixFFT(max_seq=max_seq)
 
     def forward(self, x):
         b, n, d = x.shape

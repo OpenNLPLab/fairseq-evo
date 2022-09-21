@@ -30,6 +30,7 @@ class GlobalFilterEncoderLayer(TransformerEncoderLayer):
             index=args.index,
             seq_len=getattr(args, "seq_len", 512),
             causal=getattr(args, "causal", False),
+            max_seq=getattr(args, "max_seq", 512),
         )
 
 class GlobalFilterDecoderLayer(TransformerDecoderLayer):
@@ -54,6 +55,7 @@ class GlobalFilterDecoderLayer(TransformerDecoderLayer):
             index=args.index,
             seq_len=getattr(args, "seq_len", 512),
             causal=getattr(args, "causal", True),
+            max_seq=getattr(args, "max_seq", 512),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -70,4 +72,5 @@ class GlobalFilterDecoderLayer(TransformerDecoderLayer):
             index=args.index,
             seq_len=getattr(args, "seq_len", 512),
             causal=getattr(args, "causal", False),
+            max_seq=getattr(args, "max_seq", 512),
         )

@@ -29,6 +29,7 @@ class AFNOEncoderLayer(TransformerEncoderLayer):
             # index
             index=args.index,
             causal=getattr(args, "causal", False),
+            max_seq=getattr(args, "max_seq", 512),
         )
 
 class AFNODecoderLayer(TransformerDecoderLayer):
@@ -52,6 +53,7 @@ class AFNODecoderLayer(TransformerDecoderLayer):
             # index
             index=args.index,
             causal=getattr(args, "causal", True),
+            max_seq=getattr(args, "max_seq", 512),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -67,4 +69,5 @@ class AFNODecoderLayer(TransformerDecoderLayer):
             # index
             index=args.index,
             causal=getattr(args, "causal", False),
+            max_seq=getattr(args, "max_seq", 512),
         )

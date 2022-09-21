@@ -13,7 +13,7 @@ class AFNO1D(nn.Module):
     sparsity_threshold: lambda for softshrink
     hard_thresholding_fraction: how many frequencies you want to completely mask out (lower => hard_thresholding_fraction^2 less FLOPs)
     """
-    def __init__(self, hidden_size, num_blocks=8, sparsity_threshold=0.01, hard_thresholding_fraction=1, hidden_size_factor=1, causal=False):
+    def __init__(self, hidden_size, num_blocks=8, sparsity_threshold=0.01, hard_thresholding_fraction=1, hidden_size_factor=1, causal=False, max_seq=512):
         super().__init__()
         assert hidden_size % num_blocks == 0, f"hidden_size {hidden_size} should be divisble by num_blocks {num_blocks}"
 
@@ -31,7 +31,7 @@ class AFNO1D(nn.Module):
         self.b2 = nn.Parameter(self.scale * torch.randn(2, self.num_blocks, self.block_size))
         self.causal = causal
         if causal:
-            self.fft = MatrixFFT()
+            self.fft = MatrixFFT(max_seq=max_seq)
 
     def forward(self, x):
         bias = x

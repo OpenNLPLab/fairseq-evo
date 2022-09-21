@@ -40,6 +40,7 @@ class GlobalFilterModule(nn.Module):
         index=0,
         seq_len=512,
         causal=False,
+        max_seq=512,
     ):
         # add
         self.index = index
@@ -60,7 +61,7 @@ class GlobalFilterModule(nn.Module):
         )
         
         print(f"causal {causal}")
-        self.gfn = GlobalFilter(seq_len // 2 + 1, embed_dim, causal=causal)
+        self.gfn = GlobalFilter(seq_len // 2 + 1, embed_dim, causal=causal, max_seq=max_seq)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

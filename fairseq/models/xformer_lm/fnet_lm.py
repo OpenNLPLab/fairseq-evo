@@ -97,6 +97,6 @@ def fnet_lm_base(args):
     base_lm_architecture(args)
     args.hidden_size = args.decoder_embed_dim
     args.intermediate_size = args.decoder_ffn_embed_dim
-    # args.max_position_embeddings = args.max_source_positions
+    args.max_position_embeddings = 512
     args.fourier = "matmul"
     args.decoder_layers = 9

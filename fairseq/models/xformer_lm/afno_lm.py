@@ -96,4 +96,5 @@ class AFNOLanguageModel(TransformerLanguageModel):
 def afno_lm_base(args):
     base_lm_architecture(args)
     args.decoder_layers = 9
+    args.max_seq = 512
     args.causal = True

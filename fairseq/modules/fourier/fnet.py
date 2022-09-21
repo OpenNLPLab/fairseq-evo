@@ -21,9 +21,9 @@ from .causal_fft import MatrixFFT
 #             self.dft_mat_seq
 #         ).real.type(torch.float32)
 class FourierMMLayer(nn.Module):
-    def __init__(self):
+    def __init__(self, max_seq=512):
         super().__init__()
-        self.fft = MatrixFFT()
+        self.fft = MatrixFFT(max_seq=max_seq)
         
     def forward(self, x):
         output = self.fft(self.fft(x, dim=-1, reverse=False, causal=False), dim=-2, reverse=True, causal=True)
@@ -41,7 +41,7 @@ class FourierFFTLayer(nn.Module):
 class FNetLayer(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.fft = FourierMMLayer() if config['fourier'] == 'matmul' else FourierFFTLayer()
+        self.fft = FourierMMLayer(max_seq=config['max_position_embeddings']) if config['fourier'] == 'matmul' else FourierFFTLayer()
         self.mixing_layer_norm = nn.LayerNorm(config['hidden_size'])
         self.feed_forward = nn.Linear(config['hidden_size'], config['intermediate_size'])
         self.output_dense = nn.Linear(config['intermediate_size'], config['hidden_size'])
