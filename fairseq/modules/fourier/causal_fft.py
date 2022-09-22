@@ -6,7 +6,9 @@ class MatrixFFT(nn.Module):
     def __init__(self, max_seq=512):
         super().__init__()
         self.max_seq = max_seq
-        self.W = nn.Parameter(self.build_fft_matrix(self.max_seq), requires_grad=False)
+        W = self.build_fft_matrix(self.max_seq)
+        self.real = nn.Parameter(W.real, requires_grad=False)
+        self.imag = nn.Parameter(W.imag, requires_grad=False)
     
     def build_fft_matrix(self, n):
         theta = torch.Tensor([-np.pi * 2 / n])
@@ -26,7 +28,7 @@ class MatrixFFT(nn.Module):
         if n != self.max_seq:
             W = self.build_fft_matrix(n).to(x.device)
         else:
-            W = self.W
+            W = torch.complex(self.real, self.imag)
         # theta = torch.Tensor([-np.pi * 2 / n])
         # real = torch.cos(theta)
         # imag = torch.sin(theta)

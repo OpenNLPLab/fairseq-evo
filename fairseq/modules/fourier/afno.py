@@ -90,4 +90,5 @@ class AFNO1D(nn.Module):
         else:
             x = torch.fft.irfft(x, n=N, dim=1, norm="ortho")
         x = x.type(dtype)
+
         return x + bias
