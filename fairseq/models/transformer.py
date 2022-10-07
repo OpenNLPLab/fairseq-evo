@@ -1221,6 +1221,16 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             c = torch.rand(n)
             r = -torch.arange(n)
             return toeplitz(c, r)
+        elif self.toep_type == 4:
+            # 递增
+            c = torch.rand(n)
+            r = torch.arange(n) / (n - 1)
+            return toeplitz(c, r)
+        elif self.toep_type == 5:
+            # 递减
+            c = torch.rand(n)
+            r = -torch.arange(n) / (n - 1)
+            return toeplitz(c, r)
         else:
             return torch.rand(n, n)
     

@@ -621,4 +621,18 @@ def transformer_lm_base_nope_decre_toep(args):
     args.use_toep = True
     args.toep_type = 3
     args.no_token_positional_embeddings = True
+
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope_incre_toep_normalize")
+def transformer_lm_base_nope_incre_toep_normalize(args):
+    base_lm_architecture(args)
+    args.use_toep = True
+    args.toep_type = 4
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope_decre_toep_normalize")
+def transformer_lm_base_nope_decre_toep_normalize(args):
+    base_lm_architecture(args)
+    args.use_toep = True
+    args.toep_type = 5
+    args.no_token_positional_embeddings = True
 ##### causal lm test
