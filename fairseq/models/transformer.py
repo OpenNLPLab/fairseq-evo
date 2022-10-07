@@ -887,6 +887,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             self.alibi = self.alibi.repeat(args.max_tokens//maxpos, 1, 1)  # batch_size, 1, 1
             self.buffered_future_mask = self.buffered_future_mask_alibi
         ##### alibi
+        ##### toeplitz
+        self.use_toep = getattr(args, 'use_toep', False)
+        self.toep_type = getattr(args, 'toep_type', 1)
+        print(f"use_toep {self.use_toep}")
+        print(f"toep_type {self.toep_type}")
+        if self.use_toep:
+            self.buffered_future_mask = self.buffered_future_mask_toep
+        ##### toeplitz
 
     def build_output_projection(self, args, dictionary, embed_tokens):
         if args.adaptive_softmax_cutoff is not None:
@@ -1080,7 +1088,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         x = self.dropout_module(x)
         #print(x.shape)
 
-        if self.use_alibi:
+        if self.use_alibi or self.use_toep:
             if incremental_state is None and not full_context_alignment:
                 self_attn_mask = self.buffered_future_mask(x)
             else:
@@ -1097,7 +1105,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
         for idx, layer in enumerate(self.layers):
-            if not self.use_alibi:
+            if not self.use_alibi and not self.use_toep:
                 if incremental_state is None and not full_context_alignment:
                     self_attn_mask = self.buffered_future_mask(x)
                 else:
@@ -1185,6 +1193,52 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         self._future_mask = self._future_mask.to(tensor)
         return self._future_mask[:tensor.shape[0]*self.args.decoder_attention_heads, :dim, :dim]
     ##### alibi
+    
+    ##### toeplitz
+    def get_toeplitz_matrix(self):
+        # ref: https://stackoverflow.com/questions/69809789/is-there-any-way-to-create-a-tensor-with-a-specific-pattern-in-pytorch
+        def toeplitz(c, r):
+            vals = torch.cat((r, c[1:].flip(0)))
+            shape = len(c), len(r)
+            i, j = torch.ones(*shape).nonzero().T
+            return vals[j - i].reshape(*shape).T
+        n = self.args.tokens_per_sample
+        if self.toep_type == -1:
+            # random
+            return torch.rand(n, n)
+        elif self.toep_type == 1:
+            # random toeplitz
+            c = torch.rand(n)
+            r = torch.rand(n)
+            return toeplitz(c, r)
+        elif self.toep_type == 2:
+            # 递增
+            c = torch.rand(n)
+            r = torch.arange(n)
+            return toeplitz(c, r)
+        elif self.toep_type == 3:
+            # 递减
+            c = torch.rand(n)
+            r = -torch.arange(n)
+            return toeplitz(c, r)
+        else:
+            return torch.rand(n, n)
+    
+    def buffered_future_mask_toep(self, tensor):
+        dim = tensor.size(1)
+        # self._future_mask.device != tensor.device is not working in TorchScript. This is a workaround.
+        if (
+            self._future_mask.size(0) == 0
+            or (not self._future_mask.device == tensor.device)
+            or self._future_mask.size(1) < self.args.tokens_per_sample
+        ):
+            self._future_mask = torch.triu(
+                utils.fill_with_neg_inf(torch.zeros([self.args.tokens_per_sample, self.args.tokens_per_sample])), 1
+            )
+            self._future_mask = self._future_mask + self.get_toeplitz_matrix()
+        self._future_mask = self._future_mask.to(tensor)
+        return self._future_mask[:dim, :dim]
+    ##### toeplitz
 
     def upgrade_state_dict_named(self, state_dict, name):
         """Upgrade a (possibly old) state dict for new versions of fairseq."""

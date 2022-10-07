@@ -587,3 +587,38 @@ def transformer_lm_base_alibi(args):
     base_lm_architecture(args)
     args.use_alibi = True
     args.no_token_positional_embeddings = True
+    
+##### causal lm test
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope")
+def transformer_lm_base_nope(args):
+    base_lm_architecture(args)
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope_random")
+def transformer_lm_base_nope_random(args):
+    base_lm_architecture(args)
+    args.use_toep = True
+    args.toep_type = -1
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope_random_toep")
+def transformer_lm_base_nope_random_toep(args):
+    base_lm_architecture(args)
+    args.use_toep = True
+    args.toep_type = 1
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope_incre_toep")
+def transformer_lm_base_nope_incre_toep(args):
+    base_lm_architecture(args)
+    args.use_toep = True
+    args.toep_type = 2
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_lm", "transformer_lm_base_nope_decre_toep")
+def transformer_lm_base_nope_decre_toep(args):
+    base_lm_architecture(args)
+    args.use_toep = True
+    args.toep_type = 3
+    args.no_token_positional_embeddings = True
+##### causal lm test

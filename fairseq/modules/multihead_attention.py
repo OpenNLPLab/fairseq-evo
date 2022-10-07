@@ -148,6 +148,7 @@ class MultiheadAttention(nn.Module):
                 weights for each head. Implies *need_weights*. Default:
                 return the average attention weights over all heads.
         """
+        # print(attn_mask[:5, :5])
         if need_head_weights:
             need_weights = True
 
