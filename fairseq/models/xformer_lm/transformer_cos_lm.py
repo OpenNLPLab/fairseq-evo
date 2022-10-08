@@ -93,11 +93,25 @@ class TransformerCosLanguageModel(TransformerLanguageModel):
         return cls(decoder)
 
 ##### causal lm test
+# base
 @register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base")
 def transformer_cos_lm_base(args):
     base_lm_architecture(args)
     args.energy_scale = 10
     args.matrix_scale = 1.0
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base_1")
+def transformer_cos_lm_base_1(args):
+    base_lm_architecture(args)
+    args.energy_scale = 1
+    args.matrix_scale = 1.0
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base_01")
+def transformer_cos_lm_base_01(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 1.0
+# base
 
 @register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base_nope")
 def transformer_cos_lm_base_nope(args):
@@ -156,3 +170,26 @@ def transformer_cos_lm_base_nope_decre_toep_normalize(args):
     args.energy_scale = 10
     args.matrix_scale = 1.0
 ##### causal lm test
+
+##### post norm
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base_postnorm_10")
+def transformer_cos_lm_base_postnorm_10(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = False
+    args.energy_scale = 10
+    args.matrix_scale = 1.0
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base_postnorm_1")
+def transformer_cos_lm_base_postnorm_1(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = False
+    args.energy_scale = 1
+    args.matrix_scale = 1.0
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_base_postnorm_01")
+def transformer_cos_lm_base_postnorm_01(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = False
+    args.energy_scale = 0.1
+    args.matrix_scale = 1.0
+##### post norm
