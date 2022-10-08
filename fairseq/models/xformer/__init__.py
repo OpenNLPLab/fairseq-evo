@@ -29,3 +29,4 @@ from .fnet import FNetEncoder, FNetDecoder
 from .afno import AFNOEncoder, AFNODecoder
 from .gfn import GlobalFilterEncoder, GlobalFilterDecoder
 from .gmlp import GMLPEncoder, GMLPDecoder
+from .transformer_cos import TransformerCosEncoder, TransformerCosDecoder

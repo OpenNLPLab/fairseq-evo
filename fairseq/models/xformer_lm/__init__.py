@@ -32,3 +32,4 @@ from .gmlp_lm import *
 from .fnet_lm import *
 from .afno_lm import *
 from .gfn_lm import *
+from .transformer_cos_lm import *

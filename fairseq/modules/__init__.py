@@ -184,6 +184,11 @@ from .mlp import SynthesizerEncoderLayer, SynthesizerDecoderLayer
 ##### Synthesizer
 ########## mlp
 
+##### cos attention
+from .x_attention import MultiheadCosAttention
+from .x_attention import TransformerCosEncoderLayer, TransformerCosDecoderLayer
+##### cos attention
+
 ########## sparse
 # from .sparse_multihead_attention import SparseMultiheadAttention
 # from .sparse_transformer_layer import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer

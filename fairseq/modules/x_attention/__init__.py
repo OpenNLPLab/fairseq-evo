@@ -65,3 +65,6 @@ from .tno import TNO
 from .tno_layer import TNOEncoderLayer, TNODecoderLayer
 from .tno_ffn_layer import TNOFFNEncoderLayer, TNOFFNDecoderLayer
 from .tno_glu_layer import TNOGLUEncoderLayer, TNOGLUDecoderLayer
+
+from .multihead_cos_attention import MultiheadCosAttention
+from .multihead_cos_attention_layer import TransformerCosEncoderLayer, TransformerCosDecoderLayer
