@@ -193,3 +193,65 @@ def transformer_cos_lm_base_postnorm_01(args):
     args.energy_scale = 0.1
     args.matrix_scale = 1.0
 ##### post norm
+
+##### matrix scale test
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope")
+def transformer_cos_lm_nope(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_random_01_01")
+def transformer_cos_lm_nope_random_01_01(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 0.1
+    args.use_toep = True
+    args.toep_type = -1
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_random_01_1")
+def transformer_cos_lm_nope_random_01_1(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 1.0
+    args.use_toep = True
+    args.toep_type = -1
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_random_01_10")
+def transformer_cos_lm_nope_random_01_10(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 10
+    args.use_toep = True
+    args.toep_type = -1
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_random_toep_01_01")
+def transformer_cos_lm_nope_random_toep_01_01(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 0.1
+    args.use_toep = True
+    args.toep_type = 1
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_random_toep_01_1")
+def transformer_cos_lm_nope_random_toep_01_1(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 1.0
+    args.use_toep = True
+    args.toep_type = 1
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_random_toep_01_10")
+def transformer_cos_lm_nope_random_toep_01_10(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 10
+    args.use_toep = True
+    args.toep_type = 1
+    args.no_token_positional_embeddings = True
+##### matrix scale test
