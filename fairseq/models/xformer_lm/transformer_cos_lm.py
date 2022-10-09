@@ -254,6 +254,42 @@ def transformer_cos_lm_nope_random_toep_01_10(args):
     args.use_toep = True
     args.toep_type = 1
     args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_incre_toep_normaliz_01_01")
+def transformer_cos_lm_nope_incre_toep_normaliz_01_01(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 0.1
+    args.use_toep = True
+    args.toep_type = 4
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_incre_toep_normaliz_01_1")
+def transformer_cos_lm_nope_incre_toep_normaliz_01_1(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 1.0
+    args.use_toep = True
+    args.toep_type = 4
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_decre_toep_normaliz_01_01")
+def transformer_cos_lm_nope_decre_toep_normaliz_01_01(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 0.1
+    args.use_toep = True
+    args.toep_type = 5
+    args.no_token_positional_embeddings = True
+    
+@register_model_architecture("transformer_cos_lm", "transformer_cos_lm_nope_decre_toep_normaliz_01_1")
+def transformer_cos_lm_nope_decre_toep_normaliz_01_1(args):
+    base_lm_architecture(args)
+    args.energy_scale = 0.1
+    args.matrix_scale = 1.0
+    args.use_toep = True
+    args.toep_type = 5
+    args.no_token_positional_embeddings = True
 ##### matrix scale test
 
 ##### matrix scale test(postnorm)
