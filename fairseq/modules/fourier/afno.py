@@ -4,7 +4,9 @@ import torch
 import torch.fft
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .causal_fft import MatrixFFT
+
 
 class AFNO1D(nn.Module):
     """

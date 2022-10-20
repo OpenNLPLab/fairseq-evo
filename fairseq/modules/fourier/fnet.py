@@ -1,7 +1,9 @@
 # https://github.com/erksch/fnet-pytorch/blob/master/fnet.py
 import torch
+from fairseq.modules import print_config
 from scipy import linalg
 from torch import nn
+
 from .causal_fft import MatrixFFT
 
 # only for test
@@ -20,6 +22,7 @@ from .causal_fft import MatrixFFT
 #             self.dft_mat_hidden,
 #             self.dft_mat_seq
 #         ).real.type(torch.float32)
+
 class FourierMMLayer(nn.Module):
     def __init__(self, max_seq=512):
         super().__init__()
@@ -41,6 +44,11 @@ class FourierFFTLayer(nn.Module):
 class FNetLayer(nn.Module):
     def __init__(self, config):
         super().__init__()
+        # print config
+        # add for print
+        config["__class__"] = "fairseq.modules.fourier.fnet.FNetLayer("
+        print_config(config)
+        
         self.fft = FourierMMLayer(max_seq=config['max_position_embeddings']) if config['fourier'] == 'matmul' else FourierFFTLayer()
         self.mixing_layer_norm = nn.LayerNorm(config['hidden_size'])
         self.feed_forward = nn.Linear(config['hidden_size'], config['intermediate_size'])

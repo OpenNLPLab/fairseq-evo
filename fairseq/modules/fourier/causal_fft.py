@@ -1,7 +1,9 @@
-import torch
 import numpy as np
+import torch
 from torch import nn
 
+
+# The effect is very poor, ignore it for the time being
 class MatrixFFT(nn.Module):
     def __init__(self, max_seq=512):
         super().__init__()
@@ -29,12 +31,6 @@ class MatrixFFT(nn.Module):
             W = self.build_fft_matrix(n).to(x.device)
         else:
             W = torch.complex(self.real, self.imag)
-        # theta = torch.Tensor([-np.pi * 2 / n])
-        # real = torch.cos(theta)
-        # imag = torch.sin(theta)
-        # w = torch.complex(real, imag)
-        # w_row = w ** torch.arange(n)
-        # W = torch.vander(w_row, increasing=True).to(x.device) / np.sqrt(n)
         if reverse:
             W = W.conj().t()
         # cusal mask
@@ -60,7 +56,4 @@ class MatrixFFT(nn.Module):
         x = torch.rand(2, 10, 5)
         y1 = self.transform(x, causal=False)
         y2 = self.transform(y1, reverse=True, causal=False)
-        print(torch.norm(y2 - x))
-        
-# For test
-MatrixFFT().test()
+        return torch.norm(y2 - x)

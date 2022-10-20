@@ -8,14 +8,15 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 from fairseq import utils
-from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecoderLayer
+from fairseq.modules import (LayerNorm, TransformerDecoderLayer,
+                             TransformerEncoderLayer)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 
 from .fnet import FNetFairseqLayer
 
-########################################################################
+
 # FNet
 class FNetEncoderLayer(nn.Module):
     def __init__(self, args):
@@ -32,7 +33,6 @@ class FNetEncoderLayer(nn.Module):
             "dropout_rate": getattr(args, "dropout_rate", 0.0),
         }
         self.self_attn = self.build_self_attention(configs)
-
 
     def build_self_attention(self, configs):
         return FNetFairseqLayer(configs)
@@ -169,7 +169,6 @@ class FNetDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
-        #print(x.shape)
         x, attn = self.self_attn(x)
 
         return x, attn, None

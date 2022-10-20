@@ -1,27 +1,24 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
+from torch.nn import Dropout, Parameter
+
+from ..helpers.helpers import print_params
 from .synthesizer import SynthesizerDense, SynthesizerRandom
-from einops import rearrange
+
 
 @with_incremental_state
 class Synthesizer(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -42,10 +39,14 @@ class Synthesizer(nn.Module):
         max_seq_len=512,
         causal=False,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -60,9 +61,6 @@ class Synthesizer(nn.Module):
             "Self-attention requires query, key and " "value to be of the same size"
         )
         
-        print(f"synthesizer_type {synthesizer_type}")
-        print(f"max_seq_len {max_seq_len}")
-        print(f"causal {causal}")
         if synthesizer_type == "dense":
             self.synthesizer = SynthesizerDense(
                 dim=embed_dim, 

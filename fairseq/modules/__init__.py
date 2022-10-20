@@ -37,6 +37,10 @@ from .unfold import unfold1d
 from .transformer_layer import TransformerDecoderLayer, TransformerEncoderLayer
 from .vggblock import VGGBlock
 
+##########
+from .helpers import logging_info, print_params, print_config
+##########
+
 ########## positional encoding
 from .positional_encoding import rope
 from .positional_encoding import RpeVanilla
@@ -64,10 +68,10 @@ from .positional_encoding import NonDynamicToepliztMultihead
 from .norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm, ScaleNorm, OffsetScale
 ########## norm
 
-########## token mix
-from .token_mix import TokenShift
-from .token_mix import ConvMix
-########## token mix
+########## token shift
+from .token_shift import TokenShift
+from .token_shift import ConvMix
+########## token shift
 
 ########## ffn
 from .ffn import GLU

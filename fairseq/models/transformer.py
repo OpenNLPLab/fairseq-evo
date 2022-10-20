@@ -10,71 +10,20 @@ import torch
 import torch.nn as nn
 from fairseq import utils
 from fairseq.distributed import fsdp_wrap
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderDecoderModel,
-    FairseqIncrementalDecoder,
-    register_model,
-    register_model_architecture,
-)
-from fairseq.modules import (
-    AdaptiveSoftmax,
-    BaseLayer,
-    FairseqDropout,
-    LayerDropModuleList,
-    LayerNorm,
-    PositionalEmbedding,
-    SinusoidalPositionalEmbedding,
-    TransformerDecoderLayer,
-    TransformerEncoderLayer,
-    # # rfa
-    # TransformerRfaDecoderLayer,
-    # TransformerRfaEncoderLayer,
-    # # debug
-    # TransformerRfaDecoderDebugLayer,
-    # performer
-    # PerformerEncoderLayer,
-    # PerformerDecoderLayer,
-    # sparse transformer
-    SparseTransformerEncoderLayer,
-    SparseTransformerDecoderLayer,
-    # head
-    # TransformerDecoderLayerPlus,
-    # TransformerEncoderLayerPlus,
-    # cos
-    # TransformerCosEncoderLayer,
-    # TransformerCosDecoderLayer,
-
-    # FLASH
-
-    # FLASHLINEAR
-    # FlashLinearEncoderLayer,
-    # FlashLinearDecoderLayer,
-    # ReLA 
-    # ReLAEncoderLayer,
-    # ReLADecoderLayer,
-    # LinearKernelAttention with rope
-    # LinearKernelAttentionEncoderLayer,
-    # LinearKernelAttentionDecoderLayer,
-    # NormAttention
-    # NormAttentionEncoderLayer,
-    # NormAttentionDecoderLayer,
-    # NormMixAttention
-    # NormMixAttentionEncoderLayer,
-    # NormMixAttentionDecoderLayer,
-    # LSAttention
-    # LSAttentionEncoderLayer,
-    # LSAttentionDecoderLayer,
-    # LinearVanilla
-    # LinearCombinationEncoderLayer,
-)
-
+from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
+                            FairseqIncrementalDecoder, register_model,
+                            register_model_architecture)
+from fairseq.modules import (AdaptiveSoftmax, BaseLayer, FairseqDropout,
+                             LayerDropModuleList, LayerNorm,
+                             PositionalEmbedding, SimpleRMSNorm,
+                             SinusoidalPositionalEmbedding,
+                             SparseTransformerDecoderLayer,
+                             SparseTransformerEncoderLayer,
+                             TransformerDecoderLayer, TransformerEncoderLayer,
+                             logging_info)
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
-# norm layer
-from fairseq.modules import SimpleRMSNorm
-
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
@@ -408,7 +357,6 @@ class TransformerEncoder(FairseqEncoder):
 
         self.embed_scale = 1.0 if args.no_scale_embedding else math.sqrt(embed_dim)
 
-        # print(f"args.encoder_learned_pos {args.encoder_learned_pos}")
         args.no_encoder_token_positional_embeddings = getattr(args, "no_encoder_token_positional_embeddings", False) or args.no_token_positional_embeddings
         self.embed_positions = (
             PositionalEmbedding(
@@ -424,9 +372,9 @@ class TransformerEncoder(FairseqEncoder):
 
         if getattr(args, "layernorm_embedding", False):
             attn_type = getattr(args, 'embdding_layernorm', 'layernorm')
-            print("--------------------------------------")
-            print(f"Encoder embdding layernorm type {attn_type}")
-            print("--------------------------------------")
+            logging_info("--------------------------------------")
+            logging_info(f"Encoder embdding layernorm type {attn_type}")
+            logging_info("--------------------------------------")
             if attn_type == "simplermsnorm":
                 self.layernorm_embedding = SimpleRMSNorm(embed_dim)
             else:
@@ -459,8 +407,7 @@ class TransformerEncoder(FairseqEncoder):
             if attention_types != []:
                 args.attention_type = attention_types[_]
             if encoder_attention_heads_list != []:
-                print("here")
-                print("args.encoder_attention_heads")
+                logging_info("args.encoder_attention_heads")
                 args.encoder_attention_heads = encoder_attention_heads_list[_]
             # args.index = getattr(args, "index", _)
             if encoder_chunk_sizes != -1 and (isinstance(encoder_chunk_sizes, list)):
@@ -474,9 +421,9 @@ class TransformerEncoder(FairseqEncoder):
 
         if args.encoder_normalize_before:
             attn_type = getattr(args, 'final_layernorm', 'layernorm')
-            print("--------------------------------------")
-            print(f"Encoder final layernorm type {attn_type}")
-            print("--------------------------------------")
+            logging_info("--------------------------------------")
+            logging_info(f"Encoder final layernorm type {attn_type}")
+            logging_info("--------------------------------------")
             if attn_type == "simplermsnorm":
                 self.layer_norm = SimpleRMSNorm(embed_dim)
             else:
@@ -505,9 +452,6 @@ class TransformerEncoder(FairseqEncoder):
         # embed tokens and positions
         if token_embedding is None:
             token_embedding = self.embed_tokens(src_tokens)
-        # print(torch.norm(self.embed_tokens.weight.data))
-        # print(token_embedding)
-        # print(torch.norm(token_embedding))
         x = embed = self.embed_scale * token_embedding
         if self.embed_positions is not None:
             x = embed + self.embed_positions(src_tokens)
@@ -693,7 +637,7 @@ class TransformerEncoder(FairseqEncoder):
         if isinstance(self.embed_positions, SinusoidalPositionalEmbedding):
             weights_key = "{}.embed_positions.weights".format(name)
             if weights_key in state_dict:
-                #print("deleting {0}".format(weights_key))
+                #logging_info("deleting {0}".format(weights_key))
                 del state_dict[weights_key]
             state_dict[
                 "{}.embed_positions._float_tensor".format(name)
@@ -786,9 +730,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         if getattr(args, "layernorm_embedding", False):
             attn_type = getattr(args, 'embdding_layernorm', 'layernorm')
-            print("--------------------------------------")
-            print(f"Encoder embdding layernorm type {attn_type}")
-            print("--------------------------------------")
+            logging_info("--------------------------------------")
+            logging_info(f"Encoder embdding layernorm type {attn_type}")
+            logging_info("--------------------------------------")
             if attn_type == "simplermsnorm":
                 self.layernorm_embedding = SimpleRMSNorm(embed_dim)
             else:
@@ -813,15 +757,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         attention_types = getattr(args, "decoder_attention_types", [])
         if attention_types == []:
             attention_types = getattr(args, "attention_types", [])
-        print("================================")
-        print("decoder_attention_types")
-        print(attention_types)
-        print("================================")
+        logging_info("================================")
+        logging_info("decoder_attention_types")
+        logging_info(attention_types)
+        logging_info("================================")
         for _ in range(args.decoder_layers):
             args.index = _
             if attention_types != []:
                 args.attention_type = attention_types[_]
-            # args.index = getattr(args, "index", _)
             arr.append(self.build_decoder_layer(args, no_encoder_attn))
         self.layers.extend(arr)
 
@@ -831,9 +774,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             args, "no_decoder_final_norm", False
         ):
             attn_type = getattr(args, 'final_layernorm', 'layernorm')
-            print("--------------------------------------")
-            print(f"Decoder final layernorm type {attn_type}")
-            print("--------------------------------------")
+            logging_info("--------------------------------------")
+            logging_info(f"Decoder final layernorm type {attn_type}")
+            logging_info("--------------------------------------")
             if attn_type == "simplermsnorm":
                 self.layer_norm = SimpleRMSNorm(embed_dim)
             else:
@@ -862,7 +805,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         ##### alibi
         self.use_alibi = getattr(args, 'use_alibi', False)
-        print(f"use_alibi {self.use_alibi}")
+        logging_info(f"use_alibi {self.use_alibi}")
         if self.use_alibi:
             def get_slopes(n):
                 def get_slopes_power_of_2(n):
@@ -880,7 +823,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             attn_heads = args.decoder_attention_heads
             self.slopes = torch.Tensor(get_slopes(attn_heads))
             #In the next line, the part after the * is what constructs the diagonal matrix (right matrix in Figure 3 in the paper). 
-            #If you run it you'll see that it doesn't exactly print out the same matrix as we have in Figure 3, but one where all rows are identical.
+            #If you run it you'll see that it doesn't exactly logging_info out the same matrix as we have in Figure 3, but one where all rows are identical.
             #This works because the softmax operation is invariant to translation, and our bias functions are always linear. 
             self.alibi = self.slopes.unsqueeze(1).unsqueeze(1) * torch.arange(maxpos).unsqueeze(0).unsqueeze(0).expand(attn_heads, -1, -1)
             self.alibi = self.alibi.view(attn_heads, 1, maxpos)
@@ -890,8 +833,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         ##### toeplitz
         self.use_toep = getattr(args, 'use_toep', False)
         self.toep_type = getattr(args, 'toep_type', 1)
-        print(f"use_toep {self.use_toep}")
-        print(f"toep_type {self.toep_type}")
+        logging_info(f"use_toep {self.use_toep}")
+        logging_info(f"toep_type {self.toep_type}")
         if self.use_toep:
             self.buffered_future_mask = self.buffered_future_mask_toep
         ##### toeplitz
@@ -1038,7 +981,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 - a dictionary with any model-specific outputs
         """
         bs, slen = prev_output_tokens.size()
-        #print('transformer decoder input:', prev_output_tokens.shape)
+        #logging_info('transformer decoder input:', prev_output_tokens.shape)
         if alignment_layer is None:
             alignment_layer = self.num_layers - 1
 
@@ -1066,27 +1009,20 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         
         # embed tokens and positions
         x = self.embed_scale * self.embed_tokens(prev_output_tokens)
-        # print(x)
-        #print(x.shape)
 
         if self.quant_noise is not None:
             x = self.quant_noise(x)
-        #print(x.shape)
 
         if self.project_in_dim is not None:
             x = self.project_in_dim(x)
-        #print(x.shape)
 
         if positions is not None:
             x += positions
-        #print(x.shape)
 
         if self.layernorm_embedding is not None:
             x = self.layernorm_embedding(x)
-        #print(x.shape)
 
         x = self.dropout_module(x)
-        #print(x.shape)
 
         if self.use_alibi or self.use_toep:
             if incremental_state is None and not full_context_alignment:
@@ -1095,7 +1031,6 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 self_attn_mask = None
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
-        #print(x.shape)
 
         self_attn_padding_mask: Optional[Tensor] = None
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
@@ -1111,7 +1046,6 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 else:
                     self_attn_mask = None
 
-            #print(idx, 'x: ', x.shape)
             x, layer_attn, _ = layer(
                 x,
                 enc,
@@ -1122,8 +1056,6 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
             )
-
-            #print(idx, 'x after layer:', x.shape)
 
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:

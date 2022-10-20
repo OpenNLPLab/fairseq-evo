@@ -11,30 +11,24 @@ import argparse
 import logging
 import math
 import os
-import time
 import sys
-from typing import Dict, Optional, Any, List, Tuple, Callable
+import time
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-from fairseq import (
-    checkpoint_utils,
-    options,
-    quantization_utils,
-    tasks,
-    utils,
-)
+from fairseq import checkpoint_utils, options, quantization_utils, tasks, utils
 from fairseq.data import iterators
 from fairseq.data.plasma_utils import PlasmaStore
 from fairseq.dataclass.configs import FairseqConfig
 from fairseq.dataclass.utils import convert_namespace_to_omegaconf
-from fairseq.distributed import fsdp_enable_wrap, fsdp_wrap, utils as distributed_utils
+from fairseq.distributed import fsdp_enable_wrap, fsdp_wrap
+from fairseq.distributed import utils as distributed_utils
 from fairseq.file_io import PathManager
 from fairseq.logging import meters, metrics, progress_bar
 from fairseq.model_parallel.megatron_trainer import MegatronTrainer
 from fairseq.trainer import Trainer
 from omegaconf import DictConfig, OmegaConf
-
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",

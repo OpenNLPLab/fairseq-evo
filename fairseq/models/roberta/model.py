@@ -7,22 +7,19 @@ RoBERTa: A Robustly Optimized BERT Pretraining Approach.
 """
 
 import logging
-from numpy import False_
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from fairseq import utils
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderModel,
-    register_model,
-    register_model_architecture,
-)
-from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder
-from fairseq.modules import LayerNorm
+from fairseq.models import (FairseqEncoder, FairseqEncoderModel,
+                            register_model, register_model_architecture)
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerEncoder)
+from fairseq.modules import LayerNorm, logging_info
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
+from numpy import False_
 
 from .hub_interface import RobertaHubInterface
 
@@ -34,11 +31,11 @@ def small_init_weights(module):
 
     if isinstance(module, (nn.Embedding)):
         # nn.init.uniform_(module.weight, a=-1e-4, b=1e-4) # SmallInit(Emb)
-        print("Embdding norm before")
-        print(torch.norm(module.weight.data))
+        logging_info("Embdding norm before")
+        logging_info(torch.norm(module.weight.data))
         module.weight.data.normal_(mean=0.0, std=1e-5)
-        print("Embdding norm after")
-        print(torch.norm(module.weight.data))
+        logging_info("Embdding norm after")
+        logging_info(torch.norm(module.weight.data))
 
     if isinstance(module, nn.Linear) and module.bias is not None:
         module.bias.data.zero_()
@@ -60,13 +57,13 @@ class RobertaModel(FairseqEncoderModel):
 
         # We follow BERT's random weight initialization
         init_method = getattr(args, 'init_method', "default")
-        print(f"init_method {init_method}")
+        logging_info(f"init_method {init_method}")
         if init_method == "default":
-            print("default init")
+            logging_info("default init")
             self.apply(init_bert_params)
         else:
-            print("small init")
-            print(init_method)
+            logging_info("small init")
+            logging_info(init_method)
             self.apply(small_init_weights)
 
         self.classification_heads = nn.ModuleDict()

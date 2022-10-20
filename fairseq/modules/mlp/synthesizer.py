@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class SynthesizerDense(nn.Module):
     def __init__(self, dim, max_seq_len, causal=False):
         super().__init__()
@@ -10,7 +11,6 @@ class SynthesizerDense(nn.Module):
         self.max_seq_len = max_seq_len
         self.act = nn.ReLU()
         self.causal = causal
-        print(f"self.causal {self.causal}")
 
     def forward(self, x, mask=None):
         # x: b, n, d
@@ -34,7 +34,6 @@ class SynthesizerRandom(nn.Module):
         self.w = nn.Parameter(torch.randn(max_seq_len, max_seq_len), requires_grad=True)
         self.causal = causal
         self.max_seq_len = max_seq_len
-        print(f"self.causal {self.causal}")
 
     def forward(self, x, mask=None):
         # x: b, n, d
@@ -45,13 +44,9 @@ class SynthesizerRandom(nn.Module):
             if (mask == None) or (m < n):
                 mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
-            # print(energy.shape, mask.shape)
             energy = energy.masked_fill(mask==float("-inf"), float('-inf'))
         prob = F.softmax(energy, dim=-1)
         output = torch.matmul(prob, x[:, :m, :])
         output = F.pad(output, (0, 0, 0, n - m, 0, 0))
-        # if m < n:
-            # output = torch.cat([output, x[:, m:]], dim=1)
-            # output = F.pad(output, (0, 0, 0, n - m, 0, 0))
         
         return output

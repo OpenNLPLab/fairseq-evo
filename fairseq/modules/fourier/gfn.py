@@ -1,10 +1,13 @@
 # https://github.com/raoyongming/GFNet/blob/master/gfnet.py
 import math
+
 import torch
 import torch.fft
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .causal_fft import MatrixFFT
+
 
 class GlobalFilter(nn.Module):
     def __init__(self, seq_len, dim, causal=False, max_seq=512):

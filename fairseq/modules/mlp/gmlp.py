@@ -1,9 +1,10 @@
 # https://github.com/antonyvigouret/Pay-Attention-to-MLPs/blob/master/models.py
 import einops
-from einops import rearrange
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from einops import rearrange
+
 
 class SpatialGatingUnit(nn.Module):
     def __init__(self, d_ffn, seq_len, causal=False):
@@ -12,7 +13,6 @@ class SpatialGatingUnit(nn.Module):
         self.proj = nn.Linear(seq_len, seq_len)
         self.seq_len = seq_len
         self.causal = causal
-        print(f"gmlp: self.causal {self.causal}")
 
     def forward(self, x, mask=None):
         # x: b, n, d
@@ -25,8 +25,6 @@ class SpatialGatingUnit(nn.Module):
             if (mask == None) or (m < n):
                 mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
                 mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
-            # mask = (torch.triu(torch.ones(m, m)) == 1).transpose(0, 1)
-            # mask = mask.float().masked_fill(mask == 0, float('-inf')).to(x)
             weight = weight.masked_fill(mask==float("-inf"), 0)
         v = torch.einsum('bnd,mn->bmd', v[:, :m], weight)
         v = F.pad(v, (0, 0, 0, n - m, 0, 0))
@@ -36,7 +34,6 @@ class SpatialGatingUnit(nn.Module):
 class GatingMlpBlock(nn.Module):
     def __init__(self, d_model, d_ffn, seq_len, causal):
         super().__init__()
-
         self.norm = nn.LayerNorm(d_model)
         self.proj_1 = nn.Linear(d_model, d_ffn)
         self.activation = nn.GELU()
