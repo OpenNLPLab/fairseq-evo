@@ -7,10 +7,8 @@
 import os
 import subprocess
 import sys
-from setuptools import setup, find_packages, Extension
 
 from setuptools import Extension, find_packages, setup
-
 
 if sys.version_info < (3, 6):
     sys.exit("Sorry, Python >= 3.6 is required for fairseq.")
@@ -209,6 +207,7 @@ def do_setup(package_data):
             "sacrebleu>=1.4.12",
             "torch",
             "tqdm",
+            "sentencepiece",
         ],
         dependency_links=dependency_links,
         packages=find_packages(
