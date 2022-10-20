@@ -209,6 +209,7 @@ def do_setup(package_data):
             "tqdm",
             "sentencepiece",
             "jieba",
+            "scipy",
         ],
         dependency_links=dependency_links,
         packages=find_packages(
