@@ -8,12 +8,14 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 from fairseq import utils
-from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecoderLayer
+from fairseq.modules import (LayerNorm, TransformerDecoderLayer,
+                             TransformerEncoderLayer)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 
 from .dss_module import DSSModule
+
 
 ########################################################################
 # DSS
@@ -247,7 +249,6 @@ class DSSDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
-        #print(x.shape)
         if need_head_weights:
             need_attn = True
 

@@ -1,10 +1,10 @@
 # https://github.com/lucidrains/gated-state-spaces-pytorch/blob/main/gated_state_spaces_pytorch/gss.py
 import torch
 import torch.nn.functional as F
-from torch import nn, einsum
-from torch.fft import rfft, irfft
-
 from einops import rearrange
+from torch import einsum, nn
+from torch.fft import irfft, rfft
+
 
 class DSS(nn.Module):
     def __init__(

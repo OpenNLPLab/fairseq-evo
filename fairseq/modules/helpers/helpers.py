@@ -15,7 +15,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("print_config")
 
-
 def is_dist_avail_and_initialized():
     if not dist.is_available():
         return False

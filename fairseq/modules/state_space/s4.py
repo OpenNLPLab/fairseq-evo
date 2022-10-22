@@ -2,15 +2,17 @@
 """ Standalone version of Structured (Sequence) State Space (S4) model. """
 
 import logging
-from functools import partial
 import math
+from functools import partial
+
 import numpy as np
-from scipy import special as ss
+import opt_einsum as oe
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
-import opt_einsum as oe
+from fairseq.modules import logging_info
+from scipy import special as ss
 
 contract = oe.contract
 contract_expression = oe.contract_expression
@@ -391,7 +393,7 @@ def nplr(measure, N, rank=1, dtype=torch.float, diagonalize_precision=True):
     _A = AP + AP.transpose(-1, -2)
     err = torch.sum((_A - _A[0,0]*torch.eye(N))**2) / N
     if err > 1e-5: # if not torch.allclose(_A - _A[0,0]*torch.eye(N), torch.zeros(N, N), atol=1e-5):
-        print("WARNING: HiPPO matrix not skew symmetric", err)
+        logging_info("WARNING: HiPPO matrix not skew symmetric", err)
 
 
     # Take advantage of identity + skew-symmetric form to calculate real and imaginary parts separately
@@ -404,7 +406,7 @@ def nplr(measure, N, rank=1, dtype=torch.float, diagonalize_precision=True):
     if diagonalize_precision: w_im, V = w_im.to(cdtype), V.to(cdtype)
     w = w_re + 1j * w_im
     # Check: V w V^{-1} = A
-    # print("check", V @ torch.diag_embed(w) @ V.conj().transpose(-1, -2))
+    # logging_info("check", V @ torch.diag_embed(w) @ V.conj().transpose(-1, -2))
 
 
     # Only keep half of each conjugate pair
@@ -425,8 +427,8 @@ def nplr(measure, N, rank=1, dtype=torch.float, diagonalize_precision=True):
     _AP = V @ torch.diag_embed(w) @ V.conj().transpose(-1, -2)
     err = torch.sum((2*_AP.real-AP)**2)/N
     if (err > 1e-5):
-        print("Warning: Diagonalization of A matrix not numerically precise - error", err)
-    # print("check", V @ torch.diag_embed(w) @ V.conj().transpose(-1, -2))
+        logging_info("Warning: Diagonalization of A matrix not numerically precise - error", err)
+    # logging_info("check", V @ torch.diag_embed(w) @ V.conj().transpose(-1, -2))
 
     V_inv = V.conj().transpose(-1, -2)
 
@@ -957,7 +959,7 @@ class SSKernelNPLR(OptimModule):
             V_inv = torch.linalg.inv(V)
             # Check that the eigendedecomposition is correct
             if self.verbose:
-                print("Diagonalization error:", torch.dist(V @ torch.diag_embed(L) @ V_inv, self.dA))
+                logging_info("Diagonalization error:", torch.dist(V @ torch.diag_embed(L) @ V_inv, self.dA))
 
             # Change the parameterization to diagonalize
             self.dA = L
