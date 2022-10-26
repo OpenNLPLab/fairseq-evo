@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
-
+from fairseq.modules import print_params
 from fairseq.modules.layer_norm import LayerNorm
 
 
@@ -15,7 +15,11 @@ class LSCausalAttention(nn.Module):
     def __init__(self, d_model, n_head, chunk_size, chunk_rank, window_len, dropout,
                  grad_chk=False, use_bias=False, dp_attn=0,
                  probing=False):
-        nn.Module.__init__(self)
+        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
 
         self.dropout = nn.Dropout(dropout)
         self.dp_attn = nn.Dropout(dp_attn)

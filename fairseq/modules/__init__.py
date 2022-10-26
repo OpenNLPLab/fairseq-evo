@@ -81,6 +81,25 @@ from .ffn import GLU
 from .others import SEBlock
 ########## others
 
+########## token mixer test
+##### double fusion
+from .token_mixer_test import DoubleFusion
+from .token_mixer_test import DoubleFusionEncoderLayer, DoubleFusionDecoderLayer
+from .token_mixer_test import DoubleFusionV2
+from .token_mixer_test import DoubleFusionV2EncoderLayer, DoubleFusionV2DecoderLayer
+from .token_mixer_test import DoubleFusionV3
+from .token_mixer_test import DoubleFusionV3EncoderLayer, DoubleFusionV3DecoderLayer
+from .token_mixer_test import DoubleFusionQuad
+from .token_mixer_test import DoubleFusionQuadEncoderLayer, DoubleFusionQuadDecoderLayer
+##### double fusion
+##### gau
+from .token_mixer_test import GauQuad
+from .token_mixer_test import GauQuadV2
+from .token_mixer_test import GauQuadV3
+from .token_mixer_test import GauEncoderLayer, GauDecoderLayer
+##### gau
+########## token mixer test
+
 ########## xattention
 ##### linearkernel
 from .x_attention import LinearKernelAttention
@@ -120,26 +139,10 @@ from .x_attention import LinearCombinationEncoderLayer
 from .x_attention import SparseMultiheadAttention
 from .x_attention import SparseTransformerEncoderLayer, SparseTransformerDecoderLayer
 ##### sparse attetntioin
-##### double fusion
-from .x_attention import DoubleFusion
-from .x_attention import DoubleFusionEncoderLayer, DoubleFusionDecoderLayer
-from .x_attention import DoubleFusionV2
-from .x_attention import DoubleFusionV2EncoderLayer, DoubleFusionV2DecoderLayer
-from .x_attention import DoubleFusionV3
-from .x_attention import DoubleFusionV3EncoderLayer, DoubleFusionV3DecoderLayer
-from .x_attention import DoubleFusionQuad
-from .x_attention import DoubleFusionQuadEncoderLayer, DoubleFusionQuadDecoderLayer
-##### double fusion
 ##### toeplitz attention
 from .x_attention import ToeplitzAttention
 from .x_attention import ToeplitzAttentionEncoderLayer, ToeplitzAttentionDecoderLayer
 ##### toeplitz attention
-##### gau
-from .x_attention import GauQuad
-from .x_attention import GauQuadV2
-from .x_attention import GauQuadV3
-from .x_attention import GauEncoderLayer, GauDecoderLayer
-##### gau
 ##### weight linear
 from .x_attention import WeightLinearAttention
 from .x_attention import WeightLinearEncoderLayer, WeightLinearDecoderLayer

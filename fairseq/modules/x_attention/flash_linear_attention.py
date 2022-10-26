@@ -1,19 +1,21 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import print_params
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from ..positional_encoding import rope
+from torch.nn import Dropout, Parameter
+
 from ..norm import ScaleNorm
+from ..positional_encoding import rope
+
 
 # https://github.com/JunnYu/FLASHQuad_pytorch/blob/main/flash/gau.py
 @with_incremental_state
@@ -46,9 +48,12 @@ class FlashLinearAttention(nn.Module):
         chunk_size=64,
     ):
         super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.s = s
-        # self.e = int(embed_dim * expansion_factor)
-        # self.uv = nn.Linear(expansion_factor, 2 * self.e + self.s)
         self.embed_dim = embed_dim
         self.e = int(self.embed_dim * expansion_factor)
         self.u_proj = nn.Linear(embed_dim, self.e)
@@ -78,15 +83,6 @@ class FlashLinearAttention(nn.Module):
         nn.init.normal_(self.w, std=0.02)
         nn.init.normal_(self.a, std=0.02)
         nn.init.normal_(self.b, std=0.02)
-
-        print("flash attention")
-        print(f"s {self.s}")
-        print(f"norm_type {norm_type}")
-        print(f"eps {eps}")
-        print(f"max_position_embeddings {max_position_embeddings}")
-        print(f"expansion_factor {expansion_factor}")
-        print(f"chunk_size {self.chunk_size}")
-
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

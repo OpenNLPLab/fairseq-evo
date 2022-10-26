@@ -3,13 +3,14 @@
 # https://github.com/NVIDIA/transformer-ls/blob/master/imagenet/models/layers/transformer_ls.py
 # https://github.com/NVIDIA/transformer-ls/blob/master/lra/attention_transformer_ls.py
 
-from torch import nn
-import torch
-# from timm.models.layers import trunc_normal_
-import torch.nn.functional as F
 from typing import Dict, Optional, Tuple
-from torch import Tensor, nn
+
 import numpy as np
+import torch
+import torch.nn.functional as F
+from fairseq.modules import print_params
+from torch import Tensor, nn
+
 
 class LSNonCausalAttention(nn.Module):
     """The long-short term attention for bidirectional language modelling
@@ -19,6 +20,10 @@ class LSNonCausalAttention(nn.Module):
                  dim, num_heads, max_seq_len, 
                  dropout, num_landmarks=32, window_size=8):
         super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
 
         self.cls_from_seq = False
 

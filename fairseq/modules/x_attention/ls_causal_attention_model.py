@@ -11,12 +11,12 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from fairseq.modules.layer_norm import LayerNorm
-from fairseq.modules.gelu import gelu
-
 # Copyright (c) 2021 NVIDIA CORPORATION. Licensed under the MIT license.
 import torch.utils.checkpoint as cp
+from fairseq.modules.gelu import gelu
+from fairseq.modules.helpers import logging_info, print_params
+from fairseq.modules.layer_norm import LayerNorm
+
 
 class ChunkedLSAttention(nn.Module):
     def __init__(self, d_model, n_head, chunk_size, chunk_rank, window_len, dropout,
@@ -408,7 +408,11 @@ class TransformerLSModel(nn.Module):
         cpos_clamp_len=-1,
         probing=False,
     ):
-        nn.Module.__init__(self)
+        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
         # token embeddings
         self.in_emb = nn.Embedding(vocab_size, d_model)
         nn.init.normal_(self.in_emb.weight, mean=0, std=d_model ** -0.5)
@@ -587,5 +591,5 @@ class TransformerLSModel(nn.Module):
                 self._init_bias(m.r_bias)
                 hit = True
             if not hit:
-                print("Missing {}".format(classname))
+                logging_info("Missing {}".format(classname))
 

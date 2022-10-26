@@ -3,43 +3,37 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.nn as nn
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
+import torch.nn as nn
 from fairseq import options, utils
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
-from fairseq.models import (
-    FairseqIncrementalDecoder,
-    FairseqLanguageModel,
-    register_model,
-    register_model_architecture,
-)
-logger = logging.getLogger(__name__)
-from fairseq.models.transformer import (
-    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder
-)
+from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
+                            register_model, register_model_architecture)
 
+logger = logging.getLogger(__name__)
+from typing import Dict, List, Optional
+
+import torch
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP, Embedding,
+                                        TransformerDecoder)
+from fairseq.models.transformer_lm import (DEFAULT_MAX_TARGET_POSITIONS,
+                                           TransformerLanguageModel,
+                                           TransformerLanguageModelConfig,
+                                           base_lm_architecture,
+                                           transformer_lm_big)
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
-from typing import Dict, List, Optional
-import torch
 
-from fairseq.models.transformer_lm import (
-    DEFAULT_MAX_TARGET_POSITIONS, 
-    TransformerLanguageModel,
-    TransformerLanguageModelConfig,
-    base_lm_architecture,
-    transformer_lm_big,
-)
+from ..xformer import FlashLinearDecoder
 
-from ..xformer import FlashQuadDecoder
 
-@register_model("flash_quad_lm", dataclass=TransformerLanguageModelConfig)
-class FlashLanguageModel(TransformerLanguageModel):
+@register_model("flash_linear_lm", dataclass=TransformerLanguageModelConfig)
+class FlashLinearLanguageModel(TransformerLanguageModel):
     def __init__(self, decoder):
-        super(FlashLanguageModel, self).__init__(decoder)
+        super(FlashLinearLanguageModel, self).__init__(decoder)
 
     @classmethod
     def build_model(cls, args, task):
@@ -87,13 +81,13 @@ class FlashLanguageModel(TransformerLanguageModel):
             )
             assert args.decoder_input_dim == args.decoder_output_dim
 
-        decoder = FlashQuadDecoder(
+        decoder = FlashLinearDecoder(
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
 
-@register_model_architecture("flash_quad_lm", "flash_wiki_ada_v1")
-def flash_wiki_ada_v1(args):
+@register_model_architecture("flash_linear_lm", "flash_linear_wiki_ada_v1")
+def flash_linear_wiki_ada_v1(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
     args.dropout = getattr(args, "dropout", 0.3)
@@ -115,30 +109,29 @@ def flash_wiki_ada_v1(args):
     args.eps = 1e-5
     args.max_position_embeddings = 512
     args.expansion_factor = 2
+    args.chunk_size = 64
 
-@register_model_architecture("flash_quad_lm", "flash_wiki")
-def flash_wiki(args):
-    # transformer_lm_big(args)
+@register_model_architecture("flash_linear_lm", "flash_linear_wiki_one_head")
+def flash_linear_wiki_one_head(args):
     base_lm_architecture(args)
     args.decoder_layers = 10
     args.s = 128
-    # args.s = 512
     args.norm_type = "scale_norm"
     args.eps = 1e-5
     args.max_position_embeddings = 512
     args.expansion_factor = 2
-    args.decoder_attention_types = []
-
-@register_model_architecture("flash_quad_lm", "flash_wiki_one_head")
-def flash_wiki_one_head(args):
-    # transformer_lm_big(args)
-    base_lm_architecture(args)
-    args.decoder_layers = 10
-    args.s = 128
-    # args.s = 512
-    args.norm_type = "scale_norm"
-    args.eps = 1e-5
-    args.max_position_embeddings = 512
-    args.expansion_factor = 2
+    args.chunk_size = 64
     args.decoder_attention_types = []
     args.decoder_attention_heads = 1
+
+# @register_model_architecture("flash_linear_lm", "flash_linear_wiki")
+# def flash_linear_wiki(args):
+#     base_lm_architecture(args)
+#     args.decoder_layers = 10
+#     args.s = 128
+#     args.norm_type = "scale_norm"
+#     args.eps = 1e-5
+#     args.max_position_embeddings = 512
+#     args.expansion_factor = 2
+#     args.chunk_size = 64
+#     args.decoder_attention_types = []
