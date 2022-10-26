@@ -1,1 +1,1 @@
-from .helpers import logging_info, print_params, print_config
+from .helpers import logging_info, print_params, print_config, get_activation_fn

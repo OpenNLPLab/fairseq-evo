@@ -1,18 +1,21 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import print_params
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
+from torch.nn import Dropout, Parameter
+
+from ..helpers import get_activation_fn
 from ..norm import GatedRMSNorm
+
 
 @with_incremental_state
 class ReLAttention(nn.Module):
@@ -56,10 +59,14 @@ class ReLAttention(nn.Module):
         act_fun="relu",
         negative_slope=0.1,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -111,18 +118,12 @@ class ReLAttention(nn.Module):
 
 
         self.reset_parameters()
-
-        # for test
         self.onnx_trace = False
-
+        
         # add
         self.act_fun = act_fun
         self.negative_slope = negative_slope
-        self.act = self.get_act_fun()
-        print("use relu sparse")
-        print(f"add_bias_kv {add_bias_kv}")
-        print(f"act_fun {self.act_fun}")
-        print(f"negative_slope {self.negative_slope}")
+        self.act = get_activation_fn(self.act_fun)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -139,43 +140,6 @@ class ReLAttention(nn.Module):
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
-
-    def get_act_fun(self):
-        print(self.act_fun)
-        if self.act_fun == "gelu":
-            return F.gelu
-        elif self.act_fun == "relu":
-            return F.relu
-        elif self.act_fun == "elu":
-            return F.elu
-        elif self.act_fun == "sigmoid":
-            return F.sigmoid
-        elif self.act_fun == "exp":
-            return torch.exp
-        elif self.act_fun == "1+elu":
-            def f(x):
-                return F.elu(x) + 1
-            return f
-        elif self.act_fun == "1+relu":
-            def f(x):
-                return F.relu(x) + 1
-            return f
-        elif self.act_fun == "2+elu":
-            def f(x):
-                return F.elu(x) + 2
-            return f
-        elif self.act_fun == "relu2":
-            def f(x):
-                return torch.square(torch.relu(x))
-            return f
-        elif self.act_fun == "leak":
-            def f(x):
-                return F.leaky_relu(x, negative_slope=self.negative_slope)
-            return f
-        else:
-            def f(x):
-                return x
-            return f
 
     def forward(
         self,

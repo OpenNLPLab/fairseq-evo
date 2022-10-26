@@ -3,38 +3,32 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.nn as nn
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
+import torch.nn as nn
 from fairseq import options, utils
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
-from fairseq.models import (
-    FairseqIncrementalDecoder,
-    FairseqLanguageModel,
-    register_model,
-    register_model_architecture,
-)
-logger = logging.getLogger(__name__)
-from fairseq.models.transformer import (
-    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder
-)
+from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
+                            register_model, register_model_architecture)
 
+logger = logging.getLogger(__name__)
+from typing import Dict, List, Optional
+
+import torch
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP, Embedding,
+                                        TransformerDecoder)
+from fairseq.models.transformer_lm import (DEFAULT_MAX_TARGET_POSITIONS,
+                                           TransformerLanguageModel,
+                                           TransformerLanguageModelConfig,
+                                           base_lm_architecture,
+                                           transformer_lm_big)
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
-from typing import Dict, List, Optional
-import torch
-
-from fairseq.models.transformer_lm import (
-    DEFAULT_MAX_TARGET_POSITIONS, 
-    TransformerLanguageModel,
-    TransformerLanguageModelConfig,
-    base_lm_architecture,
-    transformer_lm_big,
-)
 
 from ..xformer import ReLADecoder
+
 
 @register_model("rela_lm", dataclass=TransformerLanguageModelConfig)
 class ReLALanguageModel(TransformerLanguageModel):
@@ -127,7 +121,7 @@ def rela_wiki_ada_relu2(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "relu2"
 
 @register_model_architecture("rela_lm", "rela_wiki_ada_1+elu")
@@ -147,7 +141,7 @@ def rela_wiki_ada_1_elu(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "1+elu"
 
 @register_model_architecture("rela_lm", "rela_wiki_ada_2+elu")
@@ -167,7 +161,7 @@ def rela_wiki_ada_2_elu(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "2+elu"
 
 @register_model_architecture("rela_lm", "rela_wiki_ada_1+relu")
@@ -187,7 +181,7 @@ def rela_wiki_ada_1_relu(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "1+relu"
 
 @register_model_architecture("rela_lm", "rela_wiki_ada_leak")
@@ -207,7 +201,7 @@ def rela_wiki_ada_leak(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "leak"
 
 @register_model_architecture("rela_lm", "rela_wiki_ada_elu")
@@ -227,7 +221,7 @@ def rela_wiki_ada_elu(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "elu"
 
 @register_model_architecture("rela_lm", "rela_wiki_ada_noact")
@@ -247,5 +241,10 @@ def rela_wiki_ada_noact(args):
     args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
-    ## add
+    # add
     args.act_fun = "noact"
+
+@register_model_architecture("rela_lm", "rela_wiki_base")
+def rela_wiki_base(args):
+    base_lm_architecture(args)
+    args.act_fun = "relu"

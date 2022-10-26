@@ -4,19 +4,20 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+from functools import partial
 from typing import Dict, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import Urpe, print_params
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
-from einops import rearrange
-from functools import partial
-from fairseq.modules import Urpe
+
 
 def orthogonal_matrix_chunk(cols, device = None, dtype=None):
     unstructured_block = torch.randn((cols, cols), device=device)
@@ -134,6 +135,11 @@ class PerformerAttention(nn.Module):
         修改causal默认为true
         '''
         super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -161,10 +167,6 @@ class PerformerAttention(nn.Module):
         self.use_urpe = use_urpe
         if self.use_urpe:
             self.urpe = Urpe(core_matrix, p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-
-        print(f"self.approx_attn_dim {self.approx_attn_dim}")
-        print(f"self.causal {self.causal}")
-        print(f"self.use_urpe {self.use_urpe}")
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

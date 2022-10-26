@@ -18,7 +18,7 @@ from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
+from fairseq.modules import Urpe
 from einops import rearrange
 
 def look_around(x, backward = 1, forward = 0, pad_value = -1, dim = 2):
@@ -182,7 +182,7 @@ class NormLocalAttention(nn.Module):
         self.householder_learned = householder_learned
         if self.use_urpe:
             print("=====================================")
-            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 

@@ -17,7 +17,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import ScaleNorm
 from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
+from fairseq.modules import Urpe
 from fairseq.modules import GLU
 from fairseq.modules import ConvMix
 from fairseq.modules import OffsetScale
@@ -190,7 +190,7 @@ class GauLinearV4(nn.Module):
         self.householder_learned = householder_learned
         if self.use_urpe:
             print("=====================================")
-            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 

@@ -1,13 +1,14 @@
-# - https://github.com/zh217/torch-dct
-# - https://github.com/zh217/torch-dct/issues/15
-# 还是单头版本, 但是适配多维, only test for householder and rope
+# https://github.com/zh217/torch-dct
+# https://github.com/zh217/torch-dct/issues/15
 
-import torch
-import torch.nn as nn
-import torch.functional as F
 import numpy as np
+import torch
+import torch.functional as F
+import torch.nn as nn
+from fairseq.modules import logging_info
 
-class UrpeV2(nn.Module):
+
+class UrpeBak(nn.Module):
     def __init__(self, core_matrix, p_matrix, max_positions=512, embedding_dim=768, theta_type="a", theta_learned=False, householder_learned=False):
         super().__init__()
         self.core_matrix = core_matrix
@@ -18,44 +19,44 @@ class UrpeV2(nn.Module):
 
         if self.core_matrix == 1:
             if self.theta_learned:
-                print("learn theta!")
+                logging_info("learn theta!")
                 self.theta = nn.Parameter(10000 ** (-2 / embedding_dim * torch.arange(embedding_dim // 2)).reshape(1, 1, -1))
             else:
-                print(f"theta_type {self.theta_type}")
-            print("rope")
+                logging_info(f"theta_type {self.theta_type}")
+            logging_info("rope")
         elif self.core_matrix == 2:
-            print("mixed")
+            logging_info("mixed")
         elif self.core_matrix == 3:
-            print("permutation")
+            logging_info("permutation")
             permutation = self.get_permutation(max_positions, embedding_dim)
-            print(permutation.shape)
+            logging_info(permutation.shape)
             self.register_buffer("permutation", permutation)
         elif self.core_matrix == 4:
             if self.theta_learned:
-                print("learn theta!")
+                logging_info("learn theta!")
                 self.theta = nn.Parameter(10000 ** (-2 / embedding_dim * torch.arange(embedding_dim)).reshape(1, 1, -1))
             else:
-                print(f"theta_type {self.theta_type}")
-            print("complex exp")
+                logging_info(f"theta_type {self.theta_type}")
+            logging_info("complex exp")
 
         if self.p_matrix == 1:
-            print("Identity")
+            logging_info("Identity")
         elif self.p_matrix == 2:
-            print("DCT")
+            logging_info("DCT")
         elif self.p_matrix == 3:
-            print("Householder")
+            logging_info("Householder")
             if self.householder_learned:
-                print("learn householder!")
-                self.v = nn.Parameter(torch.randn(embedding_dim))
+                logging_info("learn householder!")
+                self.v = nn.Parameter(torch.randn(1, embedding_dim, 1))
             else:
-                v = torch.randn(embedding_dim)
+                v = torch.randn(1, embedding_dim, 1)
                 v = v / torch.norm(v)
-                print(f"house holder norm is {torch.norm(v)}")
+                logging_info(f"house holder norm is {torch.norm(v)}")
                 self.v = nn.Parameter(v, requires_grad=False)
         elif self.p_matrix == 4:
-            print("Fourier")
+            logging_info("Fourier")
         elif self.p_matrix == 5:
-            print("odd_even")
+            logging_info("odd_even")
 
         self.p = self.get_p()
         self.core_transform = self.get_core_transform()
@@ -160,14 +161,12 @@ class UrpeV2(nn.Module):
         return x
 
     def rope(self, x):
-        # b, l, d = x.shape
-        d = x.shape[-1]
+        b, l, d = x.shape
         e = d - 1 if d % 2 == 1 else d
         return self.mix_transform(x, e)
 
     def mix_rope(self, x):
-        # b, l, d = x.shape
-        d = x.shape[-1]
+        b, l, d = x.shape
         assert d >= 3
         # split
         e = d // 2
@@ -178,13 +177,11 @@ class UrpeV2(nn.Module):
 
     def mix_transform(self, x, e):
         assert e % 2 == 0
-        # b, l, d = x.shape
-        l, d = x.shape[-2], x.shape[-1]
-        m = len(x.shape)
+        b, l, d = x.shape
         # 后e项
-        x1 = x[..., e:]
+        x1 = x[:, :, e:]
         # 前e项做rope
-        x = x[..., :e]
+        x = x[:, :, :e]
         if self.theta_learned:
             theta = self.theta
         else:
@@ -194,20 +191,12 @@ class UrpeV2(nn.Module):
                 theta = np.pi / 2 / l / (e // 2) * torch.arange(1, e // 2 + 1)
             elif self.theta_type == "c":
                 theta = np.pi / 2 / l / torch.arange(1, e // 2 + 1)
-            # 调整为相同形状
-            ### ...e
-            for i in range(len(x.shape) - 1):
-                theta = theta.unsqueeze(0)
-            theta = theta.to(x)
+            theta = theta.reshape(1, 1, -1).to(x)
         theta = torch.stack([theta, theta], dim=-1).reshape(1, 1, e)
-        ### l, 1
-        index = torch.arange(l).reshape(-1, 1).to(x)
-        ### ...., l, 1
-        for _ in range(len(theta.shape) - 2):
-            index = index.unsqueeze(0)
-        theta = theta * index
+        theta = theta * torch.arange(l).reshape(1, -1, 1).to(x)
         # (-q1, -q3), (q0, q2) -> (-q1, q0, -q3, q2)
         x_half = torch.stack([-x[..., 1::2], x[..., ::2]], dim=-1).reshape_as(x)
+
         x_transform = x * torch.cos(theta) + x_half * torch.sin(theta)
 
         if e != d:
@@ -225,8 +214,6 @@ class UrpeV2(nn.Module):
             theta = theta.reshape(1, 1, -1).to(x.device)
         matrix = theta * torch.arange(l).reshape(1, -1, 1).to(x.device)
         sin_cos = torch.complex(torch.cos(matrix),torch.sin(matrix)).to(x.device)
-        # sin_cos = torch.complex(torch.cos(theta), torch.sin(theta)).to(x)
-        # x = torch.complex(x * torch.cos(matrix), x * torch.sin(matrix))
         x = self.element_wise_complex(x, sin_cos)
 
         return x
@@ -311,12 +298,9 @@ class UrpeV2(nn.Module):
             v = self.v / (torch.norm(self.v) + eps)
         else:
             v = self.v
-        # 调整为相同形状
-        for i in range(len(x.shape) - 1):
-            v = v.unsqueeze(0)
-        # b, n, e; 1, 1, e -> 1, n, 1
-        y = torch.einsum("...ne,...le->...nl", x, v)
+        # b, n, e; 1, e, 1 -> 1, n, 1
+        y = torch.matmul(x, v)
         # 1, n, 1; 1, 1, e -> 1, n, e
-        y = torch.einsum("...nl,...le->...ne", y, v)
+        y = torch.matmul(y, v.transpose(1, 2))
 
         return x - 2 * y

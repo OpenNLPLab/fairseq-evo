@@ -1,24 +1,24 @@
 # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute-p/__init__.py
 
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import (T5RPE, RpeVanilla, SineSPE, SPEFilter, Urpe,
+                             print_params, rope)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from einops import rearrange
+from torch.nn import Dropout, Parameter
 
-########## positional encoding
-from fairseq.modules import Urpe, SineSPE, SPEFilter, T5RPE, RpeVanilla, rope
-########## positional encoding
+from ..helpers import get_activation_fn
+
 
 @with_incremental_state
 class LinearKernelAttention(nn.Module):
@@ -61,6 +61,11 @@ class LinearKernelAttention(nn.Module):
     ):
         super().__init__()
         self.index = index
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -122,7 +127,7 @@ class LinearKernelAttention(nn.Module):
         self.use_rope = use_rope
         if self.use_urpe:
             self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-        self.act = self.get_kernel_transform()
+        self.act = get_activation_fn(self.kernel_type)
         self.use_spe = use_spe
         if self.use_spe:
             self.spe_encoder = SineSPE(num_heads=self.num_heads,          # Number of attention heads
@@ -136,13 +141,6 @@ class LinearKernelAttention(nn.Module):
             permutation = self.expand_permutation(max_seq_len, raw_permutation)
             self.register_buffer("permutation", permutation.unsqueeze(0))
             self.register_buffer("ratio", torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2))
-
-        print(f"kernel_type {kernel_type}")
-        print(f"use_urpe {self.use_urpe}")
-        print(f"use_rope {self.use_rope}")
-        print(f"causal {self.causal}")
-        print(f"use_spe {self.use_spe}")
-        print(f"use_permutate {self.use_permutate}")
 
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def generate_random_permutation(self, num_head, head_size, seed):
@@ -164,16 +162,6 @@ class LinearKernelAttention(nn.Module):
             expanded.append(current)
         expanded = torch.stack(expanded, dim=1)
         return expanded
-
-    def get_kernel_transform(self):
-        if self.kernel_type == "1+elu":
-            def f(x):
-                return 1 + F.elu(x)
-            return f
-        elif self.kernel_type == "relu":
-            return F.relu
-        elif self.kernel_type == "elu":
-            return F.elu
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True

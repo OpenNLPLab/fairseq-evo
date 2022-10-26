@@ -17,7 +17,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import ScaleNorm
 from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
+from fairseq.modules import Urpe
 from fairseq.modules import ToepliztV2
 from fairseq.modules import ToepliztV3
 from fairseq.modules import DynamicToepliztMultihead
@@ -264,7 +264,7 @@ class ToeplitzAttention(nn.Module):
         self.householder_learned = householder_learned
         if self.use_urpe:
             print("=====================================")
-            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 

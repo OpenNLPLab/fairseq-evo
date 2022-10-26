@@ -1,25 +1,20 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import (GLU, GatedRMSNorm, RMSNorm, ScaleNorm,
+                             SimpleRMSNorm, Urpe)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from fairseq.modules import SimpleRMSNorm
-from fairseq.modules import GatedRMSNorm
-from fairseq.modules import RMSNorm
-from fairseq.modules import ScaleNorm
-from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
-from fairseq.modules import GLU
-from einops import rearrange
+from torch.nn import Dropout, Parameter
+
 
 @with_incremental_state
 class DoubleFusion(nn.Module):
@@ -189,7 +184,7 @@ class DoubleFusion(nn.Module):
         self.householder_learned = householder_learned
         if self.use_urpe:
             print("=====================================")
-            self.urpe = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             print("=====================================")
 

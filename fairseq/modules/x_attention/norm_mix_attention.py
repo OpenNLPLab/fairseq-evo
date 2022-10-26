@@ -16,7 +16,7 @@ from fairseq.modules import GatedRMSNorm
 from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
+from fairseq.modules import Urpe
 
 @with_incremental_state
 class NormMixAttention(nn.Module):
@@ -199,8 +199,8 @@ class NormMixAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_urpe:
-            self.urpe1 = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            self.urpe2 = UrpeV2(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe1 = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe2 = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
         self.linear_act = self.get_act_fun(self.linear_act_fun)

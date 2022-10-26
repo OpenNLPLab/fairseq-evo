@@ -16,7 +16,7 @@ from fairseq.modules import SimpleRMSNorm
 from fairseq.modules import GatedRMSNorm
 from fairseq.modules import RMSNorm
 from fairseq.modules import Urpe
-from fairseq.modules import UrpeV2
+from fairseq.modules import Urpe
 from fairseq.modules import ToepliztMultihead
 from fairseq.modules import SEBlock
 from fairseq.modules import DynamicToepliztMultihead

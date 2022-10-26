@@ -1,3 +1,4 @@
+# https://github.com/JunnYu/FLASHQuad_pytorch/blob/main/flash/gau.py
 import math
 import sys
 from typing import Dict, Optional, Tuple
@@ -17,7 +18,6 @@ from ..norm import ScaleNorm
 from ..positional_encoding import rope
 
 
-# https://github.com/JunnYu/FLASHQuad_pytorch/blob/main/flash/gau.py
 @with_incremental_state
 class FlashLinearAttention(nn.Module):
     """Multi-headed attention.
