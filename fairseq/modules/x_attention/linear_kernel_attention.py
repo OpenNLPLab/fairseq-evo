@@ -22,11 +22,6 @@ from ..helpers import get_activation_fn
 
 @with_incremental_state
 class LinearKernelAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,

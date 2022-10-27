@@ -1,32 +1,41 @@
-from .cosformer import CosformerEncoder, CosformerDecoder, CosformerSoftmaxDecoder
-from .performer import PerformerEncoder, PerformerDecoder
-from .rela import ReLAEncoder, ReLADecoder
-from .ls import LSAttentionEncoder
-from .flash_quad import FlashQuadEncoder, FlashQuadDecoder, FlashModel
-from .flash_linear import FlashLinearEncoder, FlashLinearDecoder, FlashLinearModel
+from .afno import AFNODecoder, AFNOEncoder
+from .cosformer import (CosformerDecoder, CosformerEncoder,
+                        CosformerSoftmaxDecoder)
+from .dss import DSSDecoder, DSSEncoder
+from .flash_linear import (FlashLinearDecoder, FlashLinearEncoder,
+                           FlashLinearModel)
+from .flash_quad import FlashModel, FlashQuadDecoder, FlashQuadEncoder
+from .fnet import FNetDecoder, FNetEncoder
+from .gau import GauDecoder, GauEncoder
+from .gau_mix import GauMixDecoder, GauMixEncoder
+from .gfn import GlobalFilterDecoder, GlobalFilterEncoder
+from .gmlp import GMLPDecoder, GMLPEncoder
+from .gss import GSSDecoder, GSSEncoder
 from .linear_combination import LinearCombinationEncoder
-from .linear_kernel import LinearKernelAttentionEncoder, LinearKernelAttentionDecoder, LinearKernelModel
-from .transformer_plus import TransformerEncoderPlus, TransformerDecoderPlus, TransfomerPlusModel
-from .norm_transformer import NormAttentionEncoder, NormAttentionDecoder, TransformerNormModel, TransformerNormOnlyEncoderModel
-from .norm_mix_transformer import NormMixAttentionEncoder, NormMixAttentionDecoder
+from .linear_kernel import (LinearKernelAttentionDecoder,
+                            LinearKernelAttentionEncoder, LinearKernelModel)
+from .ls import LSAttentionEncoder
+from .norm_mix_transformer import (NormMixAttentionDecoder,
+                                   NormMixAttentionEncoder)
+from .norm_transformer import (NormAttentionDecoder, NormAttentionEncoder,
+                               TransformerNormModel,
+                               TransformerNormOnlyEncoderModel)
+from .performer import PerformerDecoder, PerformerEncoder
+from .rela import ReLADecoder, ReLAEncoder
+from .s4 import S4Decoder, S4Encoder
 from .sparse_transformer import SparseTransformerDecoder
-from .doublefusion import DoubleFusionEncoder, DoubleFusionDecoder, DoubleFusionModel
-from .doublefusion_v2 import DoubleFusionV2Encoder, DoubleFusionV2Decoder, DoubleFusionV2Model
-from .doublefusion_v3 import DoubleFusionV3Encoder, DoubleFusionV3Decoder, DoubleFusionV3Model
-from .doublefusion_quad import DoubleFusionQuadEncoder, DoubleFusionQuadDecoder
-from .toeplitz_transformer import ToeplitzAttentionEncoder, ToeplitzAttentionDecoder, ToeplitzModel
-from .gau import GauEncoder, GauDecoder
-from .gau_mix import GauMixEncoder, GauMixDecoder
-from .weight_linear import WeightLinearEncoder, WeightLinearDecoder
-from .tno import TNOEncoder, TNODecoder
-from .tno_ffn import TNOFFNEncoder, TNOFFNDecoder
-from .tno_glu import TNOGLUEncoder, TNOGLUDecoder
-from .synthesizer import SynthesizerEncoder, SynthesizerDecoder
-from .gss import GSSEncoder, GSSDecoder
-from .dss import DSSEncoder, DSSDecoder
-from .s4 import S4Encoder, S4Decoder
-from .fnet import FNetEncoder, FNetDecoder
-from .afno import AFNOEncoder, AFNODecoder
-from .gfn import GlobalFilterEncoder, GlobalFilterDecoder
-from .gmlp import GMLPEncoder, GMLPDecoder
-from .transformer_cos import TransformerCosEncoder, TransformerCosDecoder
+from .synthesizer import SynthesizerDecoder, SynthesizerEncoder
+from .test import (DoubleFusionDecoder, DoubleFusionEncoder, DoubleFusionModel,
+                   DoubleFusionQuadDecoder, DoubleFusionQuadEncoder,
+                   DoubleFusionV2Decoder, DoubleFusionV2Encoder,
+                   DoubleFusionV2Model, DoubleFusionV3Decoder,
+                   DoubleFusionV3Encoder, DoubleFusionV3Model)
+from .tno import TNODecoder, TNOEncoder
+from .tno_ffn import TNOFFNDecoder, TNOFFNEncoder
+from .tno_glu import TNOGLUDecoder, TNOGLUEncoder
+from .toeplitz_transformer import (ToeplitzAttentionDecoder,
+                                   ToeplitzAttentionEncoder, ToeplitzModel)
+from .transformer_cos import TransformerCosDecoder, TransformerCosEncoder
+from .transformer_plus import (TransfomerPlusModel, TransformerDecoderPlus,
+                               TransformerEncoderPlus)
+from .weight_linear import WeightLinearDecoder, WeightLinearEncoder

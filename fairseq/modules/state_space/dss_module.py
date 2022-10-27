@@ -19,11 +19,6 @@ from .dss import DSS
 
 @with_incremental_state
 class DSSModule(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,

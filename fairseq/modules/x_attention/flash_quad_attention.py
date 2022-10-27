@@ -22,11 +22,6 @@ from ..positional_encoding import rope
 # Flash attention
 @with_incremental_state
 class FlashQuadAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,

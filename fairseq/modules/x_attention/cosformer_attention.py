@@ -1,11 +1,12 @@
 import math
-import numpy as np
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import print_params
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
@@ -15,11 +16,6 @@ from torch.nn import Parameter
 # cosformer
 @with_incremental_state
 class CosformerAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -44,10 +40,14 @@ class CosformerAttention(nn.Module):
         causal=False,
         resi=False,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -81,19 +81,13 @@ class CosformerAttention(nn.Module):
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
-
-        # add begin
+        # add
         self.use_relu = use_relu
         self.use_elu = use_elu
         self.use_leak = use_leak
         self.max_l = max_l
         self.has_out = has_out
         self.causal = causal
-
-        print("========================")
-        print("cosformer")
-        print(f"self.use_relu {self.use_relu}")
-        print("========================")
 
         if self.has_out:
             self.out_proj = quant_noise(

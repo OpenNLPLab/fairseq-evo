@@ -97,11 +97,6 @@ def favorp_projection(
 
 @with_incremental_state
 class PerformerAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
