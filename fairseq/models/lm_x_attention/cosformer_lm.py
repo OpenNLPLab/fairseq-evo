@@ -163,7 +163,7 @@ def cosformer_lm_base(args):
     args.has_out = True
     
 @register_model_architecture("cosformer_lm", "cosformer_lm_base_h1")
-def cosformer_lm_base(args):
+def cosformer_lm_base_h1(args):
     base_lm_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 512)
