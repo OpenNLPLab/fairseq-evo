@@ -7,6 +7,8 @@ import torch.distributed as dist
 import torch.nn.functional as F
 from torch import nn
 
+from ..norm import GatedRMSNorm, RMSNorm, ScaleNorm, SimpleRMSNorm
+
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -84,39 +86,14 @@ def get_activation_fn(activation):
     else:
         return lambda x: x
     
-    # def get_act_fun(self):
-    #     print(self.act_fun)
-    #     if self.act_fun == "gelu":
-    #         return F.gelu
-    #     elif self.act_fun == "relu":
-    #         return F.relu
-    #     elif self.act_fun == "elu":
-    #         return F.elu
-    #     elif self.act_fun == "sigmoid":
-    #         return F.sigmoid
-    #     elif self.act_fun == "exp":
-    #         return torch.exp
-    #     elif self.act_fun == "1+elu":
-    #         def f(x):
-    #             return F.elu(x) + 1
-    #         return f
-    #     elif self.act_fun == "1+relu":
-    #         def f(x):
-    #             return F.relu(x) + 1
-    #         return f
-    #     elif self.act_fun == "2+elu":
-    #         def f(x):
-    #             return F.elu(x) + 2
-    #         return f
-    #     elif self.act_fun == "relu2":
-    #         def f(x):
-    #             return torch.square(torch.relu(x))
-    #         return f
-    #     elif self.act_fun == "leak":
-    #         def f(x):
-    #             return F.leaky_relu(x, negative_slope=self.negative_slope)
-    #         return f
-    #     else:
-    #         def f(x):
-    #             return x
-    #         return f
+def get_norm_fn(norm_type):
+    if norm_type == "rmsnorm":
+        return RMSNorm
+    elif norm_type == "gatedrmsnorm":
+        return GatedRMSNorm
+    elif norm_type == "simplermsnorm":
+        return SimpleRMSNorm
+    elif norm_type == "scalenorm":
+        return ScaleNorm
+    else:
+        return nn.LayerNorm

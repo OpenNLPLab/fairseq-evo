@@ -1,32 +1,23 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import (GatedRMSNorm, RMSNorm, SimpleRMSNorm, Toeplizt,
+                             Urpe)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from fairseq.modules import SimpleRMSNorm
-from fairseq.modules import GatedRMSNorm
-from fairseq.modules import RMSNorm
-from fairseq.modules import Urpe
-from fairseq.modules import Urpe
-from fairseq.modules import Toeplizt
-from einops import rearrange
+from torch.nn import Dropout, Parameter
+
 
 @with_incremental_state
 class NormLinearAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -101,9 +92,6 @@ class NormLinearAttention(nn.Module):
         self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
-        # self.dropout_module = FairseqDropout(
-        #     dropout, module_name=self.__class__.__name__
-        # )
 
         self.head_dim = embed_dim // num_heads
         assert (

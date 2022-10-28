@@ -1,32 +1,25 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import (GatedRMSNorm, RMSNorm, SimpleRMSNorm, Toeplizt,
+                             Urpe)
 from fairseq.modules.fairseq_dropout import FairseqDropout
+from fairseq.modules.helpers import (get_activation_fn, get_norm_fn,
+                                     logging_info, print_params)
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from fairseq.modules import SimpleRMSNorm
-from fairseq.modules import GatedRMSNorm
-from fairseq.modules import RMSNorm
-from fairseq.modules import Urpe
-from fairseq.modules import Urpe
-from fairseq.modules import Toeplizt
-from einops import rearrange
+from torch.nn import Dropout, Parameter
+
 
 @with_incremental_state
 class WeightLinearAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -58,10 +51,14 @@ class WeightLinearAttention(nn.Module):
         norm_type="simplermsnorm",
         use_sigmoid=False,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -99,24 +96,23 @@ class WeightLinearAttention(nn.Module):
         self.causal = causal
         self.weight_type = weight_type
         if (self.weight_type == 1):
-            print("cos")
+            logging_info("cos")
         if self.weight_type == 2:
-            print("1 - c x ^ 2")
+            logging_info("1 - c x ^ 2")
             self.alpha = nn.Parameter(torch.zeros(1, self.num_heads, 1, 1))
         elif (self.weight_type == 3):
             a0 = 1 - np.exp(-1)
             a2 = 25 / 2 - 35 * np.exp(-1)
             self.b0 = 3 * a2 / 2
             self.b1 = a0 - a2 / 2
-            print("e^-|x|")
+            logging_info("e^-|x|")
         elif (self.weight_type == 4):
             self.c0 = 1 - np.exp(-1)
             self.c1 = self.fft_coef(1)
             self.c2 = self.fft_coef(2)
-            print("fourier")
-            print("e^-|x|")
+            logging_info("e^-|x|: fourier")
 
-        self.act = self.get_act_fun(act_fun)
+        self.act = get_activation_fn(act_fun)
         
         # urpe
         self.core_matrix = core_matrix
@@ -126,71 +122,15 @@ class WeightLinearAttention(nn.Module):
         self.householder_learned = householder_learned
         self.use_sigmoid = use_sigmoid
         if self.use_urpe:
-            print("=====================================")
             self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            print("=====================================")
-
-        print(f"causal {self.causal}")
-        print(f"weight_type {self.weight_type}")
-        print(f"use_urpe {self.use_urpe}")
         
         # norm
         self.use_norm = use_norm
         self.norm_type = norm_type
         if self.use_norm:
-            self.norm = self.get_norm_fun(norm_type, embed_dim)
-        print(f"use_norm {self.use_norm}")
-        print(f"norm_type {self.norm_type}")
-        print(f"use_sigmoid {self.use_sigmoid}")
+            self.norm = get_norm_fn(norm_type)(embed_dim)
 
         self.reset_parameters()
-
-    def get_norm_fun(self, norm_type, embed_dim):
-        if norm_type == "rmsnorm":
-            print("here! rmsnorm")
-            return RMSNorm(embed_dim)
-        elif norm_type == "gatedrmsnorm":
-            print("here! gatedrmsnorm")
-            return GatedRMSNorm(embed_dim)
-        elif norm_type == "simplermsnorm":
-            print("here! simple rmsnorm")
-            return SimpleRMSNorm(embed_dim)
-        elif norm_type == "scalenorm":
-            print("here! scale norm")
-            return ScaleNorm(embed_dim)
-        else:
-            print("here! layer norm")
-            return nn.LayerNorm(embed_dim)
-
-    def get_act_fun(self, act_fun):
-        print(act_fun)
-        if act_fun == "gelu":
-            return F.gelu
-        elif act_fun == "relu":
-            return F.relu
-        elif act_fun == "elu":
-            return F.elu
-        elif act_fun == "sigmoid":
-            return F.sigmoid
-        elif act_fun == "exp":
-            return torch.exp
-        elif act_fun == "leak":
-            def f(x):
-                return F.leaky_relu(x, negative_slope=self.negative_slope)
-            return f
-        elif act_fun == "1+elu":
-            def f(x):
-                return 1 + F.elu(x)
-            return f
-        elif act_fun == "silu":
-            return F.silu
-        elif self.act_fun == "relu2":
-            def f(x):
-                return torch.square(torch.relu(x))
-            return f
-        else:
-            return lambda x: x
         
     def fft_coef(self, k):
         return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
@@ -199,7 +139,7 @@ class WeightLinearAttention(nn.Module):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        print("normal init")
+        logging_info("normal init")
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
@@ -272,7 +212,7 @@ class WeightLinearAttention(nn.Module):
         k = self.k_proj(key)
         v = self.v_proj(value)
 
-        # N, L, H, E, batch, length, head, dim
+        # N, L, H, E: batch, length, head, dim
         # N, L, e1
         head_dim = embed_dim // num_heads
 
@@ -287,7 +227,7 @@ class WeightLinearAttention(nn.Module):
             k = self.urpe(k)
 
         if self.weight_type == 1:
-            # print("cos")
+            # logging_info("cos")
             m = max(tgt_len, src_len)
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = np.pi / 2 * index[:, :, :tgt_len, :] / m
@@ -295,7 +235,7 @@ class WeightLinearAttention(nn.Module):
             q = torch.cat([q * torch.sin(q_index), q * torch.cos(q_index)], dim=-1)
             k = torch.cat([k * torch.sin(k_index), k * torch.cos(k_index)], dim=-1)
         elif self.weight_type == 2:
-            # print("1 - a x^2")
+            # logging_info("1 - a x^2")
             m = max(tgt_len, src_len)
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             # 1, h, n, 1
@@ -307,7 +247,7 @@ class WeightLinearAttention(nn.Module):
             q = torch.cat([(1 - alpha * (q_index ** 2)) * q, 2 * alpha * q_index * q, q], dim=-1)
             k = torch.cat([k, k_index * k, alpha * (k_index ** 2) * k], dim=-1)
         elif (self.weight_type == 3):
-            # print("e ^ -|x|")
+            # logging_info("e ^ -|x|")
             m = max(tgt_len, src_len)
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = np.pi / 2 * index[:, :, :tgt_len, :] / m
@@ -315,7 +255,7 @@ class WeightLinearAttention(nn.Module):
             q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
             k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
         elif (self.weight_type == 4):
-            # print("e ^ -|x| fourier")
+            # logging_info("e ^ -|x| fourier")
             m = max(tgt_len, src_len)
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = np.pi / 2 * index[:, :, :tgt_len, :] / m
@@ -333,7 +273,6 @@ class WeightLinearAttention(nn.Module):
             weights = torch.einsum('...nd,...md->...nm', q, k)
             weights = weights.masked_fill(attn_mask==float("-inf"), 0)
             if not self.use_norm:
-                # print("not use")
                 denorm = weights.sum(dim=-1, keepdim=True)
                 denorm = torch.clamp_min(denorm, eps)
                 weights = weights / denorm
@@ -342,7 +281,6 @@ class WeightLinearAttention(nn.Module):
             o1 = torch.einsum('...nd,...ne->...de', k, v)
             output = torch.einsum('...nd,...de->...ne', q, o1)
             if not self.use_norm:
-                # print("not use")
                 denorm = torch.einsum('...nd,...d->...n', q, torch.sum(k, axis=-2)).unsqueeze(-1)
                 denorm = torch.clamp_min(denorm, eps)
                 output = output / denorm
@@ -350,7 +288,6 @@ class WeightLinearAttention(nn.Module):
         output = rearrange(output, 'b h n e -> n b (h e)')
         
         if self.use_norm:
-            # print("use")
             output = self.norm(output)
 
         # L, N, e1

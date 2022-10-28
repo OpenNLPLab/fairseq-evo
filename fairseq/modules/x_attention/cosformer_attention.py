@@ -39,6 +39,7 @@ class CosformerAttention(nn.Module):
         has_out=False,
         causal=False,
         resi=False,
+        constant=0,
     ):
         super().__init__()
         # add
@@ -88,6 +89,7 @@ class CosformerAttention(nn.Module):
         self.max_l = max_l
         self.has_out = has_out
         self.causal = causal
+        self.constant = constant
 
         if self.has_out:
             self.out_proj = quant_noise(
@@ -196,6 +198,8 @@ class CosformerAttention(nn.Module):
         elif self.use_leak:
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
+        q = q + self.constant
+        k = k + self.constant
 
         # cos transform
         m = max(src_len, tgt_len)

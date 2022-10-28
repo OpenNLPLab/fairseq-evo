@@ -3,41 +3,33 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.nn as nn
 import logging
+import math
 from dataclasses import dataclass, field
 from typing import Optional
 
+import torch.nn as nn
 from fairseq import options, utils
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
-from fairseq.models import (
-    FairseqIncrementalDecoder,
-    FairseqLanguageModel,
-    register_model,
-    register_model_architecture,
-)
-logger = logging.getLogger(__name__)
-from fairseq.models.transformer import (
-    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder
-)
+from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
+                            register_model, register_model_architecture)
 
+logger = logging.getLogger(__name__)
+from typing import Dict, List, Optional
+
+import torch
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP, Embedding,
+                                        TransformerDecoder)
+from fairseq.models.transformer_lm import (DEFAULT_MAX_TARGET_POSITIONS,
+                                           TransformerLanguageModel,
+                                           TransformerLanguageModelConfig,
+                                           base_lm_architecture,
+                                           transformer_lm_big)
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
-from typing import Dict, List, Optional
-import torch
 
-from fairseq.models.transformer_lm import (
-    DEFAULT_MAX_TARGET_POSITIONS, 
-    TransformerLanguageModel,
-    TransformerLanguageModelConfig,
-    base_lm_architecture,
-    transformer_lm_big,
-)
+from ..xformer import CosformerDecoder, CosformerSoftmaxDecoder
 
-from ..xformer import (
-    CosformerDecoder,
-    CosformerSoftmaxDecoder
-)
 
 @register_model("cosformer_lm", dataclass=TransformerLanguageModelConfig)
 class CosformerLanguageModel(TransformerLanguageModel):
@@ -169,3 +161,32 @@ def cosformer_lm_base(args):
     args.max_l = getattr(args, "max_l", 512)
     args.causal = True
     args.has_out = True
+    
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1")
+def cosformer_lm_base(args):
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True
+    args.decoder_attention_heads = 1
+    
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_c1")
+def cosformer_lm_base_c1(args):
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True
+    args.constant = 1.0
+
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_c_head")
+def cosformer_lm_base_c_head(args):
+    # c = 1 / sqrt(head_dim)
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True
+    args.constant = 1 / math.sqrt(args.decoder_embed_dim / args.decoder_attention_heads)
+    

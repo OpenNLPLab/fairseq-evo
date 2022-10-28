@@ -14,4 +14,4 @@ from .tno_lm import *
 from .toeplitz_lm import *
 from .transformer_cos_lm import *
 from .transformer_plus_lm import *
-from .weight_linear import *
+from .weight_linear_lm import *
