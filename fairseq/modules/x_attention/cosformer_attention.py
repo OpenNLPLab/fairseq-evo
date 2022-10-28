@@ -198,13 +198,11 @@ class CosformerAttention(nn.Module):
         elif self.use_leak:
             q = F.leaky_relu(q)
             k = F.leaky_relu(k)
-        q = q + self.constant
-        k = k + self.constant
 
         # cos transform
         m = max(src_len, tgt_len)
         # get index and send to cuda
-        weight_index = self.get_index(m).to(q)
+        weight_index = self.get_index(m).to(q) * self.constant
         # (N * h, L, 2 * d)
         q_ = torch.cat([q * torch.sin(weight_index[:, :tgt_len, :] / m), q * torch.cos(weight_index[:, :tgt_len, :] / m)], dim=-1)
         # (N * h, S, 2 * d)

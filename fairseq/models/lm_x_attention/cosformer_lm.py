@@ -171,22 +171,42 @@ def cosformer_lm_base_h1(args):
     args.has_out = True
     args.decoder_attention_heads = 1
     
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_c1")
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c12")
 def cosformer_lm_base_c1(args):
     base_lm_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 512)
     args.causal = True
     args.has_out = True
-    args.constant = 1.0
-
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_c_head")
-def cosformer_lm_base_c_head(args):
-    # c = 1 / sqrt(head_dim)
+    args.decoder_attention_heads = 1
+    args.constant = 1 / 2
+    
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c14")
+def cosformer_lm_base_c1(args):
     base_lm_architecture(args)
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 512)
     args.causal = True
     args.has_out = True
-    args.constant = 1 / math.sqrt(args.decoder_embed_dim / args.decoder_attention_heads)
+    args.decoder_attention_heads = 1
+    args.constant = 1 / 4
+
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c2")
+def cosformer_lm_base_c1(args):
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True
+    args.decoder_attention_heads = 1
+    args.constant = 2
     
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c4")
+def cosformer_lm_base_c1(args):
+    base_lm_architecture(args)
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = True
+    args.decoder_attention_heads = 1
+    args.constant = 4
