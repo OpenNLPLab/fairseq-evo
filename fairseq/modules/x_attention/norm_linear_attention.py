@@ -15,6 +15,9 @@ from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Dropout, Parameter
 
+from ..helpers import (get_activation_fn, get_norm_fn, logging_info,
+                       print_params)
+
 
 @with_incremental_state
 class NormLinearAttention(nn.Module):
@@ -82,10 +85,14 @@ class NormLinearAttention(nn.Module):
         use_toeplizt=False,
         type_num=-1
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -118,33 +125,36 @@ class NormLinearAttention(nn.Module):
 
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
-        if self.attention_use_layer_norm:
-            if self.norm_type == "rmsnorm":
-                print("here! rmsnorm")
-                self.layer_norm = RMSNorm(embed_dim)
-                if use_toeplizt:
-                    self.toeplizt_norm = RMSNorm(embed_dim)
-            elif self.norm_type == "gatedrmsnorm":
-                print("here! gatedrmsnorm")
-                self.layer_norm = GatedRMSNorm(embed_dim)
-                if use_toeplizt:
-                    self.toeplizt_norm = GatedRMSNorm(embed_dim)
-            elif self.norm_type == "simplermsnorm":
-                print("here! simple rmsnorm")
-                self.layer_norm = SimpleRMSNorm(embed_dim)
-                if use_toeplizt:
-                    self.toeplizt_norm = SimpleRMSNorm(embed_dim)
-            else:
-                print("here! layer norm")
-                self.layer_norm = nn.LayerNorm(embed_dim)
-                if use_toeplizt:
-                    self.toeplizt_norm = nn.LayerNorm(embed_dim)
+        self.layer_norm = get_norm_fn(norm_type)(embed_dim)
+        if use_toeplizt:
+            self.toeplizt_norm = get_norm_fn(norm_type)(embed_dim)
+        # if self.attention_use_layer_norm:
+        #     if self.norm_type == "rmsnorm":
+        #         logging_info("here! rmsnorm")
+        #         self.layer_norm = RMSNorm(embed_dim)
+        #         if use_toeplizt:
+        #             self.toeplizt_norm = RMSNorm(embed_dim)
+        #     elif self.norm_type == "gatedrmsnorm":
+        #         logging_info("here! gatedrmsnorm")
+        #         self.layer_norm = GatedRMSNorm(embed_dim)
+        #         if use_toeplizt:
+        #             self.toeplizt_norm = GatedRMSNorm(embed_dim)
+        #     elif self.norm_type == "simplermsnorm":
+        #         logging_info("here! simple rmsnorm")
+        #         self.layer_norm = SimpleRMSNorm(embed_dim)
+        #         if use_toeplizt:
+        #             self.toeplizt_norm = SimpleRMSNorm(embed_dim)
+        #     else:
+        #         logging_info("here! layer norm")
+        #         self.layer_norm = nn.LayerNorm(embed_dim)
+        #         if use_toeplizt:
+        #             self.toeplizt_norm = nn.LayerNorm(embed_dim)
 
         self.i = 0
         self.model_update_freq = model_update_freq
         self.lambda_ = lambda_
 
-        # add begin
+        # add
         self.use_relu = use_relu
         self.use_elu = use_elu
         self.use_leak = use_leak
@@ -189,23 +199,18 @@ class NormLinearAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_urpe:
-            print("=====================================")
             self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            print("=====================================")
 
-        print("=========================")
-        print("qk_act")
-        self.act = self.get_act_fun(self.act_fun)
-        print("=========================")
-        print("kv_act")
-        self.kv_act = self.get_act_fun(kv_act)
-        print("=========================")
+        # self.act = self.get_act_fun(self.act_fun)
+        # self.kv_act = self.get_act_fun(kv_act)
+        self.act = get_activation_fn(act_fun)
+        self.kv_act = get_activation_fn(kv_act)
 
         if self.has_out:
             self.out_proj = quant_noise(
                 nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
             )
+            
         self.weight_type = weight_type
         if self.weight_type == 1:
             a0 = 1 - np.exp(-1)
@@ -213,65 +218,19 @@ class NormLinearAttention(nn.Module):
             self.b0 = 3 * a2 / 2
             self.b1 = a0 - a2 / 2
         elif self.weight_type == 2:
-            # self.register_buffer("ratio", torch.sigmoid(torch.randn(1)))
             self.r = 0.5
             self.c = -2 * np.log(self.r)
-
-        print(f"causal {self.causal}")
-        print(f"has_out {self.has_out}")
-        print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
-        print(f"num_heads {self.num_heads}")
-        print(f"act_fun_type: {act_fun}")
-        print(f"norm_type {self.norm_type}")
-        print(f"init_type {self.init_type}")
-        print(f"use_urpe {self.use_urpe}")
-        print(f"use_dropout {self.use_dropout}")
-        print(f"kv_act {kv_act}")
-        print(f"self.weight_type {self.weight_type}")
-        print(f"self.use_final_dropout {self.use_final_dropout}")
-        print(f"self.final_dropout {final_dropout}")
-        print(f"self.use_toeplizt {use_toeplizt}")
-        print(f"self.type_num {self.type_num}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
         elif self.init_type == "default":
             self.reset_parameters()
 
-    def get_act_fun(self, act_fun):
-        print(act_fun)
-        if act_fun == "gelu":
-            return F.gelu
-        elif act_fun == "relu":
-            return F.relu
-        elif act_fun == "elu":
-            return F.elu
-        elif act_fun == "sigmoid":
-            return F.sigmoid
-        elif act_fun == "exp":
-            return torch.exp
-        elif act_fun == "leak":
-            def f(x):
-                return F.leaky_relu(x, negative_slope=self.negative_slope)
-            return f
-        elif act_fun == "1+elu":
-            def f(x):
-                return 1 + F.elu(x)
-            return f
-        elif act_fun == "silu":
-            return F.silu
-        elif self.act_fun == "relu2":
-            def f(x):
-                return torch.square(torch.relu(x))
-            return f
-        else:
-            return lambda x: x
-
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        print("normal init")
+        logging_info("normal init")
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
@@ -292,7 +251,7 @@ class NormLinearAttention(nn.Module):
                 nn.init.constant_(self.out_proj.bias, 0.0)
 
     def gelu_reset(self):
-        print("use gelu init")
+        logging_info("use gelu init")
         # std gelu
         c = 0.5874
         d1, d2 = self.k_proj.weight.shape
@@ -306,8 +265,8 @@ class NormLinearAttention(nn.Module):
         return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
 
     def get_weight(self, max_l):
-        # cosformer
         if (self.weight_type == 1):
+            # cosine
             a = np.pi / 2
             index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
@@ -402,18 +361,18 @@ class NormLinearAttention(nn.Module):
         # attn_output_weights = torch.einsum('bhnd,bhmd->bhnm', q1, k1)
         # denorm = torch.sum(attn_output_weights, dim=-1, keepdim=True)
         # attn_output_weights = attn_output_weights / denorm
-        # # print(attn_output_weights.shape)
+        # # logging_info(attn_output_weights.shape)
 
         # data = attn_output_weights[0]
         # if tgt_len == 512:
-        #     print(self.index)
-        #     print(data.shape)
-        #     print(torch.sum(attn_output_weights, dim=-1))
+        #     logging_info(self.index)
+        #     logging_info(data.shape)
+        #     logging_info(torch.sum(attn_output_weights, dim=-1))
         #     np.save(f"./matrix/lg_softmax/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
         #### for save
 
         if self.weight_type == 1:
-            # print("linear laplace")
+            # logging_info("linear laplace")
             m = max(tgt_len, src_len)
             index = torch.arange(1, m + 1).reshape(1, -1, 1).to(q)
             q_index = index[:, :tgt_len, :] / m
@@ -421,7 +380,7 @@ class NormLinearAttention(nn.Module):
             q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
             k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
         elif self.weight_type == 2:
-            # print("linear guassian")
+            # logging_info("linear guassian")
             m = max(tgt_len, src_len)
             index = torch.arange(m).reshape(1, -1, 1).to(q)
             q_index = index[:, :tgt_len, :] / m
@@ -431,7 +390,7 @@ class NormLinearAttention(nn.Module):
             q = torch.cat([q, self.c * q], dim=-1)
             k = torch.cat([k, k], dim=-1)
         elif self.weight_type == 3:
-            # print("cos")
+            # logging_info("cos")
             m = max(tgt_len, src_len)
             index = torch.arange(m).reshape(1, -1, 1).to(q)
             q_index = np.pi / 2 * index[:, :tgt_len, :] / m

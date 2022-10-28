@@ -1,25 +1,22 @@
 import math
-
-from torch import logit
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import GatedRMSNorm, RMSNorm, SimpleRMSNorm, Urpe
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
-from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from fairseq.modules import SimpleRMSNorm
-from fairseq.modules import GatedRMSNorm
-from fairseq.modules import RMSNorm
-from fairseq.modules import Urpe
-from fairseq.modules import Urpe
-from einops import rearrange
+from torch import Tensor, logit, nn
+from torch.nn import Dropout, Parameter
+
+from ..helpers import (get_activation_fn, get_norm_fn, logging_info,
+                       print_params)
+
 
 def look_around(x, backward = 1, forward = 0, pad_value = -1, dim = 2):
     t = x.shape[1]
@@ -30,11 +27,6 @@ def look_around(x, backward = 1, forward = 0, pad_value = -1, dim = 2):
 
 @with_incremental_state
 class NormLocalAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -89,10 +81,14 @@ class NormLocalAttention(nn.Module):
         use_final_dropout=False,
         final_dropout=0.0,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -141,25 +137,13 @@ class NormLocalAttention(nn.Module):
             )
 
         self.norm_type = norm_type
-        if self.norm_type == "rmsnorm":
-            print("here! rmsnorm")
-            self.gated_rms_norm = RMSNorm(embed_dim)
-        elif self.norm_type == "gatedrmsnorm":
-            print("here! gatedrmsnorm")
-            self.gated_rms_norm = GatedRMSNorm(embed_dim)
-        elif self.norm_type == "simplermsnorm":
-            print("here! simple rmsnorm")
-            self.gated_rms_norm = SimpleRMSNorm(embed_dim)
-        else:
-            print("here! layer norm")
-            self.gated_rms_norm = nn.LayerNorm(embed_dim)
+        self.norm = get_norm_fn(norm_type)(embed_dim)
         
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
             self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
         else:
             self.bias_k = self.bias_v = None
-
 
         self.reset_parameters()
 
@@ -169,7 +153,7 @@ class NormLocalAttention(nn.Module):
         # add
         self.act_fun = act_fun
         self.negative_slope = negative_slope
-        self.act = self.get_act_fun()
+        self.act = get_activation_fn(self.act_fun)
         self.use_softmax = use_softmax
 
         # urpe add
@@ -181,10 +165,7 @@ class NormLocalAttention(nn.Module):
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
         if self.use_urpe:
-            print("=====================================")
             self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            print("=====================================")
 
         self.causal = causal
         self.left_window = left_window
@@ -197,27 +178,24 @@ class NormLocalAttention(nn.Module):
             self.b0 = 3 * a2 / 2
             self.b1 = a0 - a2 / 2
         elif self.weight_type == 2:
-            # self.register_buffer("ratio", torch.sigmoid(torch.randn(1)))
             self.r = 0.5
             self.c = -2 * np.log(self.r)
 
         # chunk
         self.chunk_size = chunk_size
-        print("use relu sparse")
-        print(f"use urpe {self.use_urpe}")
-        print(f"num_heads {self.num_heads}")
-        print(f"add_bias_kv {add_bias_kv}")
-        print(f"act_fun {self.act_fun}")
-        print(f"negative_slope {self.negative_slope}")
-        print(f"chunk_size {self.chunk_size}")
-        print(f"causal {self.causal}")
-        print(f"self.left_window {self.left_window}")
-        print(f"self.right_window {self.right_window}")
-        print(f"self.group_type {self.group_type}")
-        print(f"self.use_softmax {self.use_softmax}")
-        print(f"self.weight_type {self.weight_type}")
-        print(f"self.use_final_dropout {self.use_final_dropout}")
-        print(f"self.final_dropout {final_dropout}")
+        
+        if self.group_type == "chunk":
+            # chunk(diag block)
+            self.forward = self.forward_chunk
+        elif self.group_type == "window":
+            # window
+            self.forward = self.forward_window
+        elif self.group_type == "linear_chunk":
+            # norm linear chunk
+            self.forward = self.forward_linear_chunk
+        elif self.group_type == "vanilla_linear_chunk":
+            # vanilla linear chunk
+            self.forward = self.forward_vanilla_linear_chunk
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -235,74 +213,35 @@ class NormLocalAttention(nn.Module):
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
 
-    def get_act_fun(self):
-        print(self.act_fun)
-        if self.act_fun == "gelu":
-            return F.gelu
-        elif self.act_fun == "relu":
-            return F.relu
-        elif self.act_fun == "elu":
-            return F.elu
-        elif self.act_fun == "sigmoid":
-            return F.sigmoid
-        elif self.act_fun == "exp":
-            return torch.exp
-        elif self.act_fun == "1+elu":
-            def f(x):
-                return F.elu(x) + 1
-            return f
-        elif self.act_fun == "1+relu":
-            def f(x):
-                return F.relu(x) + 1
-            return f
-        elif self.act_fun == "2+elu":
-            def f(x):
-                return F.elu(x) + 2
-            return f
-        elif self.act_fun == "relu2":
-            def f(x):
-                return torch.square(torch.relu(x))
-            return f
-        elif self.act_fun == "leak":
-            def f(x):
-                return F.leaky_relu(x, negative_slope=self.negative_slope)
-            return f
-        elif self.act_fun == "silu":
-            return F.silu
-        else:
-            def f(x):
-                return x
-            return f
-
-    def forward(
-        self,
-        query,
-        key: Optional[Tensor],
-        value: Optional[Tensor],
-        key_padding_mask: Optional[Tensor] = None,
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-        need_weights: bool = True,
-        static_kv: bool = False,
-        attn_mask: Optional[Tensor] = None,
-        before_softmax: bool = False,
-        need_head_weights: bool = False,
-    ) -> Tuple[Tensor, Optional[Tensor]]:
-        if self.group_type == "chunk":
-            return self.forward_chunk(query, key, value, key_padding_mask, 
-                                      incremental_state, need_weights, static_kv,
-                                      attn_mask, before_softmax, need_head_weights)
-        elif self.group_type == "window":
-            return self.forward_window(query, key, value, key_padding_mask, 
-                                      incremental_state, need_weights, static_kv,
-                                      attn_mask, before_softmax, need_head_weights)
-        elif self.group_type == "linear_chunk":
-            return self.forward_linear_chunk(query, key, value, key_padding_mask, 
-                                      incremental_state, need_weights, static_kv,
-                                      attn_mask, before_softmax, need_head_weights)
-        elif self.group_type == "vanilla_linear_chunk":
-            return self.forward_vanilla_linear_chunk(query, key, value, key_padding_mask, 
-                                      incremental_state, need_weights, static_kv,
-                                      attn_mask, before_softmax, need_head_weights)
+    # def forward(
+    #     self,
+    #     query,
+    #     key: Optional[Tensor],
+    #     value: Optional[Tensor],
+    #     key_padding_mask: Optional[Tensor] = None,
+    #     incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+    #     need_weights: bool = True,
+    #     static_kv: bool = False,
+    #     attn_mask: Optional[Tensor] = None,
+    #     before_softmax: bool = False,
+    #     need_head_weights: bool = False,
+    # ) -> Tuple[Tensor, Optional[Tensor]]:
+    #     if self.group_type == "chunk":
+    #         return self.forward_chunk(query, key, value, key_padding_mask, 
+    #                                   incremental_state, need_weights, static_kv,
+    #                                   attn_mask, before_softmax, need_head_weights)
+    #     elif self.group_type == "window":
+    #         return self.forward_window(query, key, value, key_padding_mask, 
+    #                                   incremental_state, need_weights, static_kv,
+    #                                   attn_mask, before_softmax, need_head_weights)
+    #     elif self.group_type == "linear_chunk":
+    #         return self.forward_linear_chunk(query, key, value, key_padding_mask, 
+    #                                   incremental_state, need_weights, static_kv,
+    #                                   attn_mask, before_softmax, need_head_weights)
+    #     elif self.group_type == "vanilla_linear_chunk":
+    #         return self.forward_vanilla_linear_chunk(query, key, value, key_padding_mask, 
+    #                                   incremental_state, need_weights, static_kv,
+    #                                   attn_mask, before_softmax, need_head_weights)
 
     def transform(self, q):
         q = rearrange(q, 'l b (h e) -> l (b h) e', h=self.num_heads)
@@ -405,7 +344,6 @@ class NormLocalAttention(nn.Module):
         bv = v.reshape(b, -1, self.chunk_size, e)
 
         look_around_kwargs = {'backward': self.left_window, 'forward': self.right_window}
-        # s1 = window_size * (left + right + 1)
         # b, windows, s1, e
         bk = look_around(bk,  self.left_window, self.right_window, 0)
         # b, windows, s1, e
@@ -430,7 +368,7 @@ class NormLocalAttention(nn.Module):
         output = output.reshape(-1, t, e)[:, :orig_t, :]
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         # perform RMSNorm to stabilize running
-        output = self.gated_rms_norm(output)
+        output = self.norm(output)
         # outprojection
         output = self.out_proj(output)
 
@@ -520,7 +458,7 @@ class NormLocalAttention(nn.Module):
             k = self.urpe(k)
 
         if self.weight_type == 1:
-            # print("local laplace")
+            # logging_info("local laplace")
             m = self.chunk_size
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = index / m
@@ -528,7 +466,7 @@ class NormLocalAttention(nn.Module):
             q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
             k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
         elif self.weight_type == 2:
-            # print("local guassian")
+            # logging_info("local guassian")
             m = self.chunk_size
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = index / m
@@ -559,23 +497,23 @@ class NormLocalAttention(nn.Module):
         #     # N * h, g, l, s
         #     p1 = prob / denorm
         #     p1 = rearrange(p1, '(n h) g l s -> n h g l s', h=self.num_heads)
-        #     print(p1[0][0][0].sum(dim=-1))
-        #     print(torch.isnan(p1).int().sum())
+        #     logging_info(p1[0][0][0].sum(dim=-1))
+        #     logging_info(torch.isnan(p1).int().sum())
         #     n, h, g, l, s = p1.shape
-        #     print(p1.shape)
+        #     logging_info(p1.shape)
         #     attn_output_weights = rearrange(p1, 'n h g l s -> n h (g l) s')
-        #     print(attn_output_weights[0][0][0].sum(dim=-1))
+        #     logging_info(attn_output_weights[0][0][0].sum(dim=-1))
         #     # attn_output_weights = torch.zeros((n, h, l * g, s * g))
-        #     print(attn_output_weights.shape)
+        #     logging_info(attn_output_weights.shape)
         #     # for i in range(g):
-        #     #     # print(attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l].shape)
-        #     #     # print(p1[:, :, i, ...].shape)
+        #     #     # logging_info(attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l].shape)
+        #     #     # logging_info(p1[:, :, i, ...].shape)
         #     #     attn_output_weights[:, :, i * l: (i + 1) * l, i * l: (i + 1) * l] = p1[:, :, i, ...]
             
-        #     print(attn_output_weights.shape)
+        #     logging_info(attn_output_weights.shape)
         #     data = attn_output_weights[0]
-        #     print(self.index)
-        #     print(data.shape)
+        #     logging_info(self.index)
+        #     logging_info(data.shape)
         #     np.save(f"./matrix/lg_softmax/l{self.index}.npy", attn_output_weights.cpu().detach().numpy())
         #### for save
         
@@ -590,11 +528,11 @@ class NormLocalAttention(nn.Module):
         output = output[:tgt_len, ...]
         # perform RMSNorm to stabilize running
         if not self.use_softmax:
-            output = self.gated_rms_norm(output)
+            output = self.norm(output)
         # outprojection
         output = self.out_proj(output)
         if self.use_final_dropout:
-            # print("local_use_final")
+            # logging_info("local_use_final")
             output = self.final_dropout_module(output)
 
         return output, prob
@@ -682,7 +620,6 @@ class NormLocalAttention(nn.Module):
         # n, l, c, d
 
         # act fun
-        # eps = 1e-3
         q = self.act(q)
         k = self.act(k)
 
@@ -691,7 +628,7 @@ class NormLocalAttention(nn.Module):
             k = self.urpe(k)
 
         if self.weight_type == 1:
-            # print("local laplace")
+            # logging_info("local laplace")
             m = self.chunk_size
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = index / m
@@ -699,7 +636,7 @@ class NormLocalAttention(nn.Module):
             q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
             k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
         elif self.weight_type == 2:
-            # print("local guassian")
+            # logging_info("local guassian")
             m = self.chunk_size
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = index / m
@@ -721,21 +658,19 @@ class NormLocalAttention(nn.Module):
         # (N * h, g, l, s), (N * h, g, s, e2) -> (N * h, g, l, e2)
         output = torch.einsum("bgls,bgsd->bgld", weights, v)
         # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
-        # output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
         output = rearrange(output, 'n l c e -> n (l c) e', c=self.chunk_size)
         output = rearrange(output, 'n l e -> l n e')
         output = rearrange(output, 'l (b h) e -> l b (h e)', h=self.num_heads)
         output = output[:tgt_len, ...]
         # perform RMSNorm to stabilize running
         if not self.use_softmax:
-            output = self.gated_rms_norm(output)
+            output = self.norm(output)
         # outprojection
         output = self.out_proj(output)
         if self.use_final_dropout:
-            # print("local_use_final")
+            # logging_info("local_use_final")
             output = self.final_dropout_module(output)
 
-        # output = output
         return output, prob
 
     def forward_vanilla_linear_chunk(
@@ -781,9 +716,6 @@ class NormLocalAttention(nn.Module):
         - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
           the embedding dimension.
         '''
-        # self.cnt += 1
-        # if self.cnt == 10:
-        #     sys.exit(0)
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)
@@ -829,7 +761,7 @@ class NormLocalAttention(nn.Module):
             k = self.urpe(k)
 
         if self.weight_type == 1:
-            # print("local laplace")
+            # logging_info("local laplace")
             m = self.chunk_size
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = index / m
@@ -837,7 +769,7 @@ class NormLocalAttention(nn.Module):
             q = torch.cat([(self.b1 + self.b0 * torch.square(q_index)) * q, - 2 * self.b0 * q_index * q, self.b0 * q], dim=-1)
             k = torch.cat([k, k_index * k, torch.square(k_index) * k], dim=-1)
         elif self.weight_type == 2:
-            # print("local guassian")
+            # logging_info("local guassian")
             m = self.chunk_size
             index = torch.arange(m).reshape(1, 1, -1, 1).to(q)
             q_index = index / m
@@ -869,11 +801,11 @@ class NormLocalAttention(nn.Module):
         output = output[:tgt_len, ...]
         # perform RMSNorm to stabilize running
         if not self.use_softmax:
-            output = self.gated_rms_norm(output)
+            output = self.norm(output)
         # outprojection
         output = self.out_proj(output)
         if self.use_final_dropout:
-            # print("local_use_final")
+            # logging_info("local_use_final")
             output = self.final_dropout_module(output)
 
         # output = output

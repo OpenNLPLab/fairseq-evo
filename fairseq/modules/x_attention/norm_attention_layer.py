@@ -8,16 +8,19 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 from fairseq import utils
-from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecoderLayer
+from fairseq.modules import (LayerNorm, TransformerDecoderLayer,
+                             TransformerEncoderLayer)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 
-from .norm_local_attention import NormLocalAttention
-from .norm_linear_attention import NormLinearAttention
-from .norm_mix_attention import NormMixAttention
 from ..ffn import GLU
-from ..norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
+from ..helpers import logging_info
+from ..norm import GatedRMSNorm, RMSNorm, SimpleRMSNorm
+from .norm_linear_attention import NormLinearAttention
+from .norm_local_attention import NormLocalAttention
+from .norm_mix_attention import NormMixAttention
+
 
 class NormAttentionDecoderLayer(nn.Module):
     def __init__(
@@ -57,20 +60,14 @@ class NormAttentionDecoderLayer(nn.Module):
         self.glu_act = getattr(args, "glu_act", False)
         self.fina_act = getattr(args, "fina_act", "None")
         self.glu_dropout = getattr(args, "glu_dropout", 0.0)
-        print("=============================")
-        print("Decoder")
-        print(f"self.use_glu {self.use_glu}")
-        print(f"self.glu_act {self.glu_act}")
-        print(f"self.fina_act {self.fina_act}")
-        print(f"self.glu_dropout {self.glu_dropout}")
-        print("=============================")
+
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
         # TODO  remove this once we update apex with the fix
         export = getattr(args, "char_inputs", False)
         # self.self_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
         attn_type = getattr(args, 'attn_type', 'layernorm')
-        print(f"Decoder Norm Type: {attn_type}")
+        logging_info(f"Decoder Norm Type: {attn_type}")
         if attn_type == "simplermsnorm":
             self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
         else:
@@ -88,7 +85,7 @@ class NormAttentionDecoderLayer(nn.Module):
             p = 8 / 3
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
-            print(f"GLU multiple {p}")
+            logging_info(f"GLU multiple {p}")
             self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
         else:
             self.fc1 = self.build_fc1(
@@ -127,9 +124,9 @@ class NormAttentionDecoderLayer(nn.Module):
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
         if args.attention_type == 1:
-            print("======================")
-            print("use norm_linear")
-            print("======================")
+            logging_info("======================")
+            logging_info("use norm_linear")
+            logging_info("======================")
             return NormLinearAttention(
                 embed_dim,
                 args.decoder_attention_heads,
@@ -190,9 +187,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 type_num=getattr(args, "type_num", -1),
             )
         elif args.attention_type == 2:
-            print("======================")
-            print("use norm_local")
-            print("======================")
+            logging_info("======================")
+            logging_info("use norm_local")
+            logging_info("======================")
             return NormLocalAttention(
                 embed_dim,
                 args.decoder_attention_heads,
@@ -288,9 +285,9 @@ class NormAttentionDecoderLayer(nn.Module):
 
     def build_encoder_attention(self, embed_dim, args):
         if args.attention_type == 1:
-            print("======================")
-            print("use norm_linear")
-            print("======================")
+            logging_info("======================")
+            logging_info("use norm_linear")
+            logging_info("======================")
             return NormLinearAttention(
                 embed_dim,
                 args.decoder_attention_heads,
@@ -352,9 +349,9 @@ class NormAttentionDecoderLayer(nn.Module):
                 type_num=getattr(args, "type_num", -1),
             )
         elif args.attention_type == 2:
-            print("======================")
-            print("use norm_local")
-            print("======================")
+            logging_info("======================")
+            logging_info("use norm_local")
+            logging_info("======================")
             return NormLocalAttention(
                 embed_dim,
                 args.decoder_attention_heads,
@@ -484,16 +481,12 @@ class NormAttentionDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
-        #print(x.shape)
         if need_head_weights:
             need_attn = True
-        # print("decoder")
-        # print("before")
-        # print(x.shape, encoder_out.shape)
+
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
-        #print(x.shape)
 
         if prev_self_attn_state is not None:
             prev_key, prev_value = prev_self_attn_state[:2]
@@ -530,9 +523,6 @@ class NormAttentionDecoderLayer(nn.Module):
         else:
             y = x
 
-        # print("before self")
-        # print(x.shape, y.shape)
-        #print('inside layer', x.shape)
         x, attn = self.self_attn(
             query=x,
             key=y,
@@ -542,15 +532,10 @@ class NormAttentionDecoderLayer(nn.Module):
             need_weights=False,
             attn_mask=self_attn_mask,
         )
-        #print('inside layer', x.shape)
-        # import pdb
-        # pdb.set_trace()
 
         x = self.dropout_module(x)
-        #print('dropout', x.shape)
 
         x = self.residual_connection(x, residual)
-        #print('residule connection', x.shape)
 
         if not self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -585,8 +570,6 @@ class NormAttentionDecoderLayer(nn.Module):
             if not self.normalize_before:
                 x = self.encoder_attn_layer_norm(x)
 
-        # print("after")
-        # print(x.shape)
         residual = x
         if self.normalize_before:
             x = self.final_layer_norm(x)
@@ -596,13 +579,10 @@ class NormAttentionDecoderLayer(nn.Module):
             x = self.activation_fn(self.fc1(x))
             x = self.activation_dropout_module(x)
             x = self.fc2(x)
-        #print(x.shape)
-        # x = self.activation_fn(self.fc1(x))
-        # x = self.activation_dropout_module(x)
-        # x = self.fc2(x)
+
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
-        #print(x.shape)
+
         if not self.normalize_before:
             x = self.final_layer_norm(x)
         if self.onnx_trace and incremental_state is not None:
@@ -642,7 +622,7 @@ class NormAttentionEncoderLayer(nn.Module):
         self.quant_noise_block_size = getattr(args, 'quant_noise_pq_block_size', 8) or 8
         self.self_attn = self.build_self_attention(self.embed_dim, args)
         attn_type = getattr(args, 'attn_type', 'layernorm')
-        print(f"Encoder Norm Type: {attn_type}")
+        logging_info(f"Encoder Norm Type: {attn_type}")
         if attn_type == "simplermsnorm":
             self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
         else:
@@ -665,20 +645,14 @@ class NormAttentionEncoderLayer(nn.Module):
         self.glu_act = getattr(args, "glu_act", False)
         self.fina_act = getattr(args, "fina_act", "None")
         self.glu_dropout = getattr(args, "glu_dropout", 0.0)
-        print("=============================")
-        print("Encoder")
-        print(f"self.use_glu {self.use_glu}")
-        print(f"self.glu_act {self.glu_act}")
-        print(f"self.fina_act {self.fina_act}")
-        print(f"self.glu_dropout {self.glu_dropout}")
-        print("=============================")
+        logging_info("Encoder")
 
         if self.use_glu:
             d1 = self.embed_dim
             p = 8 / 3
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
-            print(f"GLU multiple {p}")
+            logging_info(f"GLU multiple {p}")
             self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
         else:
             self.fc1 = self.build_fc1(
@@ -711,9 +685,9 @@ class NormAttentionEncoderLayer(nn.Module):
 
     def build_self_attention(self, embed_dim, args):
         if args.attention_type == 1:
-            print("======================")
-            print("use norm_linear")
-            print("======================")
+            logging_info("======================")
+            logging_info("use norm_linear")
+            logging_info("======================")
             return NormLinearAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -772,9 +746,9 @@ class NormAttentionEncoderLayer(nn.Module):
                 type_num=getattr(args, "type_num", -1),
             )
         elif args.attention_type == 2:
-            print("======================")
-            print("use norm_local")
-            print("======================")
+            logging_info("======================")
+            logging_info("use norm_local")
+            logging_info("======================")
             return NormLocalAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -904,9 +878,7 @@ class NormAttentionEncoderLayer(nn.Module):
         # will become -inf, which results in NaN in model parameters
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
-        # print("encoder")
-        # print("before")
-        # print(x.shape)
+
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -936,6 +908,5 @@ class NormAttentionEncoderLayer(nn.Module):
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
             x = self.final_layer_norm(x)
-        # print("after")
-        # print(x.shape)
+
         return x

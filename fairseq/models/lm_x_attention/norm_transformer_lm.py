@@ -3,50 +3,44 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.nn as nn
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
+import torch.nn as nn
 from fairseq import options, utils
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
-from fairseq.models import (
-    FairseqIncrementalDecoder,
-    FairseqLanguageModel,
-    register_model,
-    register_model_architecture,
-)
+from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
+                            register_model, register_model_architecture)
+
 logger = logging.getLogger(__name__)
-from fairseq.models.transformer import (
-    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder
-)
-
-from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
-from omegaconf import II
 from typing import Dict, List, Optional
-import torch
 
-from fairseq.models.transformer_lm import (
-    DEFAULT_MAX_TARGET_POSITIONS, 
-    TransformerLanguageModel,
-    TransformerLanguageModelConfig,
-    base_lm_architecture,
-    transformer_lm_big,
-)
+import torch
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP, Embedding,
+                                        TransformerDecoder)
+from fairseq.models.transformer_lm import (DEFAULT_MAX_TARGET_POSITIONS,
+                                           TransformerLanguageModel,
+                                           TransformerLanguageModelConfig,
+                                           base_lm_architecture,
+                                           transformer_lm_big)
+from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
+from fairseq.modules.helpers import logging_info
+from omegaconf import II
 
 from ..xformer import NormAttentionDecoder
+
 
 def small_init_weights(module):
     if isinstance(module, (nn.Linear)):
         module.weight.data.normal_(mean=0.0, std=0.02)        
 
     if isinstance(module, (nn.Embedding)):
-        # nn.init.uniform_(module.weight, a=-1e-4, b=1e-4) # SmallInit(Emb)
-        print("Embdding norm before")
-        print(torch.norm(module.weight.data))
+        logging_info("Embdding norm before")
+        logging_info(torch.norm(module.weight.data))
         module.weight.data.normal_(mean=0.0, std=1e-5)
-        print("Embdding norm after")
-        print(torch.norm(module.weight.data))
+        logging_info("Embdding norm after")
+        logging_info(torch.norm(module.weight.data))
 
     if isinstance(module, nn.Linear) and module.bias is not None:
         module.bias.data.zero_()
@@ -103,9 +97,9 @@ class NormAttentionLanguageModel(TransformerLanguageModel):
             assert args.decoder_input_dim == args.decoder_output_dim
 
         init_method = getattr(args, 'init_method', "default")
-        print(f"init_method {init_method}")
+        logging_info(f"init_method {init_method}")
         if init_method != "default":
-            print("small init")
+            logging_info("small init")
             embed_tokens.apply(small_init_weights)
 
         decoder = NormAttentionDecoder(
@@ -777,6 +771,7 @@ def transformer_norm_small_glu_lm_base_pure_rms_urpe_1d3_small_init_geglu(args):
 ########## norm attention + urpe + pure rms norm + geglu
 
 ########## pure rms norm + urpe + weight
+@register_model_architecture("norm_attention_lm", "transnormer_t1")
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3")
 def transformer_norm_glu_lm_base_pure_rms_urpe_1d3(args):
     base_lm_architecture(args)
@@ -1295,6 +1290,7 @@ def transformer_norm_glu_lm_base_pure_linear(args):
 ##### speed test
 
 ########## softmax + 1 + elu
+@register_model_architecture("norm_attention_lm", "transnormer_t2")
 @register_model_architecture("norm_attention_lm", "norm_glu_lm_base_pure_rms_urpe_1d3_softmax_1+elu")
 def transformer_norm_glu_lm_base_pure_rms_urpe_1d3_softmax_1_elu(args):
     base_lm_architecture(args)

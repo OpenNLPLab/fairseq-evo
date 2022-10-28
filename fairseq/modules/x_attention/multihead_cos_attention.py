@@ -34,10 +34,14 @@ class MultiheadCosAttention(nn.Module):
         energy_scale=10.0,
         matrix_scale=1.0,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -83,8 +87,6 @@ class MultiheadCosAttention(nn.Module):
         
         self.energy_scale = energy_scale
         self.matrix_scale = matrix_scale
-        print(f"self.energy_scale {self.energy_scale}")
-        print(f"self.matrix_scale {self.matrix_scale}")
 
         self.add_zero_attn = add_zero_attn
 
@@ -116,19 +118,6 @@ class MultiheadCosAttention(nn.Module):
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
-
-    def get_index(self, seq_len):
-        index = np.pi / 2 * torch.arange(1, seq_len + 1).reshape(1, -1, 1)
-
-        return nn.Parameter(index, requires_grad=False)
-
-    def get_matrix(self, l1, l2):
-        i1 = torch.arange(1, l1 + 1).reshape(1, -1, 1)
-        i2 = torch.arange(1, l2 + 1).reshape(1, 1, -1)
-        weight = np.pi / 2 * (i1 - i2) / max(l1, l2)
-        m = torch.cos(weight)
-
-        return nn.Parameter(m, requires_grad=False)
 
     def forward(
         self,

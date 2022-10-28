@@ -7,25 +7,24 @@ RoBERTa: A Robustly Optimized BERT Pretraining Approach.
 """
 
 import logging
-from numpy import False_
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from fairseq import utils
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderModel,
-    register_model,
-    register_model_architecture,
-)
-from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder
+from fairseq.models import (FairseqEncoder, FairseqEncoderModel,
+                            register_model, register_model_architecture)
+from fairseq.models.roberta import (RobertaEncoder, RobertaModel,
+                                    base_architecture)
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerEncoder)
+from fairseq.models.xformer import NormAttentionEncoder
 from fairseq.modules import LayerNorm
+from fairseq.modules.helpers import logging_info
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
-from fairseq.models.roberta import RobertaEncoder, RobertaModel, base_architecture
+from numpy import False_
 
-from fairseq.models.xformer import NormAttentionEncoder
 
 ############# NormAttentionEncoder
 class RobertaNormEncoder(RobertaEncoder):
@@ -41,15 +40,14 @@ class RobertaNormEncoder(RobertaEncoder):
         return encoder
     
     def _init_weights(self, module):
-        print("small init")
+        logging_info("small init")
         if isinstance(module, (nn.Linear)):
             module.weight.data.normal_(mean=0.0, std=0.02)        
 
         if isinstance(module, (nn.Embedding)):
-            print("here")
-            print(torch.norm(module.weight.data))
+            logging_info(torch.norm(module.weight.data))
             module.weight.data.normal_(mean=0.0, std=1e-5)
-            print(torch.norm(module.weight.data))
+            logging_info(torch.norm(module.weight.data))
 
         if isinstance(module, nn.Linear) and module.bias is not None:
             module.bias.data.zero_()

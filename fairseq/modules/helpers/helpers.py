@@ -77,9 +77,9 @@ def get_activation_fn(activation):
         def f(x):
             return 1 + F.elu(x)
         return f
-    elif self.act_fun == "2+elu":
+    elif activation == "2+elu":
             def f(x):
-                return F.elu(x) + 2
+                return 2 + F.elu(x)
             return f
     elif activation == "silu":
         return F.silu

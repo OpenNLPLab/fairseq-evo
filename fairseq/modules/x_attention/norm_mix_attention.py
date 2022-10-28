@@ -1,30 +1,24 @@
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import GatedRMSNorm, RMSNorm, SimpleRMSNorm, Urpe
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
-from fairseq.modules import GatedRMSNorm
-from fairseq.modules import SimpleRMSNorm
-from fairseq.modules import RMSNorm
-from fairseq.modules import Urpe
-from fairseq.modules import Urpe
+from torch.nn import Dropout, Parameter
+
+from ..helpers import (get_activation_fn, get_norm_fn, logging_info,
+                       print_params)
+
 
 @with_incremental_state
 class NormMixAttention(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -87,19 +81,20 @@ class NormMixAttention(nn.Module):
         # forward形式, 1为并联, 2为local + linear, 3为linear + local
         forward_type=1
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+    
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
         self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
-        # self.dropout_module = FairseqDropout(
-        #     dropout, module_name=self.__class__.__name__
-        # )
 
         self.head_dim = embed_dim // num_heads
         assert (
@@ -145,31 +140,31 @@ class NormMixAttention(nn.Module):
             dropout, module_name=self.__class__.__name__
         )
 
-        # self.gated_rms_norm = GatedRMSNorm(d)
-
         self.attention_use_layer_norm = attention_use_layer_norm
         self.norm_type = norm_type
-        if self.attention_use_layer_norm:
-            if self.norm_type == "rmsnorm":
-                self.layer_norm = RMSNorm(d)
-                self.gated_rms_norm = RMSNorm(d)
-            elif self.norm_type == "gatedrmsnorm":
-                print("here! gatedrmsnorm")
-                self.layer_norm = GatedRMSNorm(d)
-                self.gated_rms_norm = GatedRMSNorm(d)
-            elif self.norm_type == "simplermsnorm":
-                print("here! simple rmsnorm")
-                self.layer_norm = SimpleRMSNorm(d)
-                self.gated_rms_norm = SimpleRMSNorm(d)
-            else:
-                self.layer_norm = nn.LayerNorm(d)
-                self.gated_rms_norm = nn.LayerNorm(d)
+        self.linear_norm = get_norm_fn(norm_type)(embed_dim)
+        self.local_norm = get_norm_fn(norm_type)(embed_dim)
+        # if self.attention_use_layer_norm:
+        #     if self.norm_type == "rmsnorm":
+        #         self.linear_norm = RMSNorm(d)
+        #         self.local_norm = RMSNorm(d)
+        #     elif self.norm_type == "gatedrmsnorm":
+        #         logging_info("here! gatedrmsnorm")
+        #         self.linear_norm = GatedRMSNorm(d)
+        #         self.local_norm = GatedRMSNorm(d)
+        #     elif self.norm_type == "simplermsnorm":
+        #         logging_info("here! simple rmsnorm")
+        #         self.linear_norm = SimpleRMSNorm(d)
+        #         self.local_norm = SimpleRMSNorm(d)
+        #     else:
+        #         self.linear_norm = nn.LayerNorm(d)
+        #         self.local_norm = nn.LayerNorm(d)
 
         self.i = 0
         self.model_update_freq = model_update_freq
         self.lambda_ = lambda_
 
-        # add begin
+        # add
         self.use_relu = use_relu
         self.use_elu = use_elu
         self.use_leak = use_leak
@@ -201,56 +196,23 @@ class NormMixAttention(nn.Module):
         if self.use_urpe:
             self.urpe1 = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             self.urpe2 = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
-            # self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
-        self.linear_act = self.get_act_fun(self.linear_act_fun)
-        self.local_act = self.get_act_fun(self.local_act_fun)
+        # self.linear_act = self.get_act_fun(self.linear_act_fun)
+        # self.local_act = self.get_act_fun(self.local_act_fun)
+        self.linear_act = get_activation_fn(self.linear_act_fun)
+        self.local_act = get_activation_fn(self.local_act_fun)
         self.forward_type = forward_type
-
-        print(f"causal {self.causal}")
-        print(f"has_out {self.has_out}")
-        print(f"attention_use_layer_norm {self.attention_use_layer_norm}")
-        print(f"num_heads {self.num_heads}")
-        print(f"linear_act_fun: {self.linear_act_fun}")
-        print(f"local_act_fun: {self.local_act_fun}")
-        print(f"norm_type {self.norm_type}")
-        print(f"init_type {self.init_type}")
-        print(f"use_urpe {self.use_urpe}")
-        print(f"chunk_size {self.chunk_size}")
-        print(f"self.forward_type {self.forward_type}")
 
         if self.init_type == "gelu":
             self.gelu_reset()
         elif self.init_type == "default":
             self.reset_parameters()
 
-    def get_act_fun(self, act_fun):
-        if act_fun == "gelu":
-            return F.gelu
-        elif act_fun == "relu":
-            return F.relu
-        elif act_fun == "elu":
-            return F.elu
-        elif act_fun == "sigmoid":
-            return F.sigmoid
-        elif act_fun == "exp":
-            return torch.exp
-        elif act_fun == "leak":
-            def f(x):
-                return F.leaky_relu(x, negative_slope=self.negative_slope)
-            return f
-        elif act_fun == "1+elu":
-            def f(x):
-                return 1 + F.elu(x)
-            return f
-        else:
-            return None
-
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
     def reset_parameters(self):
-        print("normal init")
+        logging_info("normal init")
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
@@ -282,7 +244,7 @@ class NormMixAttention(nn.Module):
                 nn.init.constant_(self.out_proj_local.bias, 0.0)
 
     def gelu_reset(self):
-        print("use gelu init")
+        logging_info("use gelu init")
         # std gelu
         c = 0.5874
         d1, d2 = self.k_proj.weight.shape
@@ -296,8 +258,8 @@ class NormMixAttention(nn.Module):
         return (1 - ((-1) ** k) * np.exp(-1)) / (1 + (np.pi * k) ** 2)
 
     def get_weight(self, max_l):
-        # cosformer
         if (self.weight_type == 1):
+             # cosine
             a = np.pi / 2
             index = a * torch.arange(1, max_l + 1).reshape(1, -1, 1)
 
@@ -323,25 +285,20 @@ class NormMixAttention(nn.Module):
     ) -> Tuple[Tensor, Optional[Tensor]]:
         # 并联
         if self.forward_type == 1:
-            # print("a")
             o1, _ = self.forward_linear(query, key, value)
             o2, _ = self.forward_local(query, key, value)
             o = (o1 + o2) / 2
             return o, None
         elif self.forward_type == 2:
-            # print("b")
             # 串联 linear + local
             o1, _ = self.forward_linear(query, key, value)
             o2, _ = self.forward_local(o1, key, value)
             return o2, _
         else:
-            # print("c")
             # 串联 loal + linear
             o1, _ = self.forward_local(query, key, value)
             o2, _ = self.forward_linear(o1, key, value)
             return o2, _
-
-        
 
     def forward_linear(
         self,
@@ -435,7 +392,7 @@ class NormMixAttention(nn.Module):
         # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
         output = output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         # B, N, e2
-        output = self.layer_norm(output)
+        output = self.linear_norm(output)
 
         # L, N, e1
         output = self.out_proj_linear(output)
@@ -505,7 +462,6 @@ class NormMixAttention(nn.Module):
         # scale
         q *= scaling
 
-
         # pad至chunk_size整数倍
         tgt_len_pad = (self.chunk_size - tgt_len % self.chunk_size) % self.chunk_size
         src_len_pad = (self.chunk_size - src_len % self.chunk_size) % self.chunk_size
@@ -544,7 +500,7 @@ class NormMixAttention(nn.Module):
         # (N * h, g, l, e2) -> (N * h, L, e2) -> (L, N * h, e2) -> (L, N, E2)
         output = output.contiguous().view(bsz * num_heads, tgt_len + tgt_len_pad, -1).transpose(0, 1).contiguous().view(tgt_len + tgt_len_pad, bsz, -1)[:tgt_len, ...]
         # perform RMSNorm to stabilize running
-        output = self.gated_rms_norm(output)
+        output = self.local_norm(output)
         # outprojection
         output = self.out_proj_local(output)
 

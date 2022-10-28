@@ -9,36 +9,24 @@ from typing import Any, Dict, List, Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.distributed import fsdp_wrap
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderDecoderModel,
-    FairseqIncrementalDecoder,
-    register_model,
-    register_model_architecture,
-)
-
-from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
-from omegaconf import II
-from typing import Dict, List, Optional
-import torch
+from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
+                            FairseqIncrementalDecoder, register_model,
+                            register_model_architecture)
+from fairseq.models.transformer import (DEFAULT_MAX_SOURCE_POSITIONS,
+                                        DEFAULT_MAX_TARGET_POSITIONS,
+                                        DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerDecoder, TransformerEncoder,
+                                        TransformerModel, base_architecture)
+from fairseq.modules import (AdaptiveInput, CharacterTokenEmbedder,
+                             GauDecoderLayer, GauEncoderLayer)
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
+from omegaconf import II
 from torch import Tensor
-from einops import rearrange
 
-from fairseq.models.transformer import (
-    TransformerDecoder, 
-    TransformerEncoder, 
-    TransformerModel, 
-    base_architecture,
-    DEFAULT_MAX_SOURCE_POSITIONS,
-    DEFAULT_MAX_TARGET_POSITIONS,
-    DEFAULT_MIN_PARAMS_TO_WRAP,
-)
-
-from fairseq.modules import GauEncoderLayer, GauDecoderLayer
 
 class GauMixEncoder(TransformerEncoder):
     """
@@ -157,7 +145,6 @@ class GauMixDecoder(TransformerDecoder):
                 - a dictionary with any model-specific outputs
         """
         bs, slen = prev_output_tokens.size()
-        #print('transformer decoder input:', prev_output_tokens.shape)
         if alignment_layer is None:
             alignment_layer = self.num_layers - 1
 
@@ -185,32 +172,23 @@ class GauMixDecoder(TransformerDecoder):
         
         # embed tokens and positions
         x = self.embed_scale * self.embed_tokens(prev_output_tokens)
-        # print(x)
-        #print(x.shape)
 
         if self.quant_noise is not None:
             x = self.quant_noise(x)
-        #print(x.shape)
 
         if self.project_in_dim is not None:
             x = self.project_in_dim(x)
-        #print(x.shape)
 
         if positions is not None:
             x += positions
-        #print(x.shape)
 
         if self.layernorm_embedding is not None:
             x = self.layernorm_embedding(x)
-        #print(x.shape)
 
         x = self.dropout_module(x)
-        #print(x.shape)
-
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
-        #print(x.shape)
 
         self_attn_padding_mask: Optional[Tensor] = None
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
@@ -232,7 +210,6 @@ class GauMixDecoder(TransformerDecoder):
             else:
                 self_attn_mask = None
 
-            #print(idx, 'x: ', x.shape)
             x, layer_attn, _ = layer(
                 x,
                 enc,
@@ -243,8 +220,6 @@ class GauMixDecoder(TransformerDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
             )
-
-            #print(idx, 'x after layer:', x.shape)
 
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
@@ -258,7 +233,6 @@ class GauMixDecoder(TransformerDecoder):
             else:
                 self_attn_mask = None
 
-            #print(idx, 'x: ', x.shape)
             x, layer_attn, _ = layer(
                 x,
                 enc,
@@ -269,8 +243,6 @@ class GauMixDecoder(TransformerDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
             )
-
-            #print(idx, 'x after layer:', x.shape)
 
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
