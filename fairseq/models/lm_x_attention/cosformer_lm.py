@@ -210,3 +210,13 @@ def cosformer_lm_base_c1(args):
     args.has_out = True
     args.decoder_attention_heads = 1
     args.constant = 4
+
+@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_l7")
+def cosformer_lm_base_h1_l7(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 7
+    args.use_relu = getattr(args, "use_relu", True)
+    args.max_l = getattr(args, "max_l", 512)
+    args.causal = True
+    args.has_out = False
+    args.decoder_attention_heads = 1
