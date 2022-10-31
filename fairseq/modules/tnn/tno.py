@@ -189,9 +189,9 @@ class Tno(nn.Module):
         n = x.shape[dim]
         # c: first col, r: first row
         # 1, d, 1 -> h, 1, d
-        zero = self.rpe_transform(self.get_zero())
-        pos = self.rpe_transform(self.get_pos(n - 1))
-        neg_index = self.get_neg(n - 1)
+        zero = self.rpe_transform(self.get_zero().to(x))
+        pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+        neg_index = self.get_neg(n - 1).to(x)
         if self.causal:
             neg = neg_index
         else:

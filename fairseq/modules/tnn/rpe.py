@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from ..helpers import get_activation_fn, print_params
+from ..helpers import get_activation_fn, get_norm_fn, print_params
 from ..norm import SimpleRMSNorm
 from ..others import ActLayer
 
@@ -31,13 +31,13 @@ class Rpe(nn.Module):
         for i in range(layers):
             self.layers.append(
                 nn.Sequential(
-                    SimpleRMSNorm(self.pos_dim),
+                    get_norm_fn(norm_type)(self.pos_dim),
                     self.get_act(),
                     nn.Linear(self.pos_dim, self.pos_dim, bias=bias),
                 )
             )
         self.out = nn.Sequential(
-            SimpleRMSNorm(self.pos_dim),
+            get_norm_fn(norm_type)(self.pos_dim),
             self.get_act(),
             nn.Linear(self.pos_dim, self.outdim, bias=bias),
         )
