@@ -144,21 +144,6 @@ class NormMixAttention(nn.Module):
         self.norm_type = norm_type
         self.linear_norm = get_norm_fn(norm_type)(embed_dim)
         self.local_norm = get_norm_fn(norm_type)(embed_dim)
-        # if self.attention_use_layer_norm:
-        #     if self.norm_type == "rmsnorm":
-        #         self.linear_norm = RMSNorm(d)
-        #         self.local_norm = RMSNorm(d)
-        #     elif self.norm_type == "gatedrmsnorm":
-        #         logging_info("here! gatedrmsnorm")
-        #         self.linear_norm = GatedRMSNorm(d)
-        #         self.local_norm = GatedRMSNorm(d)
-        #     elif self.norm_type == "simplermsnorm":
-        #         logging_info("here! simple rmsnorm")
-        #         self.linear_norm = SimpleRMSNorm(d)
-        #         self.local_norm = SimpleRMSNorm(d)
-        #     else:
-        #         self.linear_norm = nn.LayerNorm(d)
-        #         self.local_norm = nn.LayerNorm(d)
 
         self.i = 0
         self.model_update_freq = model_update_freq
@@ -197,8 +182,6 @@ class NormMixAttention(nn.Module):
             self.urpe1 = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
             self.urpe2 = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim // 2, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
-        # self.linear_act = self.get_act_fun(self.linear_act_fun)
-        # self.local_act = self.get_act_fun(self.local_act_fun)
         self.linear_act = get_activation_fn(self.linear_act_fun)
         self.local_act = get_activation_fn(self.local_act_fun)
         self.forward_type = forward_type

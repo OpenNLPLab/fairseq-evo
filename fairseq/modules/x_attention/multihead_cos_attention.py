@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import print_params
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
@@ -162,7 +163,6 @@ class MultiheadCosAttention(nn.Module):
         - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
           the embedding dimension.
         '''
-        # print(attn_mask[:5, :5])
         num_heads = self.num_heads
         tgt_len, bsz, embed_dim = query.size()
         src_len = key.size(0)

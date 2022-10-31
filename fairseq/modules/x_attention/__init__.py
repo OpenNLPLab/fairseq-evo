@@ -33,13 +33,6 @@ from .rela_layer import ReLADecoderLayer, ReLAEncoderLayer
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import (SparseTransformerDecoderLayer,
                                        SparseTransformerEncoderLayer)
-from .tno import TNO
-from .tno_ffn_layer import TNOFFNDecoderLayer, TNOFFNEncoderLayer
-from .tno_glu_layer import TNOGLUDecoderLayer, TNOGLUEncoderLayer
-from .tno_layer import TNODecoderLayer, TNOEncoderLayer
-from .toeplitz_attention import ToeplitzAttention
-from .toeplitz_layer import (ToeplitzAttentionDecoderLayer,
-                             ToeplitzAttentionEncoderLayer)
 from .weight_linear_attention import WeightLinearAttention
 from .weight_linear_attention_layer import (WeightLinearDecoderLayer,
                                             WeightLinearEncoderLayer)

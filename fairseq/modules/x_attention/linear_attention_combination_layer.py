@@ -8,18 +8,21 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 from fairseq import utils
-from fairseq.modules import MultiheadAttention, LayerNorm, TransformerEncoderLayer, TransformerDecoderLayer
+from fairseq.modules import (LayerNorm, MultiheadAttention,
+                             TransformerDecoderLayer, TransformerEncoderLayer)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 
-from .norm_local_attention import NormLocalAttention
-from .norm_linear_attention import NormLinearAttention
-from .cosformer_attention import CosformerAttention
-from .performer_attention import PerformerAttention
-from .linear_kernel_attention import LinearKernelAttention
 from ..ffn import GLU
-from ..norm import SimpleRMSNorm, RMSNorm, GatedRMSNorm
+from ..helpers import get_norm_fn, logging_info
+from ..norm import GatedRMSNorm, RMSNorm, SimpleRMSNorm
+from .cosformer_attention import CosformerAttention
+from .linear_kernel_attention import LinearKernelAttention
+from .norm_linear_attention import NormLinearAttention
+from .norm_local_attention import NormLocalAttention
+from .performer_attention import PerformerAttention
+
 
 class LinearCombinationEncoderLayer(nn.Module):
     def __init__(self, args):
@@ -30,11 +33,9 @@ class LinearCombinationEncoderLayer(nn.Module):
         self.quant_noise_block_size = getattr(args, 'quant_noise_pq_block_size', 8) or 8
         self.self_attn = self.build_self_attention(self.embed_dim, args)
         attn_type = getattr(args, 'attn_type', 'layernorm')
-        print(f"Encoder Norm Type: {attn_type}")
-        if attn_type == "simplermsnorm":
-            self.self_attn_layer_norm = SimpleRMSNorm(self.embed_dim)
-        else:
-            self.self_attn_layer_norm = LayerNorm(self.embed_dim)
+        logging_info(f"Encoder Norm Type: {attn_type}")
+        self.self_attn_layer_norm = get_norm_fn(attn_type)(self.embed_dim)
+
         self.dropout_module = FairseqDropout(
             args.dropout, module_name=self.__class__.__name__
         )
@@ -53,20 +54,12 @@ class LinearCombinationEncoderLayer(nn.Module):
         self.glu_act = getattr(args, "glu_act", False)
         self.fina_act = getattr(args, "fina_act", "None")
         self.glu_dropout = getattr(args, "glu_dropout", 0.0)
-        print("=============================")
-        print("Encoder")
-        print(f"self.use_glu {self.use_glu}")
-        print(f"self.glu_act {self.glu_act}")
-        print(f"self.fina_act {self.fina_act}")
-        print(f"self.glu_dropout {self.glu_dropout}")
-        print("=============================")
 
         if self.use_glu:
             d1 = self.embed_dim
             p = 8 / 3
             p = getattr(args, "multiple", p)
             d2 = int(p * d1)
-            print(f"GLU multiple {p}")
             self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
         else:
             self.fc1 = self.build_fc1(
@@ -99,9 +92,7 @@ class LinearCombinationEncoderLayer(nn.Module):
 
     def build_self_attention(self, embed_dim, args):
         if args.attention_type == 1:
-            print("===========")
-            print("cos")
-            print("===========")
+            logging_info("cos")
             return CosformerAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -120,9 +111,7 @@ class LinearCombinationEncoderLayer(nn.Module):
                 resi=getattr(args, "resi", False),
             )
         elif args.attention_type == 2:
-            print("===========")
-            print("performer")
-            print("===========")
+            logging_info("performer")
             return PerformerAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -135,9 +124,7 @@ class LinearCombinationEncoderLayer(nn.Module):
                 causal=getattr(args, 'causal', False),
             )
         elif args.attention_type == 3:
-            print("===========")
-            print("1+elu")
-            print("===========")
+            logging_info("1+elu")
             return LinearKernelAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -163,9 +150,7 @@ class LinearCombinationEncoderLayer(nn.Module):
                 index=args.index
             )
         elif args.attention_type == 4:
-            print("======================")
-            print("use norm_linear")
-            print("======================")
+            logging_info("use norm_linear")
             return NormLinearAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -221,9 +206,7 @@ class LinearCombinationEncoderLayer(nn.Module):
                 final_dropout=getattr(args, "final_dropout", 0.0)
             )
         elif args.attention_type == 5:
-            print("======================")
-            print("use norm_local")
-            print("======================")
+            logging_info("use norm_local")
             return NormLocalAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -258,9 +241,7 @@ class LinearCombinationEncoderLayer(nn.Module):
                 index=args.index,
             )
         elif args.attention_type == -1:
-            print("===========")
-            print("vanilla")
-            print("===========")
+            logging_info("vanilla")
             return MultiheadAttention(
                 embed_dim,
                 args.encoder_attention_heads,
@@ -311,9 +292,7 @@ class LinearCombinationEncoderLayer(nn.Module):
         # will become -inf, which results in NaN in model parameters
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
-        # print("encoder")
-        # print("before")
-        # print(x.shape)
+
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -343,8 +322,7 @@ class LinearCombinationEncoderLayer(nn.Module):
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
             x = self.final_layer_norm(x)
-        # print("after")
-        # print(x.shape)
+
         return x
 
 

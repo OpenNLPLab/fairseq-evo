@@ -1,22 +1,26 @@
 # https://github.com/huggingface/transformers/blob/main/src/transformers/models/t5/modeling_t5.py
 import math
 from typing import Optional, Tuple, Union
+
 import torch
 from torch import nn
-# single head version
 
+from ..helpers import print_params
+
+
+# single head version
 class T5RPE(nn.Module):
     def __init__(self, bidirectional=True, num_buckets=32, max_distance=128):
         super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.bidirectional = bidirectional
         self.num_buckets = num_buckets
         self.max_distance = max_distance
         self.relative_attention_bias = nn.Embedding(self.num_buckets, 1)
-        print("T5=============================T5")
-        print(self.bidirectional)
-        print(self.num_buckets)
-        print(self.max_distance)
-        print("T5=============================T5")
 
     def relative_position_bucket(self, relative_position, bidirectional=True, num_buckets=32, max_distance=128):
         """

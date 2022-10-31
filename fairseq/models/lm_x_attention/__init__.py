@@ -8,10 +8,6 @@ from .norm_transformer_lm import *
 from .performer_lm import *
 from .rela_lm import *
 from .sparse_transformer_lm import *
-from .tno_ffn_lm import *
-from .tno_glu_lm import *
-from .tno_lm import *
-from .toeplitz_lm import *
 from .transformer_cos_lm import *
 from .transformer_plus_lm import *
 from .weight_linear_lm import *

@@ -213,36 +213,6 @@ class NormLocalAttention(nn.Module):
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
 
-    # def forward(
-    #     self,
-    #     query,
-    #     key: Optional[Tensor],
-    #     value: Optional[Tensor],
-    #     key_padding_mask: Optional[Tensor] = None,
-    #     incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-    #     need_weights: bool = True,
-    #     static_kv: bool = False,
-    #     attn_mask: Optional[Tensor] = None,
-    #     before_softmax: bool = False,
-    #     need_head_weights: bool = False,
-    # ) -> Tuple[Tensor, Optional[Tensor]]:
-    #     if self.group_type == "chunk":
-    #         return self.forward_chunk(query, key, value, key_padding_mask, 
-    #                                   incremental_state, need_weights, static_kv,
-    #                                   attn_mask, before_softmax, need_head_weights)
-    #     elif self.group_type == "window":
-    #         return self.forward_window(query, key, value, key_padding_mask, 
-    #                                   incremental_state, need_weights, static_kv,
-    #                                   attn_mask, before_softmax, need_head_weights)
-    #     elif self.group_type == "linear_chunk":
-    #         return self.forward_linear_chunk(query, key, value, key_padding_mask, 
-    #                                   incremental_state, need_weights, static_kv,
-    #                                   attn_mask, before_softmax, need_head_weights)
-    #     elif self.group_type == "vanilla_linear_chunk":
-    #         return self.forward_vanilla_linear_chunk(query, key, value, key_padding_mask, 
-    #                                   incremental_state, need_weights, static_kv,
-    #                                   attn_mask, before_softmax, need_head_weights)
-
     def transform(self, q):
         q = rearrange(q, 'l b (h e) -> l (b h) e', h=self.num_heads)
         q = rearrange(q, 'l n e -> n l e')

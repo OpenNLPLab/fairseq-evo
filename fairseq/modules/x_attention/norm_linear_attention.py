@@ -128,27 +128,6 @@ class NormLinearAttention(nn.Module):
         self.layer_norm = get_norm_fn(norm_type)(embed_dim)
         if use_toeplizt:
             self.toeplizt_norm = get_norm_fn(norm_type)(embed_dim)
-        # if self.attention_use_layer_norm:
-        #     if self.norm_type == "rmsnorm":
-        #         logging_info("here! rmsnorm")
-        #         self.layer_norm = RMSNorm(embed_dim)
-        #         if use_toeplizt:
-        #             self.toeplizt_norm = RMSNorm(embed_dim)
-        #     elif self.norm_type == "gatedrmsnorm":
-        #         logging_info("here! gatedrmsnorm")
-        #         self.layer_norm = GatedRMSNorm(embed_dim)
-        #         if use_toeplizt:
-        #             self.toeplizt_norm = GatedRMSNorm(embed_dim)
-        #     elif self.norm_type == "simplermsnorm":
-        #         logging_info("here! simple rmsnorm")
-        #         self.layer_norm = SimpleRMSNorm(embed_dim)
-        #         if use_toeplizt:
-        #             self.toeplizt_norm = SimpleRMSNorm(embed_dim)
-        #     else:
-        #         logging_info("here! layer norm")
-        #         self.layer_norm = nn.LayerNorm(embed_dim)
-        #         if use_toeplizt:
-        #             self.toeplizt_norm = nn.LayerNorm(embed_dim)
 
         self.i = 0
         self.model_update_freq = model_update_freq
@@ -201,8 +180,6 @@ class NormLinearAttention(nn.Module):
         if self.use_urpe:
             self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
 
-        # self.act = self.get_act_fun(self.act_fun)
-        # self.kv_act = self.get_act_fun(kv_act)
         self.act = get_activation_fn(act_fun)
         self.kv_act = get_activation_fn(kv_act)
 

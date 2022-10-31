@@ -313,14 +313,12 @@ class TransformerCosDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
-        #print(x.shape)
         if need_head_weights:
             need_attn = True
 
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
-        #print(x.shape)
 
         if prev_self_attn_state is not None:
             prev_key, prev_value = prev_self_attn_state[:2]
@@ -357,7 +355,6 @@ class TransformerCosDecoderLayer(nn.Module):
         else:
             y = x
 
-        #print('inside layer', x.shape)
         x, attn = self.self_attn(
             query=x,
             key=y,
@@ -367,15 +364,10 @@ class TransformerCosDecoderLayer(nn.Module):
             need_weights=False,
             attn_mask=self_attn_mask,
         )
-        #print('inside layer', x.shape)
-        # import pdb
-        # pdb.set_trace()
 
         x = self.dropout_module(x)
-        #print('dropout', x.shape)
 
         x = self.residual_connection(x, residual)
-        #print('residule connection', x.shape)
 
         if not self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -414,13 +406,12 @@ class TransformerCosDecoderLayer(nn.Module):
         if self.normalize_before:
             x = self.final_layer_norm(x)
         
-        #print(x.shape)
         x = self.activation_fn(self.fc1(x))
         x = self.activation_dropout_module(x)
         x = self.fc2(x)
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
-        #print(x.shape)
+
         if not self.normalize_before:
             x = self.final_layer_norm(x)
         if self.onnx_trace and incremental_state is not None:

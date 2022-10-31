@@ -159,13 +159,10 @@ class LSNonCausalAttention(nn.Module):
         # input: tgt_len, bsz, embed_dim
         assert not (self.num_landmarks <= 0 and cls_embed is None and self.window_size <= 0)
         # bsz, tgt_len, embed_dim
-        # print(query.shape)
         X = query.transpose(0, 1)
         bsz, tgtlen, d_model = X.shape
         len_pad = (self.window_size - tgtlen % self.window_size) % self.window_size
-        # print(X.shape)
         X = F.pad(X, (0, 0, 0, len_pad, 0, 0))
-        # print(X.shape)
         mask = attn_mask
         if self.cls_from_seq:
             cls_embed = X[:,:1].contiguous()
@@ -184,10 +181,6 @@ class LSNonCausalAttention(nn.Module):
         # bsz x length x num_head*num_lms
         mask = torch.ones(X.shape[:-1]).to(X)
         padding_mask = ~mask.bool()
-        # padding_mask = torch.ones(1, 1, seqlen, seqlen) == 0
-        # print(padding_mask.shape)
-        # print(X.shape)
-        # print(self.dconv_fc(X).shape)
 
         K_compress = V_compress = None
         if self.num_landmarks > 0:
@@ -281,12 +274,9 @@ class LSNonCausalAttention(nn.Module):
         if self.fp32:
             # Finally convert it back, same as Nystromformer
             C = C.to(X)
-        # print("here")
-        # print(self.W_o(self.combine_heads(C)).shape)
         out = self.W_o(self.combine_heads(C)).transpose(0, 1)
-        # print(out.shape)
         out = out[:tgtlen, ...]
-        # print(out.shape)
+
         return out, None
 
     def extra_repr(self):

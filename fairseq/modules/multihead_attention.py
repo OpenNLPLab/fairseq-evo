@@ -4,18 +4,18 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-import numpy as np
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
-from einops import rearrange
 
 
 @with_incremental_state
@@ -148,7 +148,6 @@ class MultiheadAttention(nn.Module):
                 weights for each head. Implies *need_weights*. Default:
                 return the average attention weights over all heads.
         """
-        # print(attn_mask[:5, :5])
         if need_head_weights:
             need_weights = True
 

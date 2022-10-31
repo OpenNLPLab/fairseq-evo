@@ -2,8 +2,12 @@
 
 import math
 from typing import Optional, Tuple, Union
+
 import torch
 from torch import nn
+
+from ..helpers import print_params
+
 
 class SineSPE(nn.Module):
     """
@@ -15,7 +19,6 @@ class SineSPE(nn.Module):
             process (R).
         num_sines: The number of sin and cos components (K).
     """
-
     def __init__(
         self,
         num_heads: int = 8,
@@ -24,7 +27,11 @@ class SineSPE(nn.Module):
         num_sines: int = 1
     ):
         super(SineSPE, self).__init__()
-
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         # saving dimensions
         self.num_heads = num_heads
         self.in_features = in_features

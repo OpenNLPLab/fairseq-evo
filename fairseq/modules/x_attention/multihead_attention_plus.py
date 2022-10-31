@@ -1,28 +1,22 @@
 import math
-import numpy as np
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
+from fairseq.modules import (T5RPE, RpeVanilla, SineSPE, SPEFilter, Urpe,
+                             print_params, rope)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
-from einops import rearrange
 
-########## positional encoding
-from fairseq.modules import Urpe, SineSPE, SPEFilter, T5RPE, RpeVanilla, rope
-########## positional encoding
 
 @with_incremental_state
 class MultiheadAttentionPlus(nn.Module):
-    """Multi-headed attention.
-
-    See "Attention Is All You Need" for more details.
-    """
-
     def __init__(
         self,
         embed_dim,
@@ -86,10 +80,14 @@ class MultiheadAttentionPlus(nn.Module):
         # Relation-aware
         use_rpe_vanilla=False,
     ):
+        super().__init__()
         # add
         self.index = index
-
-        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -123,7 +121,6 @@ class MultiheadAttentionPlus(nn.Module):
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
 
-        # add
         self.out_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
@@ -148,6 +145,7 @@ class MultiheadAttentionPlus(nn.Module):
         self.use_urpe = use_urpe
         self.theta_learned = theta_learned
         self.householder_learned = householder_learned
+        
         if self.use_urpe:
             self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
         self.use_spe = use_spe
@@ -170,14 +168,6 @@ class MultiheadAttentionPlus(nn.Module):
         self.use_rpe_vanilla = use_rpe_vanilla
         if self.use_rpe_vanilla:
             self.rpevanilla = RpeVanilla(self.head_dim, max_positions)
-
-        print(f"weight_type {weight_type}")
-        print(f"use_rope {use_rope}")
-        print(f"use_urpe {self.use_urpe}")
-        print(f"use_spe {self.use_spe}")
-        print(f"use_permutate {self.use_permutate}")
-        print(f"use_t5 {self.use_t5}")
-        print(f"use_rpe_vanilla {self.use_rpe_vanilla}")
 
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def generate_random_permutation(self, num_head, head_size, seed):
@@ -238,7 +228,6 @@ class MultiheadAttentionPlus(nn.Module):
         m = torch.cos(weight)
 
         return nn.Parameter(m, requires_grad=False)
-
 
     def forward(
         self,

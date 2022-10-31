@@ -1,9 +1,9 @@
 # https://github.com/evelinehong/Transformer_Relative_Position_PyTorch/blob/master/relative_position.py
-
 import math
-import numpy as np
+import sys
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from fairseq import utils
@@ -11,13 +11,17 @@ from fairseq.incremental_decoding_utils import with_incremental_state
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
-from torch.nn import Parameter
-from torch.nn import Dropout
-import sys
+from torch.nn import Dropout, Parameter
+
 
 class RpeVanilla(nn.Module):
     def __init__(self, num_units, max_relative_position):
         super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
         self.num_units = num_units
         self.max_relative_position = max_relative_position
         self.embeddings_table = nn.Parameter(torch.Tensor(max_relative_position * 2 + 1, num_units))

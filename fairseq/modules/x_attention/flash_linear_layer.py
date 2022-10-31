@@ -228,7 +228,6 @@ class FlashLinearDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
-        #print(x.shape)
         if need_head_weights:
             need_attn = True
 

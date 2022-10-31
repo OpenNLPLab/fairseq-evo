@@ -153,64 +153,8 @@ def cosformer_lm_12_layers(args):
     args.use_relu = getattr(args, "use_relu", True)
     args.max_l = getattr(args, "max_l", 2048)
     args.causal = True
-    
+
 @register_model_architecture("cosformer_lm", "cosformer_lm_base")
-def cosformer_lm_base(args):
-    base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1")
-def cosformer_lm_base_h1(args):
-    base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.decoder_attention_heads = 1
-    
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c12")
-def cosformer_lm_base_c1(args):
-    base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.decoder_attention_heads = 1
-    args.constant = 1 / 2
-    
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c14")
-def cosformer_lm_base_c1(args):
-    base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.decoder_attention_heads = 1
-    args.constant = 1 / 4
-
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c2")
-def cosformer_lm_base_c1(args):
-    base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.decoder_attention_heads = 1
-    args.constant = 2
-    
-@register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_c4")
-def cosformer_lm_base_c1(args):
-    base_lm_architecture(args)
-    args.use_relu = getattr(args, "use_relu", True)
-    args.max_l = getattr(args, "max_l", 512)
-    args.causal = True
-    args.has_out = True
-    args.decoder_attention_heads = 1
-    args.constant = 4
-
 @register_model_architecture("cosformer_lm", "cosformer_lm_base_h1_l7")
 def cosformer_lm_base_h1_l7(args):
     base_lm_architecture(args)

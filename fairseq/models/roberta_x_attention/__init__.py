@@ -10,7 +10,4 @@ from .norm_attention import *
 from .norm_mix_attention import *
 from .performer_attention import *
 from .rela_attention import *
-from .tno_glu import *
-from .tno_glu_no_cls import *
-from .toeplitz_attention import *
 from .weight_linear import *
