@@ -1119,6 +1119,7 @@ def roberta_base_architecture_glu_all_rms_layer_ln_rms_no_urpe(args):
     ##### urpe
     args.encoder_use_urpe = False
 
+@register_model_architecture("roberta_norm_attention", "roberta_transnormer_t1")
 @register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3")
 def roberta_base_architecture_glu_all_rms_layer_ln_rms_urpe_1d3(args):
     base_architecture(args)
@@ -2989,6 +2990,7 @@ def roberta_base_architecture_glu_all_rms_layer_ln_rms_no_urpe_softmax_1_elu(arg
     ##### softmax
     args.use_softmax = True
 
+@register_model_architecture("roberta_norm_attention", "roberta_transnormer_t2")
 @register_model_architecture("roberta_norm_attention", "roberta_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1+elu")
 def roberta_base_architecture_glu_all_rms_layer_ln_rms_urpe_1d3_softmax_1_elu(args):
     base_architecture(args)
