@@ -135,6 +135,5 @@ experimental/*
 # Weights and Biases logs
 wandb/
 
-/examples/language_model
 /examples/test
 /examples/transformer
