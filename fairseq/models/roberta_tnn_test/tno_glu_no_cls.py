@@ -1,20 +1,20 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from fairseq import utils
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderModel,
-    register_model,
-    register_model_architecture,
-)
-from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder
+from fairseq.models import (FairseqEncoder, FairseqEncoderModel,
+                            register_model, register_model_architecture)
+from fairseq.models.roberta import (RobertaClassificationNoClsHead,
+                                    RobertaEncoder, RobertaModel,
+                                    base_architecture)
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerEncoder)
+from fairseq.models.xformer import TNOGLUEncoder
 from fairseq.modules import LayerNorm
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
-from fairseq.models.roberta import RobertaEncoder, RobertaModel, base_architecture
 
-from fairseq.models.xformer import TNOGLUEncoder
 from .tno_glu import RobertaTNOGLUEncoder
+
 
 class RobertaTNOGLUNoClsEncoder(RobertaEncoder):
     """RoBERTa encoder."""
@@ -87,45 +87,6 @@ class RobertaTNOGLUNoCls(RobertaModel):
             qn_block_size=self.args.quant_noise_pq_block_size,
             do_spectral_norm=self.args.spectral_norm_classification_head,
         )
-        
-class RobertaClassificationNoClsHead(nn.Module):
-    """Head for sentence-level classification tasks."""
-
-    def __init__(
-        self,
-        input_dim,
-        inner_dim,
-        num_classes,
-        activation_fn,
-        pooler_dropout,
-        q_noise=0,
-        qn_block_size=8,
-        do_spectral_norm=False,
-    ):
-        super().__init__()
-        self.dense = nn.Linear(input_dim, inner_dim)
-        self.activation_fn = utils.get_activation_fn(activation_fn)
-        self.dropout = nn.Dropout(p=pooler_dropout)
-        self.out_proj = apply_quant_noise_(
-            nn.Linear(inner_dim, num_classes), q_noise, qn_block_size
-        )
-        if do_spectral_norm:
-            if q_noise != 0:
-                raise NotImplementedError(
-                    "Attempting to use Spectral Normalization with Quant Noise. This is not officially supported"
-                )
-            self.out_proj = torch.nn.utils.spectral_norm(self.out_proj)
-
-    def forward(self, features, **kwargs):
-        # x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
-        x = features.mean(dim=1)
-        x = self.dropout(x)
-        x = self.dense(x)
-        x = self.activation_fn(x)
-        x = self.dropout(x)
-        x = self.out_proj(x)
-        return x
-
 
 ##### standard pos
 @register_model_architecture("roberta_tno_glu_no_cls", "roberta_tno_no_exp_base_3_1_standard_no_pos_no_cls")
