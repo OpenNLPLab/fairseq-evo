@@ -1,1 +1,1 @@
-from .glu import GLU
+from .glu import GLU, GLUV2

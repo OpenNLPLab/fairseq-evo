@@ -33,3 +33,29 @@ class GLU(nn.Module):
         output = self.fina_act(output)
 
         return output
+
+class GLUV2(nn.Module):
+    def __init__(self, d1, d2, act_fun, fina_act="None", dropout=0.0, bias=True):
+        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
+        self.l1 = nn.Linear(d1, d2, bias=bias)
+        self.l2 = nn.Linear(d2, d1, bias=bias)
+        act_fun = get_activation_fn(act_fun)
+        self.act_fun = lambda x: x * act_fun(x)
+        self.p = dropout
+        if self.p > 0.0:
+            self.dropout = nn.Dropout(p=dropout)
+        self.fina_act = get_activation_fn(fina_act)
+
+    def forward(self, x):
+        x = self.act_fun(self.l1(x))
+        if self.p > 0.0:
+            weight = self.dropout(weight)
+        output = self.l2(x)
+        output = self.fina_act(output)
+
+        return output

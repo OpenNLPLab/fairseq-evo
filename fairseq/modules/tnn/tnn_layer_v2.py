@@ -14,7 +14,7 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
 
-from ..ffn import GLU
+from ..ffn import GLU, GLUV2
 from ..helpers import get_norm_fn, logging_info
 from .gtu_module_v2 import GtuV2Module
 
@@ -55,7 +55,13 @@ class TnnV2EncoderLayer(nn.Module):
         # bias
         bias = getattr(args, "bias", True)
 
-        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
+        glu_type = getattr(args, "glu_type", 1)
+        logging_info(f"glu_type {glu_type}")
+        if glu_type == 2:
+            glu = GLUV2
+        else:
+            glu = GLU
+        self.glu = glu(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
 
         self.final_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
 
@@ -213,7 +219,13 @@ class TnnV2DecoderLayer(nn.Module):
             self.encoder_attn = self.build_encoder_attention(self.embed_dim, args)
             self.encoder_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
 
-        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
+        glu_type = getattr(args, "glu_type", 1)
+        logging_info(f"glu_type {glu_type}")
+        if glu_type == 2:
+            glu = GLUV2
+        else:
+            glu = GLU
+        self.glu = glu(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
 
         self.final_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
 
