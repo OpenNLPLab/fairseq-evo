@@ -17,6 +17,7 @@ from torch import Tensor
 from ..ffn import GLU, GLUV2
 from ..helpers import get_norm_fn, logging_info
 from .gtu_module_v2 import GtuV2Module
+from .gtu_module_v3 import GtuV3Module
 
 
 class TnnV2EncoderLayer(nn.Module):
@@ -66,7 +67,13 @@ class TnnV2EncoderLayer(nn.Module):
         self.final_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
 
     def build_self_attention(self, embed_dim, args):
-        return GtuV2Module(
+        gtu_type = getattr(args, "gtu_type", 2)
+        logging_info(f"gtu_type {gtu_type}")
+        if gtu_type == 3:
+            gtu = GtuV3Module
+        else:
+            gtu = GtuV2Module
+        return gtu(
             embed_dim,
             args.encoder_attention_heads,
             dropout=args.attention_dropout,
@@ -236,7 +243,13 @@ class TnnV2DecoderLayer(nn.Module):
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
     ):
-        return GtuV2Module(
+        gtu_type = getattr(args, "gtu_type", 2)
+        logging_info(f"gtu_type {gtu_type}")
+        if gtu_type == 3:
+            gtu = GtuV3Module
+        else:
+            gtu = GtuV2Module
+        return gtu(
             embed_dim,
             args.decoder_attention_heads,
             dropout=args.attention_dropout,
@@ -265,7 +278,13 @@ class TnnV2DecoderLayer(nn.Module):
         )
 
     def build_encoder_attention(self, embed_dim, args):
-        return GtuV2Module(
+        gtu_type = getattr(args, "gtu_type", 2)
+        logging_info(f"gtu_type {gtu_type}")
+        if gtu_type == 3:
+            gtu = GtuV3Module
+        else:
+            gtu = GtuV2Module
+        return gtu(
             embed_dim,
             args.decoder_attention_heads,
             kdim=getattr(args, "encoder_embed_dim", None),

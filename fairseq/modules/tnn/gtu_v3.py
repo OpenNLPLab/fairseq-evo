@@ -5,7 +5,7 @@ from ..helpers import get_activation_fn, get_norm_fn, print_params
 from .tno import Tno
 
 
-class GtuV2(nn.Module):
+class GtuV3(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -42,9 +42,8 @@ class GtuV2(nn.Module):
         d1 = (d1 // self.num_heads) * self.num_heads
         self.head_dim = d1 // num_heads
         # linear projection
-        self.v_proj = nn.Linear(embed_dim, d1, bias=bias)
-        self.u_proj = nn.Linear(embed_dim, d1, bias=bias)
-        self.o = nn.Linear(d1, embed_dim, bias=bias)
+        self.in_proj = nn.Linear(embed_dim, d1, bias=bias)
+        self.out_proj = nn.Linear(d1, embed_dim, bias=bias)
         self.act = get_activation_fn(act_fun)
         # tno
         self.toep = Tno(
@@ -75,16 +74,15 @@ class GtuV2(nn.Module):
 
         if self.resi_param:
             shortcut = shortcut * self.d
-        u = self.act(self.u_proj(x))
-        v = self.act(self.v_proj(x))
+        u = self.in_proj(x)
         # reshape
-        v = rearrange(v, 'b n (h d) -> b h n d', h=num_heads)
+        v = rearrange(u, 'b n (h d) -> b h n d', h=num_heads)
         output = self.toep(v, dim=-2, normalize=self.normalize)
         output = rearrange(output, 'b h n d -> b n (h d)')
         output = u * output
         if self.use_norm:
             output = self.norm(output)
             
-        output = self.o(output)
+        output = self.out_proj(output)
         
         return output
