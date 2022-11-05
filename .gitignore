@@ -138,3 +138,4 @@ wandb/
 /examples/test
 /examples/transformer
 /examples/tnn
+/examples/lra
