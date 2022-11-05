@@ -41,6 +41,10 @@ from .vggblock import VGGBlock
 from .helpers import *
 ########## helpers
 
+########## embedding
+from .embedding import *
+########## embedding
+
 ########## positional encoding
 from .positional_encoding import *
 ##### test

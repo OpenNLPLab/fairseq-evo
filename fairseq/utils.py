@@ -17,9 +17,9 @@ from typing import Callable, Dict, List, Optional
 
 import torch
 import torch.nn.functional as F
-from fairseq.modules.multihead_attention import MultiheadAttention
 from torch import Tensor
 
+from fairseq.modules.multihead_attention import MultiheadAttention
 
 try:
     from amp_C import multi_tensor_l2norm
@@ -533,6 +533,8 @@ def get_activation_fn(activation: str) -> Callable:
         return torch.tanh
     elif activation == "linear":
         return lambda x: x
+    elif activation == 'silu':
+        return F.silu
     else:
         raise RuntimeError("--activation-fn {} not supported".format(activation))
 
@@ -545,6 +547,7 @@ def get_available_activation_fns() -> List:
         "gelu_accurate",
         "tanh",
         "linear",
+        "silu",
     ]
 
 
@@ -686,6 +689,7 @@ def get_tpu_device():
 def tpu_data_loader(itr):
     import torch_xla.core.xla_model as xm
     import torch_xla.distributed.parallel_loader as pl
+
     from fairseq.data import iterators
 
     xm.rendezvous("tpu_data_loader")  # wait for all workers
