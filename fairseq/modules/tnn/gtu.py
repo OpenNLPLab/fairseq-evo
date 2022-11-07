@@ -1,3 +1,4 @@
+import numpy as np
 import torch.nn as nn
 from einops import rearrange
 
@@ -91,3 +92,26 @@ class Gtu(nn.Module):
         output = self.o(output) + shortcut
         
         return output
+    
+    def save_toeplitz_matrix(self, x, file_name="toep"):
+        # x: b, h, w, d
+        num_heads = self.num_heads
+
+        shortcut, x = x, self.pre_norm(x)
+        if self.resi_param:
+            shortcut = shortcut * self.d
+        u = self.act(self.u_proj(x))
+        v = self.act(self.v_proj(x))
+        # reshape
+        v = rearrange(v, 'b n (h d) -> b h n d', h=num_heads)
+        output, T = self.toep.toeplizt_matrix(v, dim=-2)
+        np.save(f"{file_name}.npy", T.cpu().detach().numpy())
+        output = rearrange(output, 'b h n d -> b n (h d)')
+        output = u * output
+        if self.use_norm:
+            output = self.norm(output)
+            
+        output = self.o(output) + shortcut
+        
+        return output
+

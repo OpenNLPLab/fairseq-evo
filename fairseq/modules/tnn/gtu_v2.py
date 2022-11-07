@@ -72,9 +72,6 @@ class GtuV2(nn.Module):
     def forward(self, x):
         # x: b, h, w, d
         num_heads = self.num_heads
-
-        if self.resi_param:
-            shortcut = shortcut * self.d
         u = self.act(self.u_proj(x))
         v = self.act(self.v_proj(x))
         # reshape

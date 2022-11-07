@@ -34,6 +34,7 @@ class GtuModule(nn.Module):
         encoder_decoder_attention=False,
         q_noise=0.0,
         qn_block_size=8,
+        index=0,
         # add
         act_fun="silu",
         causal=False,
@@ -57,6 +58,8 @@ class GtuModule(nn.Module):
         params = locals()
         # print params
         print_params(**params)
+        
+        self.index = index
         
         self.gtu = Gtu(
             embed_dim=embed_dim,
@@ -115,6 +118,8 @@ class GtuModule(nn.Module):
         """
         # n b e -> b n e
         x = query.transpose(0, 1)
+        # print(self.index)
+        # self.gtu.save_toeplitz_matrix(x, f"toeplitz_{self.index}")
         # b n e -> b n e -> n b e
         output = self.gtu(x).transpose(0, 1)
         

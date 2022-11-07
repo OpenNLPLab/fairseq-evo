@@ -66,6 +66,7 @@ class TnnEncoderLayer(nn.Module):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=getattr(args, "index", 0),
             # gtu
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", False),
@@ -231,6 +232,7 @@ class TnnDecoderLayer(nn.Module):
             self_attention=not getattr(args, "cross_self_attention", False),
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=getattr(args, "index", 0),
             # gtu
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", True),
@@ -260,6 +262,7 @@ class TnnDecoderLayer(nn.Module):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=getattr(args, "index", 0),
             # gtu
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", False),

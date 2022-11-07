@@ -198,7 +198,7 @@ class Tno(nn.Module):
             neg = self.rpe_transform(neg_index)
                 
         if self.use_decay or self.use_multi_decay:
-            coef = torch.arange(1, n).reshape(1, -1, 1)
+            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
             if self.use_decay:
                 gamma = self.gamma
             else:
@@ -220,4 +220,5 @@ class Tno(nn.Module):
         T = vals[:, j - i].reshape(self.h, n, n, -1)
 
         res = torch.einsum('h n m d, b h m d -> b h n d', T, x)
-        return res
+        return res, T
+

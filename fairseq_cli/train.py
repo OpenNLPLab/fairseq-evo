@@ -284,7 +284,7 @@ def train(
             num_updates = trainer.get_num_updates()
             if num_updates % cfg.common.log_interval == 0:
                 if cfg.distributed_training.distributed_rank ==0:
-                    if "tokens_per_sample" in cfg.task:
+                    if "tokens_per_sample" in cfg.task and cfg.dataset.batch_size != None:
                         total_tokens = cfg.task.tokens_per_sample*update_freq*cfg.dataset.batch_size
                     else:
                         total_tokens = cfg.dataset.max_tokens*update_freq

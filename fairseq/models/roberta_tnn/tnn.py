@@ -105,6 +105,7 @@ class RobertaClassificationNoClsHead(nn.Module):
         x = self.activation_fn(x)
         x = self.dropout(x)
         x = self.out_proj(x)
+        
         return x
 
 @register_model_architecture("roberta_tnn", "roberta_tnn_decay_99")
