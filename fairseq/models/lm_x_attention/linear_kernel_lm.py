@@ -984,6 +984,15 @@ def transformer_relu_1d_3_wiki_base(args):
     args.core_matrix = 1
     args.p_matrix = 3
     args.theta_learned = True
+    
+@register_model_architecture("linear_urpe_lm", "1+elu_wiki_base_nope")
+def transformer_1_elu_wiki_base_nope(args):
+    base_lm_architecture(args)
+    ##### add
+    args.causal = True
+    args.use_urpe = False
+    args.kernel_type = "1+elu"
+    args.no_token_positional_embeddings = True
 ########## rebuttal
 
 ########## krpe

@@ -3,29 +3,24 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.nn as nn
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
+import torch.nn as nn
 from fairseq import options, utils
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
-from fairseq.models import (
-    FairseqIncrementalDecoder,
-    FairseqLanguageModel,
-    register_model,
-    register_model_architecture,
-)
+from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
+                            register_model, register_model_architecture)
+
 logger = logging.getLogger(__name__)
-from fairseq.models.transformer import (
-    DEFAULT_MIN_PARAMS_TO_WRAP, Embedding, TransformerDecoder
-)
+from typing import Dict, List, Optional
 
-
+import torch
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP, Embedding,
+                                        TransformerDecoder)
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
 from omegaconf import II
-from typing import Dict, List, Optional
-import torch
 
 DEFAULT_MAX_TARGET_POSITIONS = 1024
 
