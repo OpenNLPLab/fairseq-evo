@@ -636,6 +636,11 @@ def xlm_architecture(args):
 
 ##### add
 @register_model_architecture("roberta", "roberta_base_single_head")
-def roberta_base_architecture(args):
+def roberta_base_single_head(args):
     base_architecture(args)
     args.encoder_attention_heads = 1
+
+@register_model_architecture("roberta", "roberta_base_nope")
+def roberta_base_nope(args):
+    base_architecture(args)
+    args.no_token_positional_embeddings = True
