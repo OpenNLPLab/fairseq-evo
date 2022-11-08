@@ -985,3 +985,14 @@ def transformer_relu_1d_3_wiki_base(args):
     args.p_matrix = 3
     args.theta_learned = True
 ########## rebuttal
+
+########## krpe
+@register_model_architecture("linear_urpe_lm", "1+elu_wiki_base_krpe")
+def transformer_1_elu_wiki_base_krpe(args):
+    base_lm_architecture(args)
+    ##### add
+    args.causal = True
+    args.kernel_type = "1+elu"
+    args.use_krpe = True
+    args.max_seq_len = 512
+########## krpe

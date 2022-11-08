@@ -50,6 +50,7 @@ class LinearKernelAttention(nn.Module):
         use_rope=False,
         use_spe=False,
         use_permutate=False,
+        use_krpe=False,
         max_seq_len=512,
         # index
         index=0,
@@ -137,6 +138,23 @@ class LinearKernelAttention(nn.Module):
             self.register_buffer("permutation", permutation.unsqueeze(0))
             self.register_buffer("ratio", torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2))
 
+        self.use_krpe = use_krpe
+        if self.use_krpe:
+            # self.zero_value = float("-inf")
+            h = self.num_heads
+            n = self.max_positions
+            # [1,...,(n-1)]
+            self.pos = nn.Parameter(torch.randn(h, n - 1).reshape(h, n - 1))
+            # [0]
+            self.zero = nn.Parameter(torch.randn(h).reshape(h, 1))
+            # [-(n-1),...,-1]
+            self.neg = nn.Parameter(torch.randn(h, n - 1).reshape(h, n - 1))
+            # if self.causal:
+            #     self.neg = nn.Parameter(torch.ones(h, n - 1).reshape(h, n - 1) * self.zero_value, requires_grad=False)
+            # else:
+            #     self.neg = nn.Parameter(torch.randn(h, n - 1).reshape(h, n - 1))
+            self.forward = self.forward_krpe
+
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def generate_random_permutation(self, num_head, head_size, seed):
         rng = torch.Generator()
@@ -196,6 +214,116 @@ class LinearKernelAttention(nn.Module):
 
         return nn.Parameter(m, requires_grad=False)
 
+    def forward_krpe(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+        eps=1e-6,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        n = tgt_len
+        src_len = key.size(0)
+        head_dim = embed_dim // num_heads
+
+        # L, N, E
+        q = self.q_proj(query)
+        # S, N, E
+        k = self.k_proj(key)
+        # S, N, E
+        v = self.v_proj(value)
+        
+        # act
+        q = self.act(q)
+        k = self.act(k)
+        
+        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
+        
+        # Here we only test performance
+        weights = torch.einsum('... n d,... m d -> ... n m', q, k)
+        # comtruct toeplitz matrix
+        # h, n
+        # [1,...,(n-1)]
+        m = n - 1
+        pos = self.pos[:, :m]
+        # [-(n-1),...,-1]
+        neg = self.neg[:, -m:]
+        # [0]
+        zero = self.zero
+        # compute stable exp
+        max_value = torch.max(torch.cat([pos, neg, zero], dim=-1), dim=-1, keepdim=True).values
+        pos_exp = torch.exp(pos - max_value)
+        neg_exp = torch.exp(neg - max_value)
+        zero_exp = torch.exp(zero - max_value)
+        # toeplitz matrix
+        c = torch.cat([zero_exp, pos_exp], dim=-1)
+        r = torch.cat([zero_exp, neg_exp.flip(1)], dim=-1)
+        vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
+        shape = self.num_heads, c.shape[-1], r.shape[-1]
+        i, j = torch.ones(*(shape[1:])).nonzero().T
+        # h, n, n
+        toeplitz = vals[:, j - i].reshape(*shape)
+        
+        # compute
+        # 1, h, n, n
+        toeplitz = toeplitz.unsqueeze(0)
+        weights = weights * toeplitz
+
+        if self.causal:
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
+            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+        # (b, h, n, m) -> (b, h, n, 1)
+        denom = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
+        # (b, h, n, m)
+        attn_weights = weights / denom
+        # (b, h, n, d)
+        attn_output = torch.einsum('... n m, ... m d -> ... n d', attn_weights, v)
+        attn_output = rearrange(attn_output, 'b h n d -> n b (h d)')
+        # n b (h d)
+        attn_output = self.out_proj(attn_output)
+
+        return attn_output, None
 
     def forward(
         self,
