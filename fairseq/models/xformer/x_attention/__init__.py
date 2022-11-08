@@ -7,6 +7,7 @@ from .linear_combination import LinearCombinationEncoder
 from .linear_kernel import (LinearKernelAttentionDecoder,
                             LinearKernelAttentionEncoder, LinearKernelModel)
 from .ls import LSAttentionEncoder
+from .mha_tnn import TransformerEncoder, TransformerTnnDecoder
 from .norm_mix_transformer import (NormMixAttentionDecoder,
                                    NormMixAttentionEncoder)
 from .norm_transformer import (NormAttentionDecoder, NormAttentionEncoder,

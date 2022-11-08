@@ -103,7 +103,7 @@ class Tno(nn.Module):
         return res
     
     def forward_causal(self, x, dim=-2, normalize=False):
-        # x: b, h, n, m, d
+        # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
         ##### coef
@@ -123,7 +123,7 @@ class Tno(nn.Module):
         a = torch.cat([zero, pos, zero], dim=1)
         a = self.act_fun(a)
 
-        # x: b, h, n, m, d
+        # x: b, h, n, d
         # a: h, l, d
         output = self.compute(x, a, dim, n)
 
@@ -136,7 +136,7 @@ class Tno(nn.Module):
         return output
         
     def forward_non_causal(self, x, dim=-2, normalize=False):
-        # x: b, h, n, m, d
+        # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
         ##### coef
@@ -161,7 +161,7 @@ class Tno(nn.Module):
             neg = torch.flip(gamma, dims=[1]) * neg
         a = torch.cat([zero, pos, zero, neg], dim=1)
         a = self.act_fun(a)
-        # x: b, h, n, m, d
+        # x: b, h, n, d
         # a: h, l, d
         output = self.compute(x, a, dim, n)
 

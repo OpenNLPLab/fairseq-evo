@@ -13,6 +13,9 @@ from .ls_attention_layer import LSAttentionEncoderLayer
 from .ls_causal_attention import LSCausalAttention
 from .ls_causal_attention_model import TransformerLSModel
 from .ls_non_causal_attention import LSNonCausalAttention
+from .mha_tno import MultiheadAttentionTno
+from .mha_tno_layer import (TransformerTnnDecoderLayer,
+                            TransformerTnnEncoderLayer)
 from .multihead_attention_plus import MultiheadAttentionPlus
 from .multihead_attention_plus_layer import (TransformerDecoderLayerPlus,
                                              TransformerEncoderLayerPlus)
