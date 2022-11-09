@@ -686,7 +686,7 @@ class MemTransformerLM(nn.Module):
         else:
             self.out_emb = nn.Linear(d_model, n_token)
             self.out_emb.weight = self.word_emb.weight
-
+        self.out_norm = nn.LayerNorm(d_model)
         self.same_length = same_length
         self.clamp_len = clamp_len
 
@@ -861,6 +861,7 @@ class MemTransformerLM(nn.Module):
         hidden, new_mems = self._forward(data, mems=mems)
 
         pred_hid = hidden[-tgt_len:]
+        pred_hid = self.out_norm(pred_hid)
         
         # in fairseq, we should return logits
         if self.use_ada:
