@@ -620,6 +620,7 @@ class MemTransformerLM(nn.Module):
                                                         div_val=div_val)
         else:
             self.word_emb = nn.Embedding(n_token, d_model)
+        self.word_norm = nn.LayerNorm(d_model)
 
         self.drop = nn.Dropout(dropout)
 
@@ -756,6 +757,7 @@ class MemTransformerLM(nn.Module):
         qlen, bsz = dec_inp.size()
 
         word_emb = self.word_emb(dec_inp)
+        word_emb = self.word_norm(word_emb)
 
         mlen = mems[0].size(0) if mems is not None else 0
         klen = mlen + qlen
