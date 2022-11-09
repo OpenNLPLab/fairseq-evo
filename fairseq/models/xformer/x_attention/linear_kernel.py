@@ -10,33 +10,22 @@ import torch
 import torch.nn as nn
 from fairseq import utils
 from fairseq.distributed import fsdp_wrap
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderDecoderModel,
-    FairseqIncrementalDecoder,
-    register_model,
-    register_model_architecture,
-)
-
-from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
-from omegaconf import II
-from typing import Dict, List, Optional
-import torch
+from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
+                            FairseqIncrementalDecoder, register_model,
+                            register_model_architecture)
+from fairseq.models.transformer import (DEFAULT_MAX_SOURCE_POSITIONS,
+                                        DEFAULT_MAX_TARGET_POSITIONS,
+                                        DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerDecoder, TransformerEncoder,
+                                        TransformerModel, base_architecture)
+from fairseq.modules import (AdaptiveInput, CharacterTokenEmbedder,
+                             LinearKernelAttentionDecoderLayer,
+                             LinearKernelAttentionEncoderLayer)
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
+from omegaconf import II
 from torch import Tensor
 
-from fairseq.models.transformer import (
-    TransformerDecoder, 
-    TransformerEncoder, 
-    TransformerModel, 
-    base_architecture,
-    DEFAULT_MAX_SOURCE_POSITIONS,
-    DEFAULT_MAX_TARGET_POSITIONS,
-    DEFAULT_MIN_PARAMS_TO_WRAP,
-)
-
-from fairseq.modules import LinearKernelAttentionEncoderLayer, LinearKernelAttentionDecoderLayer
 
 class LinearKernelAttentionEncoder(TransformerEncoder):
     """
@@ -382,4 +371,13 @@ def transformer_relu_wmt_en_de_3_3(args):
     args.kernel_type = "relu"
     args.core_matrix = 3
     args.p_matrix = 3
+    
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_nope")
+def transformer_1_elu_wmt_en_de_nope(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = False
+    args.kernel_type = "1+elu"
+    args.no_token_positional_embeddings = True
 ########## rebuttal

@@ -10,33 +10,22 @@ import torch
 import torch.nn as nn
 from fairseq import utils
 from fairseq.distributed import fsdp_wrap
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderDecoderModel,
-    FairseqIncrementalDecoder,
-    register_model,
-    register_model_architecture,
-)
-
-from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
-from omegaconf import II
-from typing import Dict, List, Optional
-import torch
+from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
+                            FairseqIncrementalDecoder, register_model,
+                            register_model_architecture)
+from fairseq.models.transformer import (DEFAULT_MAX_SOURCE_POSITIONS,
+                                        DEFAULT_MAX_TARGET_POSITIONS,
+                                        DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerDecoder, TransformerEncoder,
+                                        TransformerModel, base_architecture)
+from fairseq.modules import (AdaptiveInput, CharacterTokenEmbedder,
+                             TransformerDecoderLayerPlus,
+                             TransformerEncoderLayerPlus)
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
+from omegaconf import II
 from torch import Tensor
 
-from fairseq.models.transformer import (
-    TransformerDecoder, 
-    TransformerEncoder, 
-    TransformerModel, 
-    base_architecture,
-    DEFAULT_MAX_SOURCE_POSITIONS,
-    DEFAULT_MAX_TARGET_POSITIONS,
-    DEFAULT_MIN_PARAMS_TO_WRAP,
-)
-
-from fairseq.modules import TransformerEncoderLayerPlus, TransformerDecoderLayerPlus
 
 class TransformerDecoderPlus(TransformerDecoder):
     def __init__(
@@ -354,3 +343,10 @@ def transformer_vanilla_wmt_en_de_1d_5_no_abs(args):
     ##### add
     args.no_encoder_token_positional_embeddings = True
 ##### only rel
+
+########## rebuttal
+@register_model_architecture("encoder_transformer_plus", "vanilla_wmt_en_de_nope")
+def transformer_vanilla_wmt_en_de_nope(args):
+    base_architecture(args)
+    args.no_token_positional_embeddings = True
+########## rebuttal
