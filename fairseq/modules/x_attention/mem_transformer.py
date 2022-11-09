@@ -323,8 +323,9 @@ class RelPartialLearnableLinearAttn(RelMultiHeadAttn):
         
         #### act
         w_head_q = self.act(w_head_q)
+        w_head_k = self.act(w_head_k)
+        r_head_k = self.act(r_head_k)
         r_w_bias = self.act(r_w_bias)
-        w_head_q = self.act(w_head_q)
         r_r_bias = self.act(r_r_bias)
         #### act
         
@@ -358,7 +359,7 @@ class RelPartialLearnableLinearAttn(RelMultiHeadAttn):
                     attn_mask[:,:,:,None], -float('inf')).type_as(attn_score)
 
         # [qlen x klen x bsz x n_head]
-        denom = torch.clamp_min(attn_score.sum(dim=-1, keepdim=True), 1e-3)
+        denom = torch.clamp_min(attn_score.sum(dim=-1, keepdim=True), 1e-2)
         attn_prob = attn_score / denom
         
         attn_prob = self.dropatt(attn_prob)
@@ -869,7 +870,6 @@ class MemTransformerLM(nn.Module):
                 loss = self.crit(pred_hid.view(-1, pred_hid.size(-1)), target.view(-1))
                 loss = loss.view(tgt_len, -1)
         else:
-            print(self.out_emb(pred_hid).shape)
             loss = F.log_softmax(self.out_emb(pred_hid).float(), dim=-1)
 
         if new_mems is None:
