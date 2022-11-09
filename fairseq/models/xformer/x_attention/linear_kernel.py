@@ -380,4 +380,14 @@ def transformer_1_elu_wmt_en_de_nope(args):
     args.use_urpe = False
     args.kernel_type = "1+elu"
     args.no_token_positional_embeddings = True
+    
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_krpe")
+def transformer_1_elu_wmt_en_de_krpe(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = False
+    args.kernel_type = "1+elu"
+    args.use_krpe = True
+    args.max_seq_len = 512
 ########## rebuttal

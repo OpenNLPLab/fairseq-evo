@@ -450,4 +450,14 @@ def roberta_base_architecture_1_elu_nope(args):
     args.use_urpe = False
     args.kernel_type = "1+elu"
     args.no_token_positional_embeddings = True
+    
+@register_model_architecture("roberta_linear_kernel", "roberta_1+elu_krpe")
+def roberta_base_architecture_1_elu_krpe(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = False
+    args.kernel_type = "1+elu"
+    args.use_krpe = True
+    args.max_seq_len = 512
 ########## rebuttal
