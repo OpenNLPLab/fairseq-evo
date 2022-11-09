@@ -870,7 +870,7 @@ class MemTransformerLM(nn.Module):
                 loss = self.crit(pred_hid.view(-1, pred_hid.size(-1)), target.view(-1))
                 loss = loss.view(tgt_len, -1)
         else:
-            loss = F.log_softmax(self.out_emb(pred_hid).float(), dim=-1)
+            loss = -F.log_softmax(self.out_emb(pred_hid).float(), dim=-1)
 
         if new_mems is None:
             return [loss]
