@@ -3,6 +3,7 @@ from .flash_linear_lm import *
 from .flash_quad_lm import *
 from .linear_kernel_lm import *
 from .ls_lm import *
+from .mem_transformer import *
 from .mha_tnn_lm import *
 from .norm_mix_transformer_lm import *
 from .norm_transformer_lm import *
