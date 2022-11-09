@@ -347,7 +347,7 @@ class RelPartialLearnableLinearAttn(RelMultiHeadAttn):
 
         # [qlen x klen x bsz x n_head]
         attn_score = AC + BD
-        attn_score.mul_(self.scale)
+        # attn_score.mul_(self.scale)
 
         #### compute attention probability
         if attn_mask is not None and attn_mask.any().item():
@@ -359,7 +359,7 @@ class RelPartialLearnableLinearAttn(RelMultiHeadAttn):
                     attn_mask[:,:,:,None], -float('inf')).type_as(attn_score)
 
         # [qlen x klen x bsz x n_head]
-        denom = torch.clamp_min(attn_score.sum(dim=-1, keepdim=True), 1e-2)
+        denom = torch.clamp_min(attn_score.sum(dim=-1, keepdim=True), 1e-1)
         attn_prob = attn_score / denom
         
         attn_prob = self.dropatt(attn_prob)
@@ -860,6 +860,7 @@ class MemTransformerLM(nn.Module):
 
         pred_hid = hidden[-tgt_len:]
         
+        # in fairseq, we should return logits
         if self.use_ada:
             if self.sample_softmax > 0 and self.training:
                 assert self.tie_weight
@@ -870,7 +871,7 @@ class MemTransformerLM(nn.Module):
                 loss = self.crit(pred_hid.view(-1, pred_hid.size(-1)), target.view(-1))
                 loss = loss.view(tgt_len, -1)
         else:
-            loss = -F.log_softmax(self.out_emb(pred_hid).float(), dim=-1)
+            loss = self.out_emb(pred_hid).float()
 
         if new_mems is None:
             return [loss]
