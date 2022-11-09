@@ -770,6 +770,7 @@ class MemTransformerLM(nn.Module):
         else:
             dec_attn_mask = torch.triu(
                 word_emb.new_ones(qlen, klen), diagonal=1+mlen).byte()[:,:,None]
+        dec_attn_mask = dec_attn_mask.bool()
 
         hids = []
         if self.attn_type == 0: # default
