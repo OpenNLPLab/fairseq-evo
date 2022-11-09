@@ -353,10 +353,10 @@ class RelPartialLearnableLinearAttn(RelMultiHeadAttn):
         if attn_mask is not None and attn_mask.any().item():
             if attn_mask.dim() == 2:
                 attn_score = attn_score.float().masked_fill(
-                    attn_mask[None,:,:,None], -float('inf')).type_as(attn_score)
+                    attn_mask[None,:,:,None], 0).type_as(attn_score)
             elif attn_mask.dim() == 3:
                 attn_score = attn_score.float().masked_fill(
-                    attn_mask[:,:,:,None], -float('inf')).type_as(attn_score)
+                    attn_mask[:,:,:,None], 0).type_as(attn_score)
 
         # [qlen x klen x bsz x n_head]
         denom = torch.clamp_min(attn_score.sum(dim=-1, keepdim=True), 1e-1)
@@ -505,11 +505,10 @@ class RelLearnableDecoderLayer(nn.Module):
         return output
 
 class RelPartialLearnableDecoderLayer(nn.Module):
-    def __init__(self, n_head, d_model, d_head, d_inner, dropout,
+    def __init__(self, n_head, d_model, d_head, d_inner, dropout, use_linear,
                  **kwargs):
         super(RelPartialLearnableDecoderLayer, self).__init__()
 
-        use_linear = kwargs.get('use_linear', False)
         if use_linear:
             mha = RelPartialLearnableLinearAttn
         else:
