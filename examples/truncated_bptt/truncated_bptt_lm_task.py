@@ -10,17 +10,11 @@ from typing import List, Optional, Tuple
 
 import torch
 from fairseq import utils
-from fairseq.data import (
-    Dictionary,
-    TokenBlockDataset,
-    data_utils,
-    iterators,
-)
+from fairseq.data import Dictionary, TokenBlockDataset, data_utils, iterators
 from fairseq.dataclass import FairseqDataclass
 from fairseq.distributed import utils as dist_utils
 from fairseq.tasks import FairseqTask, register_task
 from omegaconf import II
-
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +42,7 @@ class TruncatedBPTTLMConfig(FairseqDataclass):
 class TruncatedBPTTLMTask(FairseqTask):
     def __init__(self, cfg: TruncatedBPTTLMConfig):
         super().__init__(cfg)
-
+        self.cfg = cfg
         if cfg.data_parallel_rank is None or cfg.data_parallel_size is None:
             if torch.distributed.is_initialized():
                 cfg.data_parallel_rank = dist_utils.get_data_parallel_rank()

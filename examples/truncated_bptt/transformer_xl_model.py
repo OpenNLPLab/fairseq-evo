@@ -9,14 +9,11 @@ from typing import Dict, List, Optional
 
 import torch
 from fairseq.dataclass import FairseqDataclass
-from fairseq.models import (
-    FairseqIncrementalDecoder,
-    FairseqLanguageModel,
-    register_model,
-)
+from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
+                            register_model, register_model_architecture)
+from fairseq.models.transformer_lm import base_lm_architecture
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from omegaconf import II
-
 
 logger = logging.getLogger(__name__)
 
@@ -51,15 +48,14 @@ class TransformerXLLanguageModel(FairseqLanguageModel):
 class TransformerXLDecoder(FairseqIncrementalDecoder):
     def __init__(self, cfg, task):
         try:
-            from transformers.models.transfo_xl import (
-                TransfoXLConfig,
-                TransfoXLLMHeadModel,
-            )
+            from transformers.models.transfo_xl import (TransfoXLConfig,
+                                                        TransfoXLLMHeadModel)
         except ImportError:
             from transformers.configuration_transfo_xl import TransfoXLConfig
             from transformers.modeling_transfo_xl import TransfoXLLMHeadModel
 
         super().__init__(task.target_dictionary)
+        cfg.max_target_positions = task.cfg.max_target_positions
         self.cfg = cfg
 
         # remove any cutoffs larger than the vocab size
@@ -153,3 +149,19 @@ class TransformerXLDecoder(FairseqIncrementalDecoder):
         if mems is not None:
             new_mems = [mems_i.index_select(1, new_order) for mems_i in mems]
             self.set_incremental_state(incremental_state, "mems", new_mems)
+
+@register_model_architecture("transformer_xl", "transformer_xl_base")
+def transformer_xl_base(args):
+    base_lm_architecture(args)
+    args.cutoffs = [260000]
+    args.d_model = 512
+    args.n_head = 8
+    args.d_head = args.d_model // args.n_head
+    args.d_inner = 2048
+    args.div_val = 1
+    args.n_layer = 6
+    args.mem_len = 128
+    args.clamp_len = -1
+    args.same_length = False
+    args.dropout = 0.0
+    args.dropatt = 0.0

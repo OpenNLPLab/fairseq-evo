@@ -359,7 +359,7 @@ class RelPartialLearnableLinearAttn(RelMultiHeadAttn):
                     attn_mask[:,:,:,None], 0).type_as(attn_score)
 
         # [qlen x klen x bsz x n_head]
-        denom = torch.clamp_min(attn_score.sum(dim=-1, keepdim=True), 1e-1)
+        denom = torch.clamp_min(attn_score.sum(dim=1, keepdim=True), 1e-1)
         attn_prob = attn_score / denom
         
         attn_prob = self.dropatt(attn_prob)

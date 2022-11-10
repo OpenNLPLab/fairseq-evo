@@ -129,36 +129,36 @@ class TransformerXLModel(FairseqIncrementalDecoder):
         """
         raise NotImplementedError("This is required for generation/beam search")
     
-@register_model_architecture("transformer-xl", "transformer_xl_base")
-def transformer_xl_base(args):
-    base_lm_architecture(args)
-    args.d_model = args.decoder_embed_dim
-    args.n_head = args.decoder_attention_heads
-    args.d_head = args.d_model // args.n_head
-    args.d_inner = args.decoder_ffn_embed_dim
-    args.n_layer = args.decoder_layers
-    args.dropout = args.dropout
-    args.dropatt = 0.0
-    args.use_linear = False
-    args.pre_lnorm = True
-    args.tgt_len = 0
-    args.ext_len = 0
-    args.mem_len = 128
-    args.use_ada = False
+# @register_model_architecture("transformer-xl", "transformer_xl_base")
+# def transformer_xl_base(args):
+#     base_lm_architecture(args)
+#     args.d_model = args.decoder_embed_dim
+#     args.n_head = args.decoder_attention_heads
+#     args.d_head = args.d_model // args.n_head
+#     args.d_inner = args.decoder_ffn_embed_dim
+#     args.n_layer = args.decoder_layers
+#     args.dropout = args.dropout
+#     args.dropatt = 0.0
+#     args.use_linear = False
+#     args.pre_lnorm = True
+#     args.tgt_len = 0
+#     args.ext_len = 0
+#     args.mem_len = 128
+#     args.use_ada = False
 
-@register_model_architecture("transformer-xl", "linear_transformer_xl_base")
-def linear_transformer_xl_base(args):
-    base_lm_architecture(args)
-    args.d_model = args.decoder_embed_dim
-    args.n_head = args.decoder_attention_heads
-    args.d_head = args.d_model // args.n_head
-    args.d_inner = args.decoder_ffn_embed_dim
-    args.n_layer = args.decoder_layers
-    args.dropout = args.dropout
-    args.dropatt = 0.0
-    args.use_linear = True
-    args.pre_lnorm = True
-    args.tgt_len = 0
-    args.ext_len = 0
-    args.mem_len = 128
-    args.use_ada = False
+# @register_model_architecture("transformer-xl", "linear_transformer_xl_base")
+# def linear_transformer_xl_base(args):
+#     base_lm_architecture(args)
+#     args.d_model = args.decoder_embed_dim
+#     args.n_head = args.decoder_attention_heads
+#     args.d_head = args.d_model // args.n_head
+#     args.d_inner = args.decoder_ffn_embed_dim
+#     args.n_layer = args.decoder_layers
+#     args.dropout = args.dropout
+#     args.dropatt = 0.0
+#     args.use_linear = True
+#     args.pre_lnorm = True
+#     args.tgt_len = 0
+#     args.ext_len = 0
+#     args.mem_len = 128
+#     args.use_ada = False
