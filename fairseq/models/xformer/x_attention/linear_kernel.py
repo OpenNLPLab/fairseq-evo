@@ -381,6 +381,18 @@ def transformer_1_elu_wmt_en_de_nope(args):
     args.kernel_type = "1+elu"
     args.no_token_positional_embeddings = True
     
+@register_model_architecture("encoder_linear", "1+elu_wmt_en_de_1d_3_nope")
+def transformer_1_elu_wmt_en_de_1d_3_nope(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    args.no_token_positional_embeddings = True
+    
 @register_model_architecture("encoder_linear", "1+elu_wmt_en_de_krpe")
 def transformer_1_elu_wmt_en_de_krpe(args):
     base_architecture(args)

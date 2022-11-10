@@ -140,7 +140,6 @@ class LinearKernelAttention(nn.Module):
 
         self.use_krpe = use_krpe
         if self.use_krpe:
-            # self.zero_value = float("-inf")
             h = self.num_heads
             n = self.max_positions
             # [1,...,(n-1)]
@@ -149,10 +148,6 @@ class LinearKernelAttention(nn.Module):
             self.zero = nn.Parameter(torch.randn(h).reshape(h, 1))
             # [-(n-1),...,-1]
             self.neg = nn.Parameter(torch.randn(h, n - 1).reshape(h, n - 1))
-            # if self.causal:
-            #     self.neg = nn.Parameter(torch.ones(h, n - 1).reshape(h, n - 1) * self.zero_value, requires_grad=False)
-            # else:
-            #     self.neg = nn.Parameter(torch.randn(h, n - 1).reshape(h, n - 1))
             self.forward = self.forward_krpe
 
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
