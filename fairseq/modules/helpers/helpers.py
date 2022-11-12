@@ -70,7 +70,13 @@ def get_activation_fn(activation):
     elif activation == "sigmoid":
         return F.sigmoid
     elif activation == "exp":
-        return torch.exp
+        def f(x):
+            with torch.no_grad():
+                x_max = torch.max(x, dim=-1, keepdims=True).values
+            y = torch.exp(x - x_max)
+            
+            return y
+        return f
     elif activation == "leak":
         return F.leaky_relu
     elif activation == "1+elu":

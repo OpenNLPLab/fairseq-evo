@@ -434,7 +434,7 @@ class LinearKernelAttention(nn.Module):
             # act
             q = self.act(q)
             k = self.act(k)
-
+            
         # urpe
         if self.use_urpe:
             q = self.urpe(q)

@@ -1005,3 +1005,13 @@ def transformer_1_elu_wiki_base_krpe(args):
     args.use_krpe = True
     args.max_seq_len = 512
 ########## krpe
+
+########## exp
+@register_model_architecture("linear_urpe_lm", "exp_wiki_base")
+def transformer_exp_wiki_base(args):
+    base_lm_architecture(args)
+    ##### add
+    args.causal = True
+    args.kernel_type = "exp"
+    args.max_seq_len = 512
+########## exp
