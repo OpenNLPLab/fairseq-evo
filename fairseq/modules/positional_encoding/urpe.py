@@ -93,7 +93,7 @@ class Urpe(nn.Module):
             return self.householder
         elif self.p_matrix == 4:
             def f(x):
-                return torch.fft.fft(x, norm="ortho")
+                return torch.fft.rfft(x, norm="ortho")
             return f
         elif self.p_matrix == 5:
             return self.odd_even_permutation
@@ -109,7 +109,7 @@ class Urpe(nn.Module):
             return self.householder
         elif self.p_matrix == 4:
             def f(x):
-                return torch.fft.ifft(x, norm="ortho")
+                return torch.fft.irfft(x, norm="ortho")
             return f
         elif self.p_matrix == 5:
             return self.odd_even_permutation_transpose
