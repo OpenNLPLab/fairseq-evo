@@ -700,3 +700,11 @@ def transformer_lm_urpe_1_1_base_no_abs(args):
     # add
     args.no_token_positional_embeddings = True
 ########## small model
+
+########## alibi
+@register_model_architecture("transformer_plus_lm", "transformer_plus_lm_base_alibi")
+def transformer_plus_lm_base_alibi(args):
+    base_lm_architecture(args)
+    args.use_alibi = True
+    args.no_token_positional_embeddings = True
+########## alibi
