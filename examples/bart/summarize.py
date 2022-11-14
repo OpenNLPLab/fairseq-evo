@@ -3,9 +3,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import argparse
+
 import torch
 from fairseq.models.bart import BARTModel
-import argparse
 
 XSUM_KWARGS = dict(beam=6, lenpen=1.0, max_len_b=60, min_len=10, no_repeat_ngram_size=3)
 CNN_KWARGS = dict(beam=4, lenpen=2.0, max_len_b=140, min_len=55, no_repeat_ngram_size=3)
@@ -26,6 +27,7 @@ def generate(bart, infile, outfile="bart_hypo.txt", bsz=32, n_obs=None, **eval_k
             if count % bsz == 0:
                 hypotheses_batch = bart.sample(slines, **eval_kwargs)
                 for hypothesis in hypotheses_batch:
+                    print(hypothesis)
                     fout.write(hypothesis + "\n")
                     fout.flush()
                 slines = []
