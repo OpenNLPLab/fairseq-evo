@@ -16,7 +16,6 @@ from fairseq.data import encoders
 from fairseq.hub_utils import GeneratorHubInterface
 from omegaconf import open_dict
 
-
 logger = logging.getLogger(__name__)
 
 

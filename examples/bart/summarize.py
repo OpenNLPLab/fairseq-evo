@@ -17,7 +17,6 @@ def generate(bart, infile, outfile="bart_hypo.txt", bsz=32, n_obs=None, **eval_k
     count = 1
 
     # if n_obs is not None: bsz = min(bsz, n_obs)
-
     with open(infile) as source, open(outfile, "w") as fout:
         sline = source.readline().strip()
         slines = [sline]
@@ -27,7 +26,6 @@ def generate(bart, infile, outfile="bart_hypo.txt", bsz=32, n_obs=None, **eval_k
             if count % bsz == 0:
                 hypotheses_batch = bart.sample(slines, **eval_kwargs)
                 for hypothesis in hypotheses_batch:
-                    print(hypothesis)
                     fout.write(hypothesis + "\n")
                     fout.flush()
                 slines = []
@@ -91,6 +89,9 @@ def main():
             data_name_or_path=args.model_dir,
         )
     bart = bart.eval()
+    if torch.cuda.is_available():
+        bart = bart.cuda()
+    print(bart)
     # if torch.cuda.is_available():
     #     bart = bart.cuda().half()
     generate(

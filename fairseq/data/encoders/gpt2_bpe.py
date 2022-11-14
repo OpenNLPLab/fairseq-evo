@@ -11,7 +11,6 @@ from fairseq.dataclass import FairseqDataclass
 
 from .gpt2_bpe_utils import get_encoder
 
-
 DEFAULT_ENCODER_JSON = "https://dl.fbaipublicfiles.com/fairseq/gpt2_bpe/encoder.json"
 DEFAULT_VOCAB_BPE = "https://dl.fbaipublicfiles.com/fairseq/gpt2_bpe/vocab.bpe"
 DEFAULT_ENCODER_JSON = "/mnt/lustre/qinzhen/.cache/torch/pytorch_fairseq/encoder.json"

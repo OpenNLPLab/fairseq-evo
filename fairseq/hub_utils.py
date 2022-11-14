@@ -11,11 +11,11 @@ import os
 from typing import Any, Dict, Iterator, List
 
 import torch
-from fairseq import utils
-from fairseq.data import encoders
 from omegaconf import open_dict
 from torch import nn
 
+from fairseq import utils
+from fairseq.data import encoders
 
 logger = logging.getLogger(__name__)
 
