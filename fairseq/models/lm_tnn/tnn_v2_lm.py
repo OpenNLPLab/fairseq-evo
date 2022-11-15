@@ -379,6 +379,8 @@ def tnn_v2_decay_99_pre_ada_128_base(args):
     args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
     transformer_lm_big(args)
     args.decoder_embed_dim = 512
+    args.decoder_input_dim = args.decoder_embed_dim
+    args.decoder_output_dim = args.decoder_embed_dim
     # gtu
     args.decoder_normalize_before = True
     # model
@@ -440,3 +442,30 @@ def tnn_v2_decay_99_pre_ada_128(args):
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
 ##### large
+
+##### test
+@register_model_architecture("tnn_v2_lm", "tnn_v2_decay_99_pre_l1")
+def tnn_v2_decay_99_pre_l1(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 1
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+##### test
