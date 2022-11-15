@@ -498,7 +498,7 @@ def bart_base_plus_per(args):
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
     bart_large_architecture(args)
     # per
-    args.max_seq_len = 2048
+    args.max_seq_len = 1024
     args.weight_type = -1
     args.use_urpe = False
     args.use_spe = False
