@@ -147,7 +147,7 @@ class MultiheadAttentionPlus(nn.Module):
         self.householder_learned = householder_learned
         
         if self.use_urpe:
-            self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned)
+            self.urpe = Urpe(self.core_matrix, self.p_matrix, embedding_dim=self.head_dim, theta_type=theta_type, theta_learned=theta_learned, householder_learned=householder_learned, max_positions=max_positions)
         self.use_spe = use_spe
         if self.use_spe:
             self.spe_encoder = SineSPE(num_heads=self.num_heads,          # Number of attention heads

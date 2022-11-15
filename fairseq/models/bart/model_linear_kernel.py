@@ -320,3 +320,204 @@ def bart_base_linear_kernel(args):
     args.decoder_layers = getattr(args, "decoder_layers", 6)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
     bart_large_architecture(args)
+
+# Type 1
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_1_3")
+def bart_base_linear_kernel_1_3(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+
+# Type 2
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_1d_3")
+def bart_base_linear_kernel_1d_3(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    
+# Type 3
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_1d_3a")
+def bart_base_linear_kernel_1d_3a(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.core_matrix = 1
+    args.theta_learned = True
+    args.p_matrix = 3
+    args.householder_learned = True
+    
+# Type 4
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_3_3")
+def bart_base_linear_kernel_3_3(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.core_matrix = 3
+    args.p_matrix = 3
+    args.max_positions = 1024
+
+# Type 5
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_1_5")
+def bart_base_linear_kernel_1_5(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.core_matrix = 1
+    args.p_matrix = 5
+
+# Type 6
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_1d_5")
+def bart_base_linear_kernel_1d_5(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 5
+    args.theta_learned = True
+
+# Type 7
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_3_5")
+def bart_base_linear_kernel_3_5(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 5
+    
+# Type 8
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_4_4")
+def bart_base_linear_kernel_4_4(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # urpe
+    args.weight_type = -1
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 4
+
+# rope
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_1_1")
+def bart_base_linear_kernel_1_1(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # rope
+    args.weight_type = -1
+    args.use_urpe = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+
+# spe
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_spe")
+def bart_base_linear_kernel_spe(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # spe
+    args.weight_type = -1
+    args.use_urpe = False
+    args.use_spe = True
+
+# per
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_per")
+def bart_base_linear_kernel_per(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # per
+    args.max_seq_len = 1024
+    args.weight_type = -1
+    args.use_urpe = False
+    args.use_spe = False
+    args.use_permutate = True
+    
+# t5
+@register_model_architecture("bart_linear_kernel", "bart_base_linear_kernel_t5")
+def bart_base_linear_kernel_t5(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 4 * 768)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 12)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 12)
+    bart_large_architecture(args)
+    # t5
+    args.weight_type = -1
+    args.use_urpe = False
+    args.use_spe = False
+    args.causal = False
+    args.use_t5 = True

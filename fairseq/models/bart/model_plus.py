@@ -387,6 +387,7 @@ def bart_base_plus_3_3(args):
     args.use_urpe = True
     args.core_matrix = 3
     args.p_matrix = 3
+    args.max_positions = 1024
 
 # Type 5
 @register_model_architecture("bart_plus", "bart_base_plus_1_5")
