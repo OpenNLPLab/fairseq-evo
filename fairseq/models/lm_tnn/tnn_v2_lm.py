@@ -402,7 +402,49 @@ def tnn_v2_decay_99_pre_ada_128_base(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
-    
+
+@register_model_architecture("tnn_v2_lm", "tnn_v2_decay_99_pre_ada_128_small")
+def tnn_v2_decay_99_pre_ada_128_small(args):
+    args.decoder_layers = getattr(args, "decoder_layers", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.3)
+    args.adaptive_input = getattr(args, "adaptive_input", True)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", True)
+    args.adaptive_input_cutoff = getattr(args, "adaptive_input_cutoff", "20000,60000")
+    args.adaptive_softmax_cutoff = getattr(
+        args, "adaptive_softmax_cutoff", "20000,60000"
+    )
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0.2)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.1)
+    args.no_decoder_final_norm = getattr(args, "no_decoder_final_norm", True)
+    args.tie_adaptive_proj = getattr(args, "tie_adaptive_proj", True)
+    transformer_lm_big(args)
+    args.decoder_embed_dim = 768
+    args.decoder_input_dim = args.decoder_embed_dim
+    args.decoder_output_dim = args.decoder_embed_dim
+    # gtu
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 128
+    args.rpe_layers = 1
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
 @register_model_architecture("tnn_v2_lm", "tnn_v2_decay_99_pre_ada_128")
 def tnn_v2_decay_99_pre_ada_128(args):
     args.decoder_layers = getattr(args, "decoder_layers", 16)
