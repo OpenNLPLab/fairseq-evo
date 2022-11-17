@@ -321,6 +321,58 @@ def tnn_v2_decay_99_pre_glu_v2_gtu_v3_l6(args):
     args.glu_dim = 3 * args.decoder_embed_dim
 ##### v3 test
 
+##### pre large version
+@register_model_architecture("tnn_v2_lm", "tnn_v2_decay_99_pre_l12")
+def tnn_v2_decay_99_pre_l12(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 12
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 1
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    
+@register_model_architecture("tnn_v2_lm", "tnn_v2_decay_99_pre_e768")
+def tnn_v2_decay_99_pre_e768(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    args.decoder_embed_dim = 768
+    # model
+    args.decoder_attention_heads = 1
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 96
+    args.rpe_layers = 1
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+##### pre large version
+
 ##### large
 @register_model_architecture("tnn_v2_lm", "tnn_v2_decay_99_pre_ada")
 def tnn_v2_decay_99_pre_ada(args):
