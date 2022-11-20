@@ -50,6 +50,9 @@ class WeightLinearAttention(nn.Module):
         use_norm=False,
         norm_type="simplermsnorm",
         use_sigmoid=False,
+        # cos weight type=5
+        cos_prenorm=False,
+        cos_postnorm=False,
     ):
         super().__init__()
         # add
@@ -111,6 +114,13 @@ class WeightLinearAttention(nn.Module):
             self.c1 = self.fft_coef(1)
             self.c2 = self.fft_coef(2)
             logging_info("e^-|x|: fourier")
+        elif self.weight_type == 5:
+            logging_info("cos(q - k)")
+            # h, 1, 1
+            self.freq = nn.Parameter(np.pi / 2 * (2 ** torch.arange(num_heads).reshape(1, -1, 1, 1)), requires_grad=False)
+            self.forward = self.forward_cos
+            self.cos_prenorm = cos_prenorm
+            self.cos_postnorm = cos_postnorm
 
         self.act = get_activation_fn(act_fun)
         
@@ -129,6 +139,11 @@ class WeightLinearAttention(nn.Module):
         self.norm_type = norm_type
         if self.use_norm:
             self.norm = get_norm_fn(norm_type)(embed_dim)
+            
+        if self.weight_type == 5:
+            self.act = None
+            if not self.cos_postnorm:
+                self.norm = None
 
         self.reset_parameters()
         
@@ -157,6 +172,109 @@ class WeightLinearAttention(nn.Module):
 
         if self.out_proj.bias is not None:
             nn.init.constant_(self.out_proj.bias, 0.0)
+
+    def forward_cos(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+
+        # L, N, E1
+        q = self.q_proj(query)
+        # S, N, E1
+        k = self.k_proj(key)
+        v = self.v_proj(value)
+
+        # N, L, H, E, batch, length, head, dim
+        # N, L, e1
+        head_dim = embed_dim // num_heads
+
+        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
+        
+        if self.cos_prenorm:
+            # print("use_norm")
+            q = F.normalize(q)
+            k = F.normalize(k)
+        
+        q = self.freq * q
+        k = self.freq * k
+        q = torch.cat([torch.cos(q), torch.sin(q)], dim=-1)
+        k = torch.cat([torch.cos(k), torch.sin(k)], dim=-1)
+    
+        eps = 1e-4
+        if self.causal:
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            weights = torch.einsum('...nd,...md->...nm', q, k)
+            weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            if not self.use_norm:
+                # print("with denom")
+                denorm = weights.sum(dim=-1, keepdim=True)
+                # denorm = torch.clamp_min(denorm, eps)
+                weights = weights / denorm
+            # print(weights[0][:][:5, :5])
+            output = torch.einsum('...nm,...md->...nd', weights, v)
+        else:
+            o1 = torch.einsum('...nd,...ne->...de', k, v)
+            output = torch.einsum('...nd,...de->...ne', q, o1)
+            if not self.use_norm:
+                # print("with denom")
+                denorm = torch.einsum('...nd,...d->...n', q, torch.sum(k, axis=-2)).unsqueeze(-1)
+                # denorm = torch.clamp_min(denorm, eps)
+                output = output / denorm
+
+        output = rearrange(output, 'b h n e -> n b (h e)')
+        
+        if self.use_norm and self.cos_postnorm:
+            # print("withpost")
+            output = self.norm(output)
+
+        # L, N, e1
+        output = self.out_proj(output)
+
+        return output, None
 
     def forward(
         self,

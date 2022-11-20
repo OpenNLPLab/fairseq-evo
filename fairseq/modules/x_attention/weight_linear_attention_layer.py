@@ -8,11 +8,14 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 from fairseq import utils
-from fairseq.modules import LayerNorm, TransformerEncoderLayer, TransformerDecoderLayer
+from fairseq.modules import (LayerNorm, TransformerDecoderLayer,
+                             TransformerEncoderLayer)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor
+
 from .weight_linear_attention import WeightLinearAttention
+
 
 class WeightLinearEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):
@@ -41,7 +44,10 @@ class WeightLinearEncoderLayer(TransformerEncoderLayer):
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
-            use_sigmoid=getattr(args, "use_sigmoid", False)
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            # cos
+            cos_prenorm=getattr(args, "cos_prenorm", False),
+            cos_postnorm=getattr(args, "cos_postnorm", False),
         )
 
 class WeightLinearDecoderLayer(TransformerDecoderLayer):
@@ -77,7 +83,10 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
-            use_sigmoid=getattr(args, "use_sigmoid", False)
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            # cos
+            cos_prenorm=getattr(args, "cos_prenorm", False),
+            cos_postnorm=getattr(args, "cos_postnorm", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -105,5 +114,8 @@ class WeightLinearDecoderLayer(TransformerDecoderLayer):
             # norm
             use_norm=getattr(args, "use_norm", False),
             norm_type=getattr(args, "norm_type", "simplermsnorm"),
-            use_sigmoid=getattr(args, "use_sigmoid", False)
+            use_sigmoid=getattr(args, "use_sigmoid", False),
+            # cos
+            cos_prenorm=getattr(args, "cos_prenorm", False),
+            cos_postnorm=getattr(args, "cos_postnorm", False),
         )

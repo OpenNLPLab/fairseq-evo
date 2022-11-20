@@ -185,6 +185,8 @@ class NormAttentionDecoderLayer(nn.Module):
                 # Toeplizt
                 use_toeplizt=getattr(args, "use_toeplizt", False),
                 type_num=getattr(args, "type_num", -1),
+                # cos
+                use_cos=getattr(args, "use_cos", False),
             )
         elif args.attention_type == 2:
             logging_info("======================")
@@ -347,6 +349,8 @@ class NormAttentionDecoderLayer(nn.Module):
                 # Toeplizt
                 use_toeplizt=getattr(args, "use_toeplizt", False),
                 type_num=getattr(args, "type_num", -1),
+                # cos
+                use_cos=getattr(args, "use_cos", False),
             )
         elif args.attention_type == 2:
             logging_info("======================")
@@ -744,6 +748,8 @@ class NormAttentionEncoderLayer(nn.Module):
                 # Toeplizt
                 use_toeplizt=getattr(args, "use_toeplizt", False),
                 type_num=getattr(args, "type_num", -1),
+                # cos
+                use_cos=getattr(args, "use_cos", False),
             )
         elif args.attention_type == 2:
             logging_info("======================")

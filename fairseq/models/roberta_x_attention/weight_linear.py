@@ -7,25 +7,23 @@ RoBERTa: A Robustly Optimized BERT Pretraining Approach.
 """
 
 import logging
-from numpy import False_
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from fairseq import utils
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqEncoderModel,
-    register_model,
-    register_model_architecture,
-)
-from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder
+from fairseq.models import (FairseqEncoder, FairseqEncoderModel,
+                            register_model, register_model_architecture)
+from fairseq.models.roberta import (RobertaEncoder, RobertaModel,
+                                    base_architecture)
+from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP,
+                                        TransformerEncoder)
+from fairseq.models.xformer import WeightLinearEncoder
 from fairseq.modules import LayerNorm
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
-from fairseq.models.roberta import RobertaEncoder, RobertaModel, base_architecture
+from numpy import False_
 
-from fairseq.models.xformer import WeightLinearEncoder
 
 class RobertaWeightLinearEncoder(RobertaEncoder):
     """RoBERTa encoder."""

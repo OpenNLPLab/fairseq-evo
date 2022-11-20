@@ -289,3 +289,75 @@ def weight_linear_1_elu_laplace_fft_with_norm(args):
     args.norm_type = "simplermsnorm"
 ##### weight 4
 ########## 1+elu
+
+########## cos(q - k)
+##### with denom
+@register_model_architecture("weight_linear_lm", "cos_qk_denom")
+def cos_qk_denom(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    args.use_norm = False
+    args.cos_prenorm = False
+    args.cos_postnorm = False
+    
+@register_model_architecture("weight_linear_lm", "cos_normqk_denom")
+def cos_normqk_denom(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    args.use_norm = False
+    args.cos_prenorm = True
+    args.cos_postnorm = False
+##### with denom
+
+##### without denom
+@register_model_architecture("weight_linear_lm", "cos_qk_nodenom")
+def cos_qk_nodenom(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    args.use_norm = True
+    args.cos_prenorm = False
+    args.cos_postnorm = True
+    
+@register_model_architecture("weight_linear_lm", "cos_normqk_nodenom")
+def cos_normqk_nodenom(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    args.use_norm = True
+    args.cos_prenorm = True
+    args.cos_postnorm = True
+##### without denom
+
+##### without denom and without postnorm
+@register_model_architecture("weight_linear_lm", "cos_qk_nodenom_nopost")
+def cos_qk_nodenom_nopost(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    # no denorm
+    args.use_norm = True
+    args.cos_prenorm = False
+    # no postnorm
+    args.cos_postnorm = False
+    
+@register_model_architecture("weight_linear_lm", "cos_normqk_nodenom_nopost")
+def cos_normqk_nodenom_nopost(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    # no denorm
+    args.use_norm = True
+    args.cos_prenorm = True
+    # no postnorm
+    args.cos_postnorm = False
+##### without denom and without postnorm
+########## cos(q - k)

@@ -83,7 +83,10 @@ class NormLinearAttention(nn.Module):
         final_dropout=0.0,
         # Toeplizt
         use_toeplizt=False,
-        type_num=-1
+        type_num=-1,
+        # cos
+        use_cos=False,
+        use_norm=False,
     ):
         super().__init__()
         # add
