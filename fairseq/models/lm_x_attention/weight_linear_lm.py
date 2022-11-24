@@ -333,6 +333,17 @@ def cos_normqk_nodenom(args):
     args.use_norm = True
     args.cos_prenorm = True
     args.cos_postnorm = True
+    
+@register_model_architecture("weight_linear_lm", "cos_normqk_nodenom_onehead")
+def cos_normqk_nodenom_onehead(args):
+    base_lm_architecture(args)
+    args.causal = True
+    args.weight_type = 5
+    # norm
+    args.use_norm = True
+    args.cos_prenorm = True
+    args.cos_postnorm = True
+    args.decoder_attention_heads = 1
 ##### without denom
 
 ##### without denom and without postnorm
