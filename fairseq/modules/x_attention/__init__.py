@@ -26,7 +26,9 @@ from .multihead_cos_attention_layer import (TransformerCosDecoderLayer,
 from .norm_attention_layer import (NormAttentionDecoderLayer,
                                    NormAttentionEncoderLayer)
 from .norm_linear_attention import NormLinearAttention
+from .norm_linear_attention_v2 import NormLinearAttentionV2Module
 from .norm_local_attention import NormLocalAttention
+from .norm_local_attention_v2 import NormLocalAttentionV2Module
 from .norm_mix_attention import NormMixAttention
 from .norm_mix_layer import (NormMixAttentionDecoderLayer,
                              NormMixAttentionEncoderLayer)
@@ -37,6 +39,8 @@ from .rela_layer import ReLADecoderLayer, ReLAEncoderLayer
 from .sparse_multihead_attention import SparseMultiheadAttention
 from .sparse_transformer_layer import (SparseTransformerDecoderLayer,
                                        SparseTransformerEncoderLayer)
+from .transnormer_v2_layer import (TransnormerV2DecoderLayer,
+                                   TransnormerV2EncoderLayer)
 from .weight_linear_attention import WeightLinearAttention
 from .weight_linear_attention_layer import (WeightLinearDecoderLayer,
                                             WeightLinearEncoderLayer)
