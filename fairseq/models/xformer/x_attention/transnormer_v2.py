@@ -161,8 +161,8 @@ class TransnormerV2Encoder(TransformerEncoder):
         if self.layer_norm is not None:
             x = self.layer_norm(x)
         
-        # T x B x C -> B x T x C
-        x = x.transpose(0, 1)
+        # # T x B x C -> B x T x C
+        # x = x.transpose(0, 1)
 
         # The Pytorch Mobile lite interpreter does not supports returning NamedTuple in
         # `forward` so we use a dictionary instead.
@@ -304,6 +304,7 @@ class TransnormerV2Decoder(TransformerDecoder):
         #         self_attn_mask = None
         # x: B x T x C
         # T x B x C -> B x T x C
+        # 待处理, 可能不需要
         if enc != None:
             enc = enc.transpose(0, 1)
 
@@ -390,8 +391,8 @@ class TransnormerV2Decoder(TransformerDecoder):
         if self.layer_norm is not None:
             x = self.layer_norm(x)
 
-        # T x B x C -> B x T x C
-        x = x.transpose(0, 1)
+        # # T x B x C -> B x T x C
+        # x = x.transpose(0, 1)
 
         if self.project_out_dim is not None:
             x = self.project_out_dim(x)
