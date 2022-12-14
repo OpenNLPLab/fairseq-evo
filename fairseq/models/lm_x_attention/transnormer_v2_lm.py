@@ -101,6 +101,7 @@ def transnormer_v2_lm_t1_prenorm(args):
     args.local_act_fun = "relu"
     args.use_softmax = False
     args.linear_act_fun = "elu"
+    args.uv_act_fun = "swish"
 
 @register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t2_prenorm")
 def transnormer_v2_lm_t2_prenorm(args):
@@ -117,6 +118,7 @@ def transnormer_v2_lm_t2_prenorm(args):
     args.local_act_fun = "relu"
     args.use_softmax = True
     args.linear_act_fun = "1+elu"
+    args.uv_act_fun = "swish"
 
 @register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t1_postnorm")
 def transnormer_v2_lm_t1_postnorm(args):
@@ -133,6 +135,7 @@ def transnormer_v2_lm_t1_postnorm(args):
     args.local_act_fun = "relu"
     args.use_softmax = False
     args.linear_act_fun = "elu"
+    args.uv_act_fun = "swish"
     args.decoder_normalize_before = False
 
 @register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t2_postnorm")
@@ -150,4 +153,5 @@ def transnormer_v2_lm_t2_postnorm(args):
     args.local_act_fun = "relu"
     args.use_softmax = True
     args.linear_act_fun = "1+elu"
+    args.uv_act_fun = "swish"
     args.decoder_normalize_before = False

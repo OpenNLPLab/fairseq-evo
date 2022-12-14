@@ -146,6 +146,7 @@ class TransnormerV2DecoderLayer(nn.Module):
             # add
             local_act_fun=getattr(args, "local_act_fun", "relu"),
             linear_act_fun=getattr(args, "linear_act_fun", "elu"),
+            uv_act_fun=getattr(args, "uv_act_fun", "swish"),
             norm_type=getattr(args, "norm_type", "layernorm"),
             causal=getattr(args, "causal", True),
             use_softmax=getattr(args, "use_softmax", True),
@@ -176,6 +177,7 @@ class TransnormerV2DecoderLayer(nn.Module):
             # add
             local_act_fun=getattr(args, "local_act_fun", "relu"),
             linear_act_fun=getattr(args, "linear_act_fun", "elu"),
+            uv_act_fun=getattr(args, "uv_act_fun", "swish"),
             norm_type=getattr(args, "norm_type", "layernorm"),
             causal=getattr(args, "causal", False),
             use_softmax=getattr(args, "use_softmax", True),
@@ -442,6 +444,7 @@ class TransnormerV2EncoderLayer(nn.Module):
             # add
             local_act_fun=getattr(args, "local_act_fun", "relu"),
             linear_act_fun=getattr(args, "linear_act_fun", "elu"),
+            uv_act_fun=getattr(args, "uv_act_fun", "swish"),
             norm_type=getattr(args, "norm_type", "layernorm"),
             causal=getattr(args, "causal", True),
             use_softmax=getattr(args, "use_softmax", True),

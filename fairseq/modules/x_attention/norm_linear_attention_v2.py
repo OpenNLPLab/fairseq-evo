@@ -35,6 +35,7 @@ class NormLinearAttentionV2Module(nn.Module):
         # add
         local_act_fun="relu",
         linear_act_fun="elu",
+        uv_act_fun="swish",
         norm_type="layernorm",
         causal=False,
         use_softmax=True,

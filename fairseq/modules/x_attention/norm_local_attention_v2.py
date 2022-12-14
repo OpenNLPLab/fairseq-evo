@@ -35,6 +35,7 @@ class NormLocalAttentionV2Module(nn.Module):
         # add
         local_act_fun="relu",
         linear_act_fun="elu",
+        uv_act_fun="swish",
         norm_type="layernorm",
         causal=False,
         use_softmax=True,
@@ -46,7 +47,15 @@ class NormLocalAttentionV2Module(nn.Module):
         # print params
         print_params(**params)
         
-        self.token_mixer = NormLocalAttention(embed_dim, num_heads, local_act_fun, norm_type, causal, use_softmax)
+        self.token_mixer = NormLocalAttention(
+            embed_dim=embed_dim, 
+            num_heads=num_heads, 
+            act_fun=local_act_fun, 
+            uv_act_fun=uv_act_fun,
+            norm_type=norm_type, 
+            causal=causal, 
+            use_softmax=use_softmax,
+        )
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
