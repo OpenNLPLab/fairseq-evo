@@ -47,7 +47,14 @@ class NormLinearAttentionV2Module(nn.Module):
         # print params
         print_params(**params)
         
-        self.token_mixer = NormLinearAttention(embed_dim, num_heads, linear_act_fun, norm_type, causal)
+        self.token_mixer = NormLinearAttention(
+            embed_dim=embed_dim, 
+            num_heads=num_heads, 
+            act_fun=local_act_fun, 
+            uv_act_fun=uv_act_fun,
+            norm_type=norm_type, 
+            causal=causal, 
+        )
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
