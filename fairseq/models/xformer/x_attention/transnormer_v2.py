@@ -330,7 +330,8 @@ class TransnormerV2Decoder(TransformerDecoder):
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
         # attn_mask
-        self_attn_mask = (torch.tril(torch.ones(self.chunk_size, self.chunk_size))).to(x)
+        # self_attn_mask = (torch.tril(torch.ones(self.chunk_size, self.chunk_size))).to(x)
+        self_attn_mask = self.buffered_mask(self.attn_heads, x.shape[-2]).to(x)
         for idx, layer in enumerate(self.layers):
             if idx >= self.local_layer:
                 break
@@ -362,7 +363,7 @@ class TransnormerV2Decoder(TransformerDecoder):
         inner_states: List[Optional[Tensor]] = [x]
         # attn_mask
         # self_attn_mask = torch.tril(torch.ones(x.shape[-2], x.shape[-2])).to(x)
-        self_attn_mask = self.buffered_exp_mask(self.attn_heads, x.shape[-2]).to(x)
+        self_attn_mask = torch.exp(self.buffered_mask(self.attn_heads, x.shape[-2]).to(x))
         for idx, layer in enumerate(self.layers):
             if idx < self.local_layer:
                 continue
@@ -399,7 +400,7 @@ class TransnormerV2Decoder(TransformerDecoder):
 
         return x, {"attn": [attn], "inner_states": inner_states}
 
-    def buffered_exp_mask(self, h, n):
+    def buffered_mask(self, h, n):
         # copy from alibi
         def get_slopes(n):
             def get_slopes_power_of_2(n):
@@ -413,11 +414,11 @@ class TransnormerV2Decoder(TransformerDecoder):
                 closest_power_of_2 = 2**math.floor(math.log2(n))  #when the number of heads is not a power of 2, we use this workaround. 
                 return get_slopes_power_of_2(closest_power_of_2) + get_slopes(2*closest_power_of_2)[0::2][:n-closest_power_of_2]
         slopes = torch.Tensor(get_slopes(h))
-        weight = torch.exp(-slopes.unsqueeze(1) * torch.arange(n).unsqueeze(0).expand(h, -1))
+        weight = -slopes.unsqueeze(1) * torch.arange(n).unsqueeze(0).expand(h, -1)
         
         # build Toeplitz matrix
         c = weight
-        r = torch.Tensor([1] + [0] * (n - 1)).expand(h, -1)
+        r = torch.Tensor([0] + [float("-inf")] * (n - 1)).expand(h, -1)
         vals = torch.cat([r, c[:, 1:].flip(1)], dim=-1)
         shape = h, n, n
         i, j = torch.ones(n, n).nonzero().T
