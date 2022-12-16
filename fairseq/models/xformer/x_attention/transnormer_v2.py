@@ -199,6 +199,7 @@ class TransnormerV2Decoder(TransformerDecoder):
         logging_info(f"chunk_size {self.chunk_size}")
         logging_info(f"local_layer {self.local_layer}")
         logging_info(f"attn_heads {self.attn_heads}")
+        self.mask = None
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = TransnormerV2DecoderLayer(args, no_encoder_attn)
@@ -314,7 +315,7 @@ class TransnormerV2Decoder(TransformerDecoder):
         
         # norm attention
         n = x.shape[1]
-        if self.chunk_size < n ** 2 - n:
+        if self.chunk_size < n:
             len_pad_x = (self.chunk_size - n % self.chunk_size) % self.chunk_size
             x = F.pad(x, (0, 0, 0, len_pad_x, 0, 0))
             if enc != None:
@@ -331,7 +332,8 @@ class TransnormerV2Decoder(TransformerDecoder):
         inner_states: List[Optional[Tensor]] = [x]
         # attn_mask
         # self_attn_mask = (torch.tril(torch.ones(self.chunk_size, self.chunk_size))).to(x)
-        self_attn_mask = self.buffered_mask(self.attn_heads, x.shape[-2]).to(x)
+        # self_attn_mask = self.buffered_mask(self.attn_heads, x.shape[-2]).to(x)
+        self_attn_mask = self.get_mask(x)
         for idx, layer in enumerate(self.layers):
             if idx >= self.local_layer:
                 break
@@ -350,7 +352,7 @@ class TransnormerV2Decoder(TransformerDecoder):
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
                 attn = layer_attn.float().to(x)
-        if self.chunk_size < n ** 2 - n:
+        if self.chunk_size < n:
             # b l c d -> b n d
             x = self.reverse_transform(x)
             x = x[:, :n]
@@ -363,7 +365,8 @@ class TransnormerV2Decoder(TransformerDecoder):
         inner_states: List[Optional[Tensor]] = [x]
         # attn_mask
         # self_attn_mask = torch.tril(torch.ones(x.shape[-2], x.shape[-2])).to(x)
-        self_attn_mask = torch.exp(self.buffered_mask(self.attn_heads, x.shape[-2]).to(x))
+        # self_attn_mask = torch.exp(self.buffered_mask(self.attn_heads, x.shape[-2]).to(x))
+        self_attn_mask = torch.exp(self.get_mask(x))
         for idx, layer in enumerate(self.layers):
             if idx < self.local_layer:
                 continue
@@ -400,7 +403,18 @@ class TransnormerV2Decoder(TransformerDecoder):
 
         return x, {"attn": [attn], "inner_states": inner_states}
 
-    def buffered_mask(self, h, n):
+    def get_mask(self, x):
+        n = x.shape[-2]
+        if self.mask == None:
+            self.mask = nn.Parameter(self.buffered_mask(n).to(x), requires_grad=False)
+        m = self.mask.shape[-1]
+        if m < n:
+            self.mask = nn.Parameter(self.buffered_mask(n).to(x), requires_grad=False)
+
+        return self.mask[:, :n, :n]
+
+    def buffered_mask(self, n):
+        h = self.attn_heads
         # copy from alibi
         def get_slopes(n):
             def get_slopes_power_of_2(n):
