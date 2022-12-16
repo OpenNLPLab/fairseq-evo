@@ -39,6 +39,7 @@ class NormLinearAttentionV2Module(nn.Module):
         norm_type="layernorm",
         causal=False,
         use_softmax=True,
+        hidden_dim=512,
     ):
         super().__init__()
         # add
@@ -49,7 +50,8 @@ class NormLinearAttentionV2Module(nn.Module):
         
         self.token_mixer = NormLinearAttention(
             embed_dim=embed_dim, 
-            num_heads=num_heads, 
+            num_heads=num_heads,
+            hidden_dim=hidden_dim,
             act_fun=local_act_fun, 
             uv_act_fun=uv_act_fun,
             norm_type=norm_type, 

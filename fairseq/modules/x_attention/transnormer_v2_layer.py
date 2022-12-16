@@ -150,6 +150,7 @@ class TransnormerV2DecoderLayer(nn.Module):
             norm_type=getattr(args, "norm_type", "layernorm"),
             causal=getattr(args, "causal", True),
             use_softmax=getattr(args, "use_softmax", True),
+            hidden_dim=getattr(args, "hidden_dim", 512),
         )
         
 
@@ -181,6 +182,7 @@ class TransnormerV2DecoderLayer(nn.Module):
             norm_type=getattr(args, "norm_type", "layernorm"),
             causal=getattr(args, "causal", False),
             use_softmax=getattr(args, "use_softmax", True),
+            hidden_dim=getattr(args, "hidden_dim", 512),
         )
 
     def prepare_for_onnx_export_(self):
@@ -448,6 +450,7 @@ class TransnormerV2EncoderLayer(nn.Module):
             norm_type=getattr(args, "norm_type", "layernorm"),
             causal=getattr(args, "causal", True),
             use_softmax=getattr(args, "use_softmax", True),
+            hidden_dim=getattr(args, "hidden_dim", 512),
         )
 
     def residual_connection(self, x, residual):
