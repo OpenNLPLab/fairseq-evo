@@ -96,8 +96,8 @@ def transnormer_v2_lm_t1_prenorm(args):
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
-    args.norm_type = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
+    args.norm_type = "layernorm"
+    args.final_layernorm = "layernorm"
     args.causal = True
     args.local_act_fun = "relu"
     args.use_softmax = False
@@ -114,8 +114,8 @@ def transnormer_v2_lm_t2_prenorm(args):
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
-    args.norm_type = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
+    args.norm_type = "layernorm"
+    args.final_layernorm = "layernorm"
     args.causal = True
     args.local_act_fun = "relu"
     args.use_softmax = True
@@ -132,8 +132,8 @@ def transnormer_v2_lm_t1_postnorm(args):
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
-    args.norm_type = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
+    args.norm_type = "layernorm"
+    args.final_layernorm = "layernorm"
     args.causal = True
     args.local_act_fun = "relu"
     args.use_softmax = False
@@ -151,8 +151,8 @@ def transnormer_v2_lm_t2_postnorm(args):
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
-    args.norm_type = "simplermsnorm"
-    args.final_layernorm = "simplermsnorm"
+    args.norm_type = "layernorm"
+    args.final_layernorm = "layernorm"
     args.causal = True
     args.local_act_fun = "relu"
     args.use_softmax = True
