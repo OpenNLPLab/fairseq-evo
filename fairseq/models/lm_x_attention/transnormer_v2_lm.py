@@ -92,7 +92,7 @@ def transnormer_v2_lm_t1_prenorm(args):
     base_lm_architecture(args)
     # add
     args.chunk_size = 64
-    args.decoder_layers = args.decoder_layers
+    args.decoder_layers = 3 * args.decoder_layers // 2
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
@@ -110,7 +110,7 @@ def transnormer_v2_lm_t2_prenorm(args):
     base_lm_architecture(args)
     # add
     args.chunk_size = 64
-    args.decoder_layers = args.decoder_layers
+    args.decoder_layers = 3 * args.decoder_layers // 2
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
@@ -128,7 +128,7 @@ def transnormer_v2_lm_t1_postnorm(args):
     base_lm_architecture(args)
     # add
     args.chunk_size = 64
-    args.decoder_layers = args.decoder_layers
+    args.decoder_layers = 3 * args.decoder_layers // 2
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
@@ -147,7 +147,7 @@ def transnormer_v2_lm_t2_postnorm(args):
     base_lm_architecture(args)
     # add
     args.chunk_size = 64
-    args.decoder_layers = args.decoder_layers
+    args.decoder_layers = 3 * args.decoder_layers // 2
     n = args.decoder_layers
     m = n // 2
     args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
