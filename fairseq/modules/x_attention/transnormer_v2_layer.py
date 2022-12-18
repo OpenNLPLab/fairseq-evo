@@ -18,6 +18,7 @@ from ..helpers import get_norm_fn, logging_info
 from ..norm import GatedRMSNorm, RMSNorm, SimpleRMSNorm
 from .norm_linear_attention_v2 import NormLinearAttentionV2Module
 from .norm_local_attention_v2 import NormLocalAttentionV2Module
+from ..ffn import GLU
 
 
 class TransnormerV2DecoderLayer(nn.Module):
@@ -54,10 +55,10 @@ class TransnormerV2DecoderLayer(nn.Module):
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
         self.normalize_before = args.decoder_normalize_before
-        # self.use_glu = getattr(args, "use_glu", False)
-        # self.glu_act = getattr(args, "glu_act", False)
-        # self.fina_act = getattr(args, "fina_act", "None")
-        # self.glu_dropout = getattr(args, "glu_dropout", 0.0)
+        self.use_glu = getattr(args, "use_glu", False)
+        self.glu_act = getattr(args, "glu_act", False)
+        self.fina_act = getattr(args, "fina_act", "None")
+        self.glu_dropout = getattr(args, "glu_dropout", 0.0)
 
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
@@ -79,26 +80,26 @@ class TransnormerV2DecoderLayer(nn.Module):
             self.encoder_attn = self.build_encoder_attention(self.embed_dim, args)
             self.encoder_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
 
-        # if self.use_glu:
-        #     d1 = self.embed_dim
-        #     p = 8 / 3
-        #     p = getattr(args, "multiple", p)
-        #     d2 = int(p * d1)
-        #     logging_info(f"GLU multiple {p}")
-        #     self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
-        # else:
-        #     self.fc1 = self.build_fc1(
-        #         self.embed_dim,
-        #         args.decoder_ffn_embed_dim,
-        #         self.quant_noise,
-        #         self.quant_noise_block_size,
-        #     )
-        #     self.fc2 = self.build_fc2(
-        #         args.decoder_ffn_embed_dim,
-        #         self.embed_dim,
-        #         self.quant_noise,
-        #         self.quant_noise_block_size,
-        #     )
+        if self.use_glu:
+            d1 = self.embed_dim
+            p = 8 / 3
+            p = getattr(args, "multiple", p)
+            d2 = int(p * d1)
+            logging_info(f"GLU multiple {p}")
+            self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
+        else:
+            self.fc1 = self.build_fc1(
+                self.embed_dim,
+                args.decoder_ffn_embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
+            self.fc2 = self.build_fc2(
+                args.decoder_ffn_embed_dim,
+                self.embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
 
         # self.final_layer_norm = LayerNorm(self.embed_dim, export=export)
         # if norm_type == "simplermsnorm":
@@ -312,12 +313,12 @@ class TransnormerV2DecoderLayer(nn.Module):
         residual = x
         if self.normalize_before:
             x = self.final_layer_norm(x)
-        # if self.use_glu:
-        #     x = self.glu(x)
-        # else:
-        #     x = self.activation_fn(self.fc1(x))
-        #     x = self.activation_dropout_module(x)
-        #     x = self.fc2(x)
+        if self.use_glu:
+            x = self.glu(x)
+        else:
+            x = self.activation_fn(self.fc1(x))
+            x = self.activation_dropout_module(x)
+            x = self.fc2(x)
 
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
@@ -381,37 +382,37 @@ class TransnormerV2EncoderLayer(nn.Module):
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
         self.normalize_before = args.encoder_normalize_before
-        # self.use_glu = getattr(args, "use_glu", False)
-        # self.glu_act = getattr(args, "glu_act", False)
-        # self.fina_act = getattr(args, "fina_act", "None")
-        # self.glu_dropout = getattr(args, "glu_dropout", 0.0)
+        self.use_glu = getattr(args, "use_glu", False)
+        self.glu_act = getattr(args, "glu_act", False)
+        self.fina_act = getattr(args, "fina_act", "None")
+        self.glu_dropout = getattr(args, "glu_dropout", 0.0)
         logging_info("Encoder")
 
-        # if self.use_glu:
-        #     d1 = self.embed_dim
-        #     p = 8 / 3
-        #     p = getattr(args, "multiple", p)
-        #     d2 = int(p * d1)
-        #     logging_info(f"GLU multiple {p}")
-        #     self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
-        # else:
-        #     self.fc1 = self.build_fc1(
-        #         self.embed_dim,
-        #         args.encoder_ffn_embed_dim,
-        #         self.quant_noise,
-        #         self.quant_noise_block_size,
-        #     )
-        #     self.fc2 = self.build_fc2(
-        #         args.encoder_ffn_embed_dim,
-        #         self.embed_dim,
-        #         self.quant_noise,
-        #         self.quant_noise_block_size,
-        #     )
+        if self.use_glu:
+            d1 = self.embed_dim
+            p = 8 / 3
+            p = getattr(args, "multiple", p)
+            d2 = int(p * d1)
+            logging_info(f"GLU multiple {p}")
+            self.glu = GLU(d1, d2, self.glu_act, self.fina_act, self.glu_dropout)
+        else:
+            self.fc1 = self.build_fc1(
+                self.embed_dim,
+                args.encoder_ffn_embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
+            self.fc2 = self.build_fc2(
+                args.encoder_ffn_embed_dim,
+                self.embed_dim,
+                self.quant_noise,
+                self.quant_noise_block_size,
+            )
 
-        # if norm_type == "simplermsnorm":
-        #     self.final_layer_norm = SimpleRMSNorm(self.embed_dim)
-        # else:
-        #     self.final_layer_norm = LayerNorm(self.embed_dim)
+        if norm_type == "simplermsnorm":
+            self.final_layer_norm = SimpleRMSNorm(self.embed_dim)
+        else:
+            self.final_layer_norm = LayerNorm(self.embed_dim)
         self.final_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
@@ -513,12 +514,12 @@ class TransnormerV2EncoderLayer(nn.Module):
         residual = x
         if self.normalize_before:
             x = self.final_layer_norm(x)
-        # if self.use_glu:
-        #     x = self.glu(x)
-        # else:
-        #     x = self.activation_fn(self.fc1(x))
-        #     x = self.activation_dropout_module(x)
-        #     x = self.fc2(x)
+        if self.use_glu:
+            x = self.glu(x)
+        else:
+            x = self.activation_fn(self.fc1(x))
+            x = self.activation_dropout_module(x)
+            x = self.fc2(x)
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
