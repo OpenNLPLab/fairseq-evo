@@ -172,3 +172,193 @@ def transnormer_v2_lm_t2_postnorm(args):
     # glu
     args.use_glu = True
     args.glu_act = "swish"
+    
+##### nope
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t1_prenorm_nope")
+def transnormer_v2_lm_t1_prenorm_nope(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = False
+    args.linear_act_fun = "elu"
+    args.uv_act_fun = "swish"
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # pe
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t2_prenorm_nope")
+def transnormer_v2_lm_t2_prenorm_nope(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = True
+    args.linear_act_fun = "1+elu"
+    args.uv_act_fun = "swish"
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # pe
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t1_postnorm_nope")
+def transnormer_v2_lm_t1_postnorm_nope(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = False
+    args.linear_act_fun = "elu"
+    args.uv_act_fun = "swish"
+    args.decoder_normalize_before = False
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # pe
+    args.no_token_positional_embeddings = True
+
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t2_postnorm_nope")
+def transnormer_v2_lm_t2_postnorm_nope(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = True
+    args.linear_act_fun = "1+elu"
+    args.uv_act_fun = "swish"
+    args.decoder_normalize_before = False
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # pe
+    args.no_token_positional_embeddings = True
+    
+##### one head
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t1_prenorm_onehead")
+def transnormer_v2_lm_t1_prenorm_onehead(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = False
+    args.linear_act_fun = "elu"
+    args.uv_act_fun = "swish"
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # head
+    args.decoder_attention_heads = 1
+
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t2_prenorm_onehead")
+def transnormer_v2_lm_t2_prenorm_onehead(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = True
+    args.linear_act_fun = "1+elu"
+    args.uv_act_fun = "swish"
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # head
+    args.decoder_attention_heads = 1
+
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t1_postnorm_onehead")
+def transnormer_v2_lm_t1_postnorm_onehead(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = False
+    args.linear_act_fun = "elu"
+    args.uv_act_fun = "swish"
+    args.decoder_normalize_before = False
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # head
+    args.decoder_attention_heads = 1
+
+@register_model_architecture("transnormer_v2_lm", "transnormer_v2_lm_t2_postnorm_onehead")
+def transnormer_v2_lm_t2_postnorm_onehead(args):
+    base_lm_architecture(args)
+    # add
+    args.chunk_size = 64
+    args.decoder_layers = args.decoder_layers
+    n = args.decoder_layers
+    m = n // 2
+    args.decoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
+    args.norm_type = "simplermsnorm"
+    args.final_simplermsnorm = "simplermsnorm"
+    args.causal = True
+    args.local_act_fun = "relu"
+    args.use_softmax = True
+    args.linear_act_fun = "1+elu"
+    args.uv_act_fun = "swish"
+    args.decoder_normalize_before = False
+    args.hidden_dim = args.decoder_embed_dim
+    # glu
+    args.use_glu = True
+    args.glu_act = "swish"
+    # head
+    args.decoder_attention_heads = 1
