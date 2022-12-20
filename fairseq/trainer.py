@@ -464,7 +464,7 @@ class Trainer(object):
                 result = self.model.load_state_dict(
                     state["model"], strict=False, model_cfg=self.cfg.model
                 )
-                logging(result)
+                logging.info(result)
                 # pdb.set_trace()
                 # save memory for later steps
                 del state["model"]
