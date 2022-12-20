@@ -16,6 +16,8 @@ from itertools import chain
 from typing import Any, Dict, List
 
 import torch
+from omegaconf import OmegaConf
+
 from fairseq import checkpoint_utils, models, optim, utils
 from fairseq.dataclass.configs import FairseqConfig
 from fairseq.dataclass.utils import convert_namespace_to_omegaconf
@@ -24,9 +26,6 @@ from fairseq.file_io import PathManager
 from fairseq.logging import meters, metrics
 from fairseq.nan_detector import NanDetector
 from fairseq.optim import lr_scheduler
-
-from omegaconf import OmegaConf
-
 
 logger = logging.getLogger(__name__)
 
@@ -460,10 +459,12 @@ class Trainer(object):
             # load model parameters
             try:
                 import pdb
+
                 # pdb.set_trace()
-                self.model.load_state_dict(
-                    state["model"], strict=True, model_cfg=self.cfg.model
+                result = self.model.load_state_dict(
+                    state["model"], strict=False, model_cfg=self.cfg.model
                 )
+                logging(result)
                 # pdb.set_trace()
                 # save memory for later steps
                 del state["model"]
