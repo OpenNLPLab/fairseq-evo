@@ -10,6 +10,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+from omegaconf import II
+from torch import Tensor
+
 from fairseq import utils
 from fairseq.distributed import fsdp_wrap
 from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
@@ -26,8 +29,6 @@ from fairseq.modules import (AdaptiveInput, CharacterTokenEmbedder,
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.helpers import get_norm_fn, logging_info
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
-from omegaconf import II
-from torch import Tensor
 
 
 class TransnormerV2Encoder(TransformerEncoder):
@@ -199,7 +200,7 @@ class TransnormerV2Decoder(TransformerDecoder):
         logging_info(f"chunk_size {self.chunk_size}")
         logging_info(f"local_layer {self.local_layer}")
         logging_info(f"attn_heads {self.attn_heads}")
-        self.mask = None
+        self.mask = torch.empty(0)
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = TransnormerV2DecoderLayer(args, no_encoder_attn)
