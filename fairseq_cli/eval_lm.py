@@ -254,7 +254,7 @@ def main(cfg: DictConfig, **unused_kwargs):
         [cfg.common_eval.path],
         arg_overrides=eval(cfg.common_eval.model_overrides),
         suffix=cfg.checkpoint.checkpoint_suffix,
-        strict=(cfg.checkpoint.checkpoint_shard_count == 1),
+        strict=False,#(cfg.checkpoint.checkpoint_shard_count == 1),
         num_shards=cfg.checkpoint.checkpoint_shard_count,
         task=task,
     )
