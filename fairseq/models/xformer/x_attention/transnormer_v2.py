@@ -133,10 +133,16 @@ class TransnormerV2Encoder(TransformerEncoder):
             
         # norm attention
         n = x.shape[1]
-        len_pad = (self.chunk_size - n % self.chunk_size) % self.chunk_size
-        x = F.pad(x, (0, 0, 0, len_pad, 0, 0))
-        # b n d -> b l c d
-        x = self.transform(x)
+        if self.chunk_size < n:
+            len_pad_x = (self.chunk_size - n % self.chunk_size) % self.chunk_size
+            x = F.pad(x, (0, 0, 0, len_pad_x, 0, 0))
+            # b n d -> b l c d
+            x = self.transform(x)
+            
+        # len_pad = (self.chunk_size - n % self.chunk_size) % self.chunk_size
+        # x = F.pad(x, (0, 0, 0, len_pad, 0, 0))
+        # # b n d -> b l c d
+        # x = self.transform(x)
     
         # norm layers
         for layer in self.layers[:self.local_layer]:
@@ -146,9 +152,13 @@ class TransnormerV2Encoder(TransformerEncoder):
             if return_all_hiddens:
                 assert encoder_states is not None
                 encoder_states.append(x)
-        # b l c d -> b n d
-        x = self.reverse_transform(x)
-        x = x[:, :n]
+        if self.chunk_size < n:
+            # b l c d -> b n d
+            x = self.reverse_transform(x)
+            x = x[:, :n]
+        # # b l c d -> b n d
+        # x = self.reverse_transform(x)
+        # x = x[:, :n]
         
         # linear layers
         for layer in self.layers[self.local_layer:]:
@@ -162,8 +172,8 @@ class TransnormerV2Encoder(TransformerEncoder):
         if self.layer_norm is not None:
             x = self.layer_norm(x)
         
-        # # T x B x C -> B x T x C
-        # x = x.transpose(0, 1)
+        # B x T x C -> T x B x C
+        x = x.transpose(0, 1)
 
         # The Pytorch Mobile lite interpreter does not supports returning NamedTuple in
         # `forward` so we use a dictionary instead.
