@@ -86,7 +86,7 @@ def roberta_transnormer_v2_t2_postnorm(args):
     n = args.encoder_layers
     m = n // 2
     args.encoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
-    args.norm_type = "simplermsnorm"
+    args.norm_type = "layernorm"#"simplermsnorm"
     args.final_simplermsnorm = "simplermsnorm"
     args.causal = False
     args.local_act_fun = "relu"
@@ -129,7 +129,7 @@ def roberta_transnormer_v2_t2_prenorm(args):
     n = args.encoder_layers
     m = n // 2
     args.encoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
-    args.norm_type = "simplermsnorm"
+    args.norm_type = "layernorm" #"simplermsnorm"
     args.final_simplermsnorm = "simplermsnorm"
     args.causal = False
     args.local_act_fun = "relu"
