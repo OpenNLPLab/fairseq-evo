@@ -67,7 +67,7 @@ def roberta_transnormer_v2_t1_postnorm(args):
     args.encoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
     args.norm_type = "simplermsnorm"
     args.final_simplermsnorm = "simplermsnorm"
-    args.causal = True
+    args.causal = False
     args.local_act_fun = "relu"
     args.use_softmax = False
     args.linear_act_fun = "elu"
@@ -88,7 +88,7 @@ def roberta_transnormer_v2_t2_postnorm(args):
     args.encoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
     args.norm_type = "simplermsnorm"
     args.final_simplermsnorm = "simplermsnorm"
-    args.causal = True
+    args.causal = False
     args.local_act_fun = "relu"
     args.use_softmax = True
     args.linear_act_fun = "1+elu"
@@ -109,7 +109,7 @@ def roberta_transnormer_v2_t1_prenorm(args):
     args.encoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
     args.norm_type = "simplermsnorm"
     args.final_simplermsnorm = "simplermsnorm"
-    args.causal = True
+    args.causal = False
     args.local_act_fun = "relu"
     args.use_softmax = False
     args.linear_act_fun = "elu"
@@ -131,7 +131,7 @@ def roberta_transnormer_v2_t2_prenorm(args):
     args.encoder_attention_types = [2 for _ in range(m)] + [1 for _ in range(n - m)]
     args.norm_type = "simplermsnorm"
     args.final_simplermsnorm = "simplermsnorm"
-    args.causal = True
+    args.causal = False
     args.local_act_fun = "relu"
     args.use_softmax = True
     args.linear_act_fun = "1+elu"

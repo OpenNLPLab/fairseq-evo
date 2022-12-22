@@ -449,7 +449,7 @@ class TransnormerV2EncoderLayer(nn.Module):
             linear_act_fun=getattr(args, "linear_act_fun", "elu"),
             uv_act_fun=getattr(args, "uv_act_fun", "swish"),
             norm_type=getattr(args, "norm_type", "layernorm"),
-            causal=getattr(args, "causal", True),
+            causal=getattr(args, "causal", False),
             use_softmax=getattr(args, "use_softmax", True),
             hidden_dim=getattr(args, "hidden_dim", 512),
         )

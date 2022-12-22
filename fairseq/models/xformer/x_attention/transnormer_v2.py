@@ -124,7 +124,6 @@ class TransnormerV2Encoder(TransformerEncoder):
         # account for padding while computing the representation
         if has_pads:
             x = x * (1 - encoder_padding_mask.unsqueeze(-1).type_as(x))
-
         # x: B x T x C
         encoder_states = []
 
