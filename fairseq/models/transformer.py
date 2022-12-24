@@ -837,6 +837,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         logging_info(f"toep_type {self.toep_type}")
         if self.use_toep:
             self.buffered_future_mask = self.buffered_future_mask_toep
+        self.rpe_type = getattr(args, 'rpe_type', -1)
         ##### toeplitz
 
     def build_output_projection(self, args, dictionary, embed_tokens):
@@ -1024,11 +1025,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         x = self.dropout_module(x)
 
-        if self.use_alibi or self.use_toep:
+        if self.use_alibi or self.use_toep or self.rpe_type > 0:
             if incremental_state is None and not full_context_alignment:
                 self_attn_mask = self.buffered_future_mask(x)
             else:
                 self_attn_mask = None
+
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
 
@@ -1040,7 +1042,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
         for idx, layer in enumerate(self.layers):
-            if not self.use_alibi and not self.use_toep:
+            if not self.use_alibi and not self.use_toep and (not (self.rpe_type > 0)):
                 if incremental_state is None and not full_context_alignment:
                     self_attn_mask = self.buffered_future_mask(x)
                 else:
