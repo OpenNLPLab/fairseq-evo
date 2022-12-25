@@ -190,7 +190,12 @@ class TransformerRpeDecoder(TransformerDecoder):
             # slopes: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625]
             arr = []
             for k in self.slopes:
-                arr.append(get_mask_k(self.args.tokens_per_sample, self.rpe_type, k))
+                arr.append(get_mask_k(self.args.tokens_per_sample, self.rpe_type, k.item()))
             self._future_mask = torch.stack(arr, dim=0).to(tensor)
+            # mask1 = get_mask(self.args.tokens_per_sample, self.rpe_type) * self.slopes
+            # mask1 = mask1.to(tensor)
+            # print(self._future_mask[0])
+            # print(mask1[0])
+            # print(torch.norm(mask1 - self._future_mask))
 
         return self._future_mask[:, :dim, :dim]
