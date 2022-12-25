@@ -89,9 +89,6 @@ class TransformerRpeDecoder(TransformerDecoder):
             attn_heads = args.decoder_attention_heads
             # h, 1, 1
             self.slopes = torch.Tensor(get_slopes(attn_heads)).reshape(attn_heads, 1, 1)
-            batch_size = args.max_tokens // maxpos
-            # adapt to fairseq attention
-            self.slopes = repeat(self.slopes, 'h 1 1 -> (b h) 1 1', b=batch_size)
             self.buffered_future_mask = self.buffered_future_mask_rpe
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
