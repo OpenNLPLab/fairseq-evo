@@ -70,7 +70,57 @@ def get_mask(n, type=-1):
         # -n^2, ..., -2^2, -1^2, 0
         for i in range(n):
             mask[i, :i + 1] = -torch.flip(torch.arange(i + 1) ** 2, [0])
+    elif type == 6:
+        for i in range(n):
+            mask[i, :i + 1] = -torch.flip(torch.arange(i + 1) ** 0.5, [0])
         
+    return mask
+
+def get_mask_k(n, type=-1, k=1):
+    mask = torch.triu(torch.zeros(n, n).float().fill_(float("-inf")), 1)
+    if type == 1:
+        # 0, -1, -2, ..., -n
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -y
+    elif type == 2:
+        # -ln(1^2), -ln(2^2), ...
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.log(1 + y ** 2)
+    elif type == 3:
+        # -n, ..., -2, -1, 0
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.flip(y, [0])
+    elif type == 4:
+        # -ln(n^2), ..., -ln(2^2), -ln(1^2), 0
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.log(1 + torch.flip(y ** 2, [0]))
+    elif type == 5:
+        # -n^2, ..., -2^2, -1^2, 0
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.flip(y ** 2, [0])
+    elif type == 6:
+        # -n^0.5, ..., -2^0.5, -1^0.5, 0
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.flip(y ** 0.5, [0])
+    elif type == 7:
+        # -ln(n), ..., -ln(2), -ln(1), 0
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.log(1 + torch.flip(y, [0]))
+    
     return mask
 
 class TransformerRpeDecoder(TransformerDecoder):
@@ -106,6 +156,28 @@ class TransformerRpeDecoder(TransformerDecoder):
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 
+    # v2
+    # def buffered_future_mask_rpe(self, tensor):
+    #     # l
+    #     dim = tensor.size(1)
+    #     # self._future_mask.device != tensor.device is not working in TorchScript. This is a workaround.
+    #     if (
+    #         self._future_mask.size(0) == 0
+    #         or (not self._future_mask.device == tensor.device)
+    #         or self._future_mask.size(1) < self.args.tokens_per_sample
+    #     ):
+    #         self._future_mask = get_mask(self.args.tokens_per_sample, self.rpe_type)
+    #         # slopes: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625]
+    #         # 1, n, n; h, 1, 1 -> h, n, n
+    #         if self.rpe_type in [2, 4]:
+    #             # kx = exp(ln(k) + ln(x))
+    #             self._future_mask = (self._future_mask + self.slopes).to(tensor)
+    #         else:
+    #             self._future_mask = (self._future_mask * self.slopes).to(tensor)
+
+    #     return self._future_mask[:, :dim, :dim]
+            
+    # v3
     def buffered_future_mask_rpe(self, tensor):
         # l
         dim = tensor.size(1)
@@ -115,17 +187,10 @@ class TransformerRpeDecoder(TransformerDecoder):
             or (not self._future_mask.device == tensor.device)
             or self._future_mask.size(1) < self.args.tokens_per_sample
         ):
-            self._future_mask = get_mask(self.args.tokens_per_sample, self.rpe_type)
             # slopes: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625]
-            # 1, n, n; h, 1, 1 -> h, n, n
-            if self.rpe_type in [2, 4]:
-                # kx = exp(ln(k) + ln(x))
-                self._future_mask = (self._future_mask + self.slopes).to(tensor)
-            else:
-                self._future_mask = (self._future_mask * self.slopes).to(tensor)
+            arr = []
+            for k in self.slopes:
+                arr.append(get_mask_k(self.args.tokens_per_sample, self.rpe_type, k))
+            self._future_mask = torch.stack(arr, dim=0).to(tensor)
 
         return self._future_mask[:, :dim, :dim]
-        # return self._future_mask[:tensor.shape[0]*self.args.decoder_attention_heads, :dim, :dim].to(tensor)
-    
-            
-    
