@@ -20,6 +20,9 @@ from .mha_tno_layer import (TransformerTnnDecoderLayer,
 from .multihead_attention_plus import MultiheadAttentionPlus
 from .multihead_attention_plus_layer import (TransformerDecoderLayerPlus,
                                              TransformerEncoderLayerPlus)
+from .multihead_attention_rpe import MultiheadAttentionRpe
+from .multihead_attention_rpe_layer import (MhaRpeDecoderLayer,
+                                            MhaRpeEncoderLayer)
 from .multihead_cos_attention import MultiheadCosAttention
 from .multihead_cos_attention_layer import (TransformerCosDecoderLayer,
                                             TransformerCosEncoderLayer)

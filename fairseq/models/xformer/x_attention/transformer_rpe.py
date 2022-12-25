@@ -8,6 +8,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
+from einops import repeat
+from omegaconf import II
+from torch import Tensor
+
 from fairseq import utils
 from fairseq.distributed import fsdp_wrap
 from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
@@ -18,13 +22,11 @@ from fairseq.models.transformer import (DEFAULT_MAX_SOURCE_POSITIONS,
                                         DEFAULT_MIN_PARAMS_TO_WRAP,
                                         TransformerDecoder, TransformerEncoder,
                                         TransformerModel, base_architecture)
-from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
+from fairseq.modules import (AdaptiveInput, CharacterTokenEmbedder,
+                             MhaRpeDecoderLayer, MhaRpeEncoderLayer)
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
-from omegaconf import II
-from torch import Tensor
-import math
-from einops import repeat
+
 
 # from alibi
 def get_slopes(n):
@@ -61,9 +63,13 @@ def get_mask(n, type=-1):
         for i in range(n):
             mask[i, :i + 1] = -torch.flip(torch.arange(i + 1), [0])
     elif type == 4:
-        # -n, ..., -2, -1, 0
+        # -ln(n), ..., -ln(2), -ln(1), 0
         for i in range(n):
             mask[i, :i + 1] = -torch.log(1 + torch.flip(torch.arange(i + 1) ** 2, [0]))
+    elif type == 5:
+        # -n^2, ..., -2^2, -1^2, 0
+        for i in range(n):
+            mask[i, :i + 1] = -torch.flip(torch.arange(i + 1) ** 2, [0])
         
     return mask
 
@@ -87,7 +93,22 @@ class TransformerRpeDecoder(TransformerDecoder):
             # adapt to fairseq attention
             self.slopes = repeat(self.slopes, 'h 1 1 -> (b h) 1 1', b=batch_size)
             self.buffered_future_mask = self.buffered_future_mask_rpe
-            
+
+    def build_decoder_layer(self, args, no_encoder_attn=False):
+        layer = MhaRpeDecoderLayer(args, no_encoder_attn)
+        checkpoint = getattr(args, "checkpoint_activations", False)
+        if checkpoint:
+            offload_to_cpu = getattr(args, "offload_activations", False)
+            layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
+        # if we are checkpointing, enforce that FSDP always wraps the
+        # checkpointed layer, regardless of layer size
+        min_params_to_wrap = (
+            getattr(args, "min_params_to_wrap", DEFAULT_MIN_PARAMS_TO_WRAP)
+            if not checkpoint else 0
+        )
+        layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
+        return layer
+
     def buffered_future_mask_rpe(self, tensor):
         # l
         dim = tensor.size(1)
@@ -98,11 +119,16 @@ class TransformerRpeDecoder(TransformerDecoder):
             or self._future_mask.size(1) < self.args.tokens_per_sample
         ):
             self._future_mask = get_mask(self.args.tokens_per_sample, self.rpe_type)
-        
-        # 1, n, n; b, 1, 1 -> b, n, n
-        self._future_mask = self._future_mask * self.slopes
-        # b * h, l, l
-        return self._future_mask[:tensor.shape[0]*self.args.decoder_attention_heads, :dim, :dim].to(tensor)
+            # slopes: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625]
+            # 1, n, n; h, 1, 1 -> h, n, n
+            if self.rpe_type in [2, 4]:
+                # kx = exp(ln(k) + ln(x))
+                self._future_mask = (self._future_mask + self.slopes).to(tensor)
+            else:
+                self._future_mask = (self._future_mask * self.slopes).to(tensor)
+
+        return self._future_mask[:, :dim, :dim]
+        # return self._future_mask[:tensor.shape[0]*self.args.decoder_attention_heads, :dim, :dim].to(tensor)
     
             
     

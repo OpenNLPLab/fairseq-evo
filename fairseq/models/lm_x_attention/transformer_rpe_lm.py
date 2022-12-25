@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import torch.nn as nn
+
 from fairseq import options, utils
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
 from fairseq.models import (FairseqIncrementalDecoder, FairseqLanguageModel,
@@ -17,6 +18,8 @@ logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional
 
 import torch
+from omegaconf import II
+
 from fairseq.models.transformer import (DEFAULT_MIN_PARAMS_TO_WRAP, Embedding,
                                         TransformerDecoder)
 from fairseq.models.transformer_lm import (DEFAULT_MAX_TARGET_POSITIONS,
@@ -25,7 +28,6 @@ from fairseq.models.transformer_lm import (DEFAULT_MAX_TARGET_POSITIONS,
                                            base_lm_architecture,
                                            transformer_lm_big)
 from fairseq.modules import AdaptiveInput, CharacterTokenEmbedder
-from omegaconf import II
 
 from ..xformer import TransformerRpeDecoder
 
@@ -109,3 +111,9 @@ def transformer_lm_base_rpe4(args):
     base_lm_architecture(args)
     args.no_token_positional_embeddings = True
     args.rpe_type = 4
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_base_rpe5")
+def transformer_lm_base_rpe5(args):
+    base_lm_architecture(args)
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 5
