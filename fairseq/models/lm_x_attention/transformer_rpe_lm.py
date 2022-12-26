@@ -141,3 +141,9 @@ def transformer_lm_base_rpe9(args):
     base_lm_architecture(args)
     args.no_token_positional_embeddings = True
     args.rpe_type = 9
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_base_rpe10")
+def transformer_lm_base_rpe10(args):
+    base_lm_architecture(args)
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 10
