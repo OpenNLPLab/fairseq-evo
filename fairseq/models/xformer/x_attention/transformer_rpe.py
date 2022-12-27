@@ -138,7 +138,12 @@ def get_mask_k(n, type=-1, k=1):
             x = torch.arange(i + 1)
             y = k * x
             mask[i, :i + 1] = torch.flip(torch.log(1 + torch.log(1 + y)) - (torch.log((y + 1) ** 2)), [0])
-    
+    elif type == 11:
+        # exp(-ln^2x)
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = torch.flip(torch.exp(-torch.log(3 + y) ** 2), [0])
     
     return mask
 
