@@ -143,8 +143,21 @@ def get_mask_k(n, type=-1, k=1):
         for i in range(n):
             x = torch.arange(i + 1)
             y = k * x
-            mask[i, :i + 1] = torch.flip(torch.exp(-torch.log(3 + y) ** 2), [0])
-    
+            mask[i, :i + 1] = torch.flip(-torch.log(3 + y) ** 2, [0])
+    elif type == 12:
+        # exp(-x^4)
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            mask[i, :i + 1] = -torch.flip(y ** 4, [0])
+    elif type == 13:
+        # 1/n(lnn) = exp(-(lnx + lnlnx))
+        for i in range(n):
+            x = torch.arange(i + 1)
+            y = k * x
+            z = torch.log(3 + y)
+            mask[i, :i + 1] = -torch.flip(z + torch.log(z), [0])
+            
     return mask
 
 class TransformerRpeDecoder(TransformerDecoder):
