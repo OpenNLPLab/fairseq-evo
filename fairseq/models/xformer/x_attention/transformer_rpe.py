@@ -400,7 +400,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             cos = torch.zeros_like(diff)
             d = self.emb.shape[0]
             for i in range(d):
-                cos += torch.cos(diff[i] * self.emb)
+                cos += torch.cos(diff * self.emb[i])
             cos -= self.half_dim
                 
             # 1, n, n; h, 1, 1 -> h, n, n
