@@ -381,8 +381,10 @@ def load_model_ensemble_and_task(
             model = task.build_model(cfg.model)
             # print(model)
             # for kerple
-            state["model"].pop("decoder.cache_matrix")
-            state["model"].pop("decoder.causal_mask")
+            if "decoder.cache_matrix" in state["model"]:
+                state["model"].pop("decoder.cache_matrix")
+            if "decoder.causal_mask" in state["model"]:
+                state["model"].pop("decoder.causal_mask")
             # for kerple
             result = model.load_state_dict(state["model"], strict=strict, model_cfg=cfg.model)
             logging.info(result)
