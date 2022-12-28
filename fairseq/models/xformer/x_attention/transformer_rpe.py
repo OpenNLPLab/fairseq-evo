@@ -236,6 +236,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             attn_heads = args.decoder_attention_heads
             # h, 1, 1
             slopes = torch.arange(1, attn_heads + 1) / attn_heads * 8
+            # self.slopes = nn.Parameter(1 / slopes.reshape(attn_heads, 1, 1), requires_grad=False)
             self.slopes = nn.Parameter(slopes.reshape(attn_heads, 1, 1), requires_grad=False)
             # compute 10000 ^ (2* i / d)
             half_dim = args.decoder_embed_dim // 2
@@ -392,10 +393,16 @@ class TransformerRpeDecoder(TransformerDecoder):
             # 1, n, n
             diff = self.get_kerple_cache_matrix().to(tensor)
             # sum cos
-            # 1, n, n; d, 1, 1 -> d, n, n
-            diff_cos = torch.cos(diff * self.emb)
-            # d, n, n -> 1, n, n
-            cos = torch.sum(diff_cos, dim=0, keepdim=True) - self.half_dim
+            # # 1, n, n; d, 1, 1 -> d, n, n
+            # diff_cos = torch.cos(diff * self.emb)
+            # # d, n, n -> 1, n, n
+            # cos = torch.sum(diff_cos, dim=0, keepdim=True) - self.half_dim
+            cos = torch.zeros_like(diff)
+            d = self.emb.shape[0]
+            for i in range(d):
+                cos += torch.cos(diff[i] * self.emb)
+            cos -= self.half_dim
+                
             # 1, n, n; h, 1, 1 -> h, n, n
             bias = self.slopes * cos
             self._future_mask = bias + self.get_causal_mask().to(tensor)
