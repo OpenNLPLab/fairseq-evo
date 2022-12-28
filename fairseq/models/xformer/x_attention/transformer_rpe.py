@@ -199,6 +199,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             self.bias_p = get_parameter(2, 'uniform')
             self.bias_a = get_parameter(1, 'uniform')
             self.cache_matrix = nn.Parameter(self.get_kerple_cache_matrix(), requires_grad=False)
+            self.causal_mask = nn.Parameter(self.get_causal_mask(), requires_grad=False)
             self.eps = 1e-2
             self.buffered_future_mask = self.buffered_future_mask_kerple_log
             
@@ -224,6 +225,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             self.bias_p = get_parameter(2, 'uniform')
             self.bias_a = get_parameter(1, 'uniform')
             self.cache_matrix = nn.Parameter(self.get_kerple_cache_matrix(), requires_grad=False)
+            self.causal_mask = nn.Parameter(self.get_causal_mask(), requires_grad=False)
             self.eps = 1e-2
             self.buffered_future_mask = self.buffered_future_mask_kerple_power
             
@@ -313,6 +315,15 @@ class TransformerRpeDecoder(TransformerDecoder):
         
         return diff
     
+    def get_causal_mask(self):
+        n = self.args.tokens_per_sample
+        # 1, n, n
+        mask = torch.triu(
+            utils.fill_with_neg_inf(torch.zeros([n, n])), 1
+        ).unsqueeze(0)
+
+        return mask
+    
     # kerple log
     def buffered_future_mask_kerple_log(self, tensor):
         # n
@@ -323,12 +334,16 @@ class TransformerRpeDecoder(TransformerDecoder):
             or (not self.cache_matrix.device == tensor.device)
             or self.cache_matrix.size(-1) < self.args.tokens_per_sample
         ):
-            self.cache_matrix = self.get_kerple_cache_matrix()
+            self.cache_matrix = nn.Parameter(self.get_kerple_cache_matrix(), requires_grad=False)
+            self.causal_mask = nn.Parameter(self.get_causal_mask(), requires_grad=False)
         
         diff = self.cache_matrix
         self.bias_p.data = self.bias_p.data.clamp(min=self.eps)
         self.bias_a.data = self.bias_a.data.clamp(min=self.eps)
         bias = -self.bias_p*torch.log(1+self.bias_a*diff) # log kernel
+        
+        # causal mask
+        bias += self.causal_mask
 
         return bias[:, :dim, :dim]
     
@@ -342,7 +357,8 @@ class TransformerRpeDecoder(TransformerDecoder):
             or (not self.cache_matrix.device == tensor.device)
             or self.cache_matrix.size(-1) < self.args.tokens_per_sample
         ):
-            self.cache_matrix = self.get_kerple_cache_matrix()
+            self.cache_matrix = nn.Parameter(self.get_kerple_cache_matrix(), requires_grad=False)
+            self.causal_mask = nn.Parameter(self.get_causal_mask(), requires_grad=False)
         # 1, n, n
         diff = self.cache_matrix
         
@@ -356,6 +372,9 @@ class TransformerRpeDecoder(TransformerDecoder):
             bias = -bias*self.bias_a
         else:
             bias = -bias
+            
+        # causal mask
+        bias += self.causal_mask
             
         return bias[:, :dim, :dim]
 
@@ -371,11 +390,7 @@ class TransformerRpeDecoder(TransformerDecoder):
         ):
             n = self.args.tokens_per_sample
             # 1, n, n
-            diff = torch.tril(
-                torch.arange(n).view(n, 1).repeat(1, n)
-                + torch.arange(0, -n, -1)
-            ).unsqueeze(0)
-            diff = diff.to(tensor)
+            diff = self.get_kerple_cache_matrix().to(tensor)
             # sum cos
             # 1, n, n; d, 1, 1 -> d, n, n
             diff_cos = torch.cos(diff * self.emb)
@@ -383,7 +398,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             cos = torch.sum(diff_cos, dim=0, keepdim=True) - self.half_dim
             # 1, n, n; h, 1, 1 -> h, n, n
             bias = self.slopes * cos
-            self._future_mask = bias
+            self._future_mask = bias + self.get_causal_mask().to(tensor)
 
         return self._future_mask[:, :dim, :dim]
 
