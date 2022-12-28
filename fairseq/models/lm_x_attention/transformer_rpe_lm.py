@@ -190,3 +190,140 @@ def transformer_lm_base_sandwich(args):
 def transformer_lm_base_sincos(args):
     base_lm_architecture(args)
 ##### small model
+
+##### medium model
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe1")
+def transformer_lm_medium_rpe1(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 1
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe2")
+def transformer_lm_medium_rpe2(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 2
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe3")
+def transformer_lm_medium_rpe3(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 3
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe4")
+def transformer_lm_medium_rpe4(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 4
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe5")
+def transformer_lm_medium_rpe5(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 5
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe6")
+def transformer_lm_medium_rpe6(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 6
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe7")
+def transformer_lm_medium_rpe7(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 7
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe8")
+def transformer_lm_medium_rpe8(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 8
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe9")
+def transformer_lm_medium_rpe9(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 9
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe10")
+def transformer_lm_medium_rpe10(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 10
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe11")
+def transformer_lm_medium_rpe11(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 11
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe12")
+def transformer_lm_medium_rpe12(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 12
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_rpe13")
+def transformer_lm_medium_rpe13(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.rpe_type = 13
+    
+# competitor
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_kerple_log")
+def transformer_lm_medium_kerple_log(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.kerple_log = 1
+
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_kerple_power")
+def transformer_lm_medium_kerple_power(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.kerple_power = 1
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_sandwich")
+def transformer_lm_medium_sandwich(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+    args.no_token_positional_embeddings = True
+    args.sandwich = 1
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_medium_sincos")
+def transformer_lm_medium_sincos(args):
+    base_lm_architecture(args)
+    args.decoder_layers = 12
+    args.decoder_embed_dim = 768
+##### medium model
