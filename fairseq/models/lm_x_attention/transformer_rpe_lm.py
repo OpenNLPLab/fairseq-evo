@@ -87,7 +87,8 @@ class TransformerRpeLanguageModel(TransformerLanguageModel):
             args, task.target_dictionary, embed_tokens, no_encoder_attn=True
         )
         return cls(decoder)
-    
+
+##### small model
 @register_model_architecture("transformer_rpe_lm", "transformer_lm_base_rpe1")
 def transformer_lm_base_rpe1(args):
     base_lm_architecture(args)
@@ -165,3 +166,27 @@ def transformer_lm_base_rpe13(args):
     base_lm_architecture(args)
     args.no_token_positional_embeddings = True
     args.rpe_type = 13
+    
+# competitor
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_base_kerple_log")
+def transformer_lm_base_kerple_log(args):
+    base_lm_architecture(args)
+    args.no_token_positional_embeddings = True
+    args.kerple_log = 1
+
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_base_kerple_power")
+def transformer_lm_base_kerple_power(args):
+    base_lm_architecture(args)
+    args.no_token_positional_embeddings = True
+    args.kerple_power = 1
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_base_sandwich")
+def transformer_lm_base_sandwich(args):
+    base_lm_architecture(args)
+    args.no_token_positional_embeddings = True
+    args.sandwich = 1
+    
+@register_model_architecture("transformer_rpe_lm", "transformer_lm_base_sincos")
+def transformer_lm_base_sincos(args):
+    base_lm_architecture(args)
+##### small model
