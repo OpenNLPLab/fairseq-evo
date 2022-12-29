@@ -406,8 +406,8 @@ class TransformerRpeDecoder(TransformerDecoder):
             # 1, n, n; h, 1, 1 -> h, n, n
             bias = self.slopes * cos
             self._future_mask = bias + self.get_causal_mask().to(tensor)
-            for i in range(8):
-                print(torch.exp(self._future_mask)[i, -1])
+            # for i in range(8):
+            #     print(torch.exp(self._future_mask)[i, -1])
 
         return self._future_mask[:, :dim, :dim]
 
