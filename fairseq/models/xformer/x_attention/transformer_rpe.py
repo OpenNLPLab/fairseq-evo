@@ -238,8 +238,11 @@ class TransformerRpeDecoder(TransformerDecoder):
             slopes = torch.arange(1, attn_heads + 1) / attn_heads * 8
             self.slopes = nn.Parameter(1 / slopes.reshape(attn_heads, 1, 1), requires_grad=False)
             # self.slopes = nn.Parameter(slopes.reshape(attn_heads, 1, 1), requires_grad=False)
+            dim = args.decoder_embed_dim
+            # for test
+            dim = dim // attn_heads
             # compute 10000 ^ (2* i / d)
-            half_dim = args.decoder_embed_dim // 2
+            half_dim = dim // 2
             emb = math.log(10000) / half_dim
             # d, 1, 1
             emb = torch.exp(torch.arange(1, half_dim + 1, dtype=torch.float) * -emb).reshape(half_dim, 1, -1)
