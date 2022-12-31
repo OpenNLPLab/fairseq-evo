@@ -404,7 +404,8 @@ class TransformerRpeDecoder(TransformerDecoder):
             d = self.emb.shape[0]
             for i in range(d):
                 cos += torch.cos(diff * self.emb[i])
-            cos -= self.half_dim
+            eps = 1e-4
+            cos -= (self.half_dim + eps)
                 
             # 1, n, n; h, 1, 1 -> h, n, n
             bias = self.slopes * cos
