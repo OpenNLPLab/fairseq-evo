@@ -240,7 +240,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             # self.slopes = nn.Parameter(slopes.reshape(attn_heads, 1, 1), requires_grad=False)
             dim = args.decoder_embed_dim
             # for test
-            dim = dim // attn_heads
+            # dim = dim // attn_heads
             # compute 10000 ^ (2* i / d)
             half_dim = dim // 2
             emb = math.log(10000) / half_dim
