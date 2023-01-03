@@ -241,6 +241,8 @@ class TransformerRpeDecoder(TransformerDecoder):
             dim = args.decoder_embed_dim
             # for test
             # dim = dim // attn_heads
+            # for test
+            dim = dim // attn_heads * 2
             # compute 10000 ^ (2* i / d)
             half_dim = dim // 2
             emb = math.log(10000) / half_dim
