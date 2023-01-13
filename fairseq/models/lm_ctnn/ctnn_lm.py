@@ -108,6 +108,7 @@ def ctnn_lm_decay99_pre(args):
 @register_model_architecture("ctnn_lm", "ctnn_lm_decay99_post")
 def ctnn_lm_decay99_post(args):
     base_lm_architecture(args)
+    args.decoder_normalize_before = False
     # model
     args.decoder_attention_heads = 1
     args.decoder_layers = 6
