@@ -74,6 +74,7 @@ from .state_space import *
 from .fourier import *
 from .mlp import *
 from .tnn import *
+from .ctnn import *
 ##### test
 from .tnn_test import *
 from .token_mixer_test import *

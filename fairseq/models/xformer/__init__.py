@@ -1,3 +1,4 @@
+from .ctnn import *
 from .fourier import *
 from .mlp import *
 from .state_space import *
