@@ -84,6 +84,7 @@ class CtnnDecoder(TransformerDecoder):
         emb = math.log(10000) / half_dim
         # 1, 1, k, 1
         emb = torch.exp(torch.arange(1, half_dim + 1, dtype=torch.float) * -emb).reshape(1, 1, half_dim, -1)
+        print(emb[0, 0, :, 0])
         self.emb = nn.Parameter(emb, requires_grad=False)
         self.cos_pos = torch.empty(0)
         self.cos_neg = torch.empty(0)
