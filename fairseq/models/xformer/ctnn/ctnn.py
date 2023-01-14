@@ -83,6 +83,10 @@ class CtnnDecoder(TransformerDecoder):
         self.zero = torch.empty(0)
         # cos
         dim = getattr(args, 'k', 128)
+        # rpe input
+        self.rpe_pos = torch.empty(0)
+        self.rpe_neg = torch.empty(0)
+        self.rpe_zero = torch.empty(0)
         if self.embed_type == 1:
             half_dim = dim // 2
             n = self.max_len
@@ -215,11 +219,15 @@ class CtnnDecoder(TransformerDecoder):
             decay = torch.cat([self.zero, self.pos, self.zero, self.neg], dim=1)
             # 1, n, k, 1
             cos = torch.cat([self.cos_zero, self.cos_pos, self.cos_zero, self.cos_neg], dim=1)
+            # n, 1
+            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos, self.rpe_zero, self.rpe_neg], dim=0)
         else:
             # 1, n, 1
             decay = torch.cat([self.zero, self.pos], dim=1)
             # 1, n, k, 1
             cos = torch.cat([self.cos_zero, self.cos_pos], dim=1) 
+            # n, 1
+            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos], dim=0)
         index = self.index
 
         # B x T x C -> T x B x C
@@ -245,6 +253,7 @@ class CtnnDecoder(TransformerDecoder):
                 need_head_weights=bool((idx == alignment_layer)),
                 decay=decay,
                 cos=cos, 
+                rpe_input=rpe_input,
                 index=index,
             )
 
@@ -290,4 +299,9 @@ class CtnnDecoder(TransformerDecoder):
             self.cos_neg = torch.flip(self.cos_pos, dims=[1])
             # index
             self.index = torch.tensor(range(self.max_seq)).to(x.device)
+            # rpe input
+            self.rpe_zero = torch.zeros(1, 1).to(x)
+            self.rpe_pos = torch.arange(1, n).reshape(-1, 1).to(x)
+            self.rpe_neg = torch.flip(self.rpe_pos, dims=[1])
+            
             

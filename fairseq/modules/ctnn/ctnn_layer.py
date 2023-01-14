@@ -90,7 +90,7 @@ class CtnnEncoderLayer(nn.Module):
                     state_dict["{}.{}.{}".format(name, new, m)] = state_dict[k]
                     del state_dict[k]
 
-    def forward(self, x, encoder_padding_mask: Optional[Tensor], attn_mask: Optional[Tensor] = None, decay=None, cos=None, index=None):
+    def forward(self, x, encoder_padding_mask: Optional[Tensor], attn_mask: Optional[Tensor] = None, decay=None, cos=None, rpe_input=None, index=None):
         """
         Args:
             x (Tensor): input to the layer of shape `(seq_len, batch, embed_dim)`
@@ -126,6 +126,7 @@ class CtnnEncoderLayer(nn.Module):
             attn_mask=attn_mask,
             decay=decay,
             cos=cos, 
+            rpe_input=rpe_input,
             index=index,
         )
         x = self.dropout_module(x)
@@ -272,6 +273,7 @@ class CtnnDecoderLayer(nn.Module):
         need_head_weights: bool = False,
         decay=None,
         cos=None, 
+        rpe_input=None, 
         index=None,
     ):
         """
@@ -339,6 +341,7 @@ class CtnnDecoderLayer(nn.Module):
             attn_mask=self_attn_mask,
             decay=decay,
             cos=cos, 
+            rpe_input=rpe_input,
             index=index,
         )
 

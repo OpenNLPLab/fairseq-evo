@@ -37,14 +37,14 @@ class Gctu(nn.Module):
             causal=causal, 
         )
     
-    def forward(self, x, decay, cos, index):
+    def forward(self, x, decay, cos, rpe_input, index):
         # x: b, n, d
         num_heads = self.num_heads
         u = self.act(self.u_proj(x))
         v = self.act(self.v_proj(x))
         # reshape
         v = rearrange(v, 'b n (h d) -> b h n d', h=num_heads)
-        output = self.toep(v, decay, cos, index)
+        output = self.toep(v, decay, cos, rpe_input, index)
         output = rearrange(output, 'b h n d -> b n (h d)')
         output = u * output
         output = self.o(output)
