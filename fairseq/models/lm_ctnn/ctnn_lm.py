@@ -288,3 +288,92 @@ def ctnn_lm_decay99_22_k512_pre(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim * 2
+
+# DCT
+@register_model_architecture("ctnn_lm", "ctnn_lm_decay99_k64_type1_pre")
+def ctnn_lm_decay99_k64_type1_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    args.max_len = 512
+    args.embed_type = 1
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    args.k = 64
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_decay99_k128_type1_pre")
+def ctnn_lm_decay99_k128_type1_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    args.max_len = 512
+    args.embed_type = 1
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    args.k = 128
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_decay99_k256_type1_pre")
+def ctnn_lm_decay99_k256_type1_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    args.max_len = 512
+    args.embed_type = 1
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    args.k = 256
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    
+@register_model_architecture("ctnn_lm", "ctnn_lm_decay99_k512_type1_pre")
+def ctnn_lm_decay99_k512_type1_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    args.max_len = 512
+    args.embed_type = 1
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    args.k = 512
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim

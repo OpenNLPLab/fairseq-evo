@@ -67,7 +67,11 @@ class CtnnDecoder(TransformerDecoder):
     ):
         super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
         
-        
+        # max_len
+        self.max_len = getattr(args, 'max_len', 512)
+        # embed type
+        self.embed_type = getattr(args, 'embed_type', -1)
+        # causal
         self.causal = getattr(args, 'causal', True)
         # gamma
         self.gamma = getattr(args, 'gamma', 1)
@@ -79,11 +83,18 @@ class CtnnDecoder(TransformerDecoder):
         self.zero = torch.empty(0)
         # cos
         dim = getattr(args, 'k', 128)
-        # compute 10000 ^ (2* i / d)
-        half_dim = dim // 2
-        emb = math.log(10000) / half_dim
-        # 1, 1, k, 1
-        emb = torch.exp(torch.arange(1, half_dim + 1, dtype=torch.float) * -emb).reshape(1, 1, half_dim, -1)
+        if self.embed_type == 1:
+            half_dim = dim // 2
+            n = self.max_len
+            theta = math.pi / (n - 1)
+            # 1, 1, k, 1
+            emb = torch.arange(half_dim, dtype=torch.float).reshape(1, 1, half_dim, -1) * theta
+        else:
+            # compute 10000 ^ (2* i / d)
+            half_dim = dim // 2
+            emb = math.log(10000) / half_dim
+            # 1, 1, k, 1
+            emb = torch.exp(torch.arange(1, half_dim + 1, dtype=torch.float) * -emb).reshape(1, 1, half_dim, -1)
         self.emb = nn.Parameter(emb, requires_grad=False)
         self.cos_pos = torch.empty(0)
         self.cos_neg = torch.empty(0)
@@ -93,6 +104,8 @@ class CtnnDecoder(TransformerDecoder):
 
         logging_info(f"causal: {self.causal}")
         logging_info(f"gamma: {self.gamma}")
+        logging_info(f"embed_type: {self.embed_type}")
+        logging_info(f"max_len: {self.max_len}")
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
         layer = CtnnDecoderLayer(args, no_encoder_attn)
