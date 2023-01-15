@@ -73,7 +73,6 @@ class GctuModule(nn.Module):
         need_head_weights: bool = False,
         decay=None,
         cos=None, 
-        rpe_input=None,
         index=None,
     ) -> Tuple[Tensor, Optional[Tensor]]:
         """Input shape: Time x Batch x Channel
@@ -96,7 +95,7 @@ class GctuModule(nn.Module):
         # n b e -> b n e
         x = query.transpose(0, 1)
         # b n e -> b n e -> n b e
-        output = self.gtu(x, decay, cos, rpe_input, index).transpose(0, 1)
+        output = self.gtu(x, decay, cos, index).transpose(0, 1)
         
         return output, None
 

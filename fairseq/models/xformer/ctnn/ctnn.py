@@ -103,6 +103,9 @@ class CtnnDecoder(TransformerDecoder):
         self.cos_pos = torch.empty(0)
         self.cos_neg = torch.empty(0)
         self.cos_zero = torch.ones(1, 1, 1, 1)
+        self.sin_pos = torch.empty(0)
+        self.sin_neg = torch.empty(0)
+        self.sin_zero = torch.ones(1, 1, 1, 1)
         # index
         self.index = torch.empty(0)
 
@@ -219,6 +222,7 @@ class CtnnDecoder(TransformerDecoder):
             decay = torch.cat([self.zero, self.pos, self.zero, self.neg], dim=1)
             # 1, n, k, 1
             cos = torch.cat([self.cos_zero, self.cos_pos, self.cos_zero, self.cos_neg], dim=1)
+            sin = torch.cat([self.sin_zero, self.sin_pos, self.sin_zero, self.sin_neg], dim=1)
             # n, 1
             rpe_input = torch.cat([self.rpe_zero, self.rpe_pos, self.rpe_zero, self.rpe_neg], dim=0)
         else:
@@ -226,8 +230,10 @@ class CtnnDecoder(TransformerDecoder):
             decay = torch.cat([self.zero, self.pos], dim=1)
             # 1, n, k, 1
             cos = torch.cat([self.cos_zero, self.cos_pos], dim=1) 
+            sin = torch.cat([self.sin_zero, self.sin_pos], dim=1)
             # n, 1
             rpe_input = torch.cat([self.rpe_zero, self.rpe_pos], dim=0)
+        tri = torch.cat([cos, sin], dim=-2)
         index = self.index
 
         # B x T x C -> T x B x C
@@ -252,8 +258,7 @@ class CtnnDecoder(TransformerDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
                 decay=decay,
-                cos=cos, 
-                rpe_input=rpe_input,
+                cos=tri, 
                 index=index,
             )
 
@@ -296,7 +301,14 @@ class CtnnDecoder(TransformerDecoder):
             # 1, n - 1, k, 1
             self.cos_zero = torch.cos(0 * self.emb)
             self.cos_pos = torch.cos(coef * self.emb)
-            self.cos_neg = torch.flip(self.cos_pos, dims=[1])
+            if not self.causal:
+                self.cos_neg = torch.flip(self.cos_pos, dims=[1])
+            # sin
+            # 1, n - 1, k, 1
+            self.sin_zero = torch.sin(0 * self.emb)
+            self.sin_pos = torch.sin(coef * self.emb)
+            if not self.causal:
+                self.sin_neg = torch.flip(self.sin_pos, dims=[1])
             # index
             self.index = torch.tensor(range(self.max_seq)).to(x.device)
             # rpe input

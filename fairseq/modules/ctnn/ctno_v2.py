@@ -9,7 +9,7 @@ from einops import rearrange, repeat
 
 from ..helpers import get_activation_fn, print_params
 from ..others import ActLayer
-
+from .rpe import Rpe
 
 class Ctno(nn.Module):
     def __init__(
@@ -17,6 +17,7 @@ class Ctno(nn.Module):
         h, # num of heads
         dim, # dim per heads
         k, # number of cos components
+        layers=3,
         causal=False, 
     ):
         super().__init__()
@@ -28,10 +29,15 @@ class Ctno(nn.Module):
         self.h = h
         self.dim = dim
         self.causal = causal
-        self.cos_coef = nn.Parameter(torch.randn(h, 1, k, 1) / np.sqrt(k), requires_grad=True)
-        self.dim_coef = nn.Parameter(torch.randn(1, 1, 1, dim) / np.sqrt(dim), requires_grad=True)
-        
-    def forward(self, x, decay, cos, index):
+        rpe_dim = 32
+        self.rpe = Rpe(
+            dim=rpe_dim, 
+            outdim=h * (k // 2), 
+            layers=layers,
+        )
+        self.coef = nn.Parameter(torch.randn(1, 1, dim), requires_grad=True)
+
+    def forward(self, x, decay, cos, rpe_input, index):
         # x: ..., h, n, d
         # causal:
         # decay: 1, n, 1; lambda ^ (0, 1, ..., n - 1, 0, -(n-1), ... , -1)
@@ -40,11 +46,14 @@ class Ctno(nn.Module):
         # decay: 1, 2n - 1, 1; lambda ^ (0, 1, ..., n - 1, 0, -(n-1), ... , -1)
         # cos: 1, 2n - 1, k, 1
         n = x.shape[-2]
-        # (h, 1, k, 1), (1, n, k, 1) -> (h, n, k, 1) -> (h, n, 1)
+        # n, h * (k // 2)
+        coef = self.rpe(rpe_input)
+        coef = rearrange(coef, 'n (h k) -> h n k', h=self.h).unsqueeze(-1)
+        # (h, n, k, 1), (1, n, k, 1) -> (h, n, 1) -> (h, n, 1)
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
-        a = decay * torch.sum(self.cos_coef * cos, dim=-2)
+        a = decay * torch.sum(coef * cos, dim=-2)
         # (h, n, 1), (1, 1, d) -> (h, n, d)
-        a = a * self.dim_coef
+        a = a * self.coef
         # x: ..., h, n, d
         # a: h, n, d
         output = self.compute(x, a, n, index)
