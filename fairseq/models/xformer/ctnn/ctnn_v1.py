@@ -73,19 +73,45 @@ class CtnnDecoder(TransformerDecoder):
         self.embed_type = getattr(args, 'embed_type', -1)
         # causal
         self.causal = getattr(args, 'causal', True)
+        # gamma
+        self.gamma = getattr(args, 'gamma', 1)
         # max_seq_len
         self.max_seq = 0
+        # decay
+        self.pos = torch.empty(0)
+        self.neg = torch.empty(0)
+        self.zero = torch.empty(0)
         # cos
-        k = getattr(args, 'k', 128)
-        c = getattr(args, 'c', 1)
-        self.lambda_ = nn.Parameter(1 - c / k * torch.arange(k), requires_grad=False)
-        self.vander = torch.empty(0)
+        dim = getattr(args, 'k', 128)
+        # rpe input
+        self.rpe_pos = torch.empty(0)
+        self.rpe_neg = torch.empty(0)
+        self.rpe_zero = torch.empty(0)
+        if self.embed_type == 1:
+            half_dim = dim // 2
+            n = self.max_len
+            theta = math.pi / (n - 1)
+            # 1, 1, k, 1
+            emb = torch.arange(half_dim, dtype=torch.float).reshape(1, 1, half_dim, -1) * theta
+        else:
+            # compute 10000 ^ (2* i / d)
+            half_dim = dim // 2
+            emb = math.log(10000) / half_dim
+            # 1, 1, k, 1
+            emb = torch.exp(torch.arange(1, half_dim + 1, dtype=torch.float) * -emb).reshape(1, 1, half_dim, -1)
+        self.emb = nn.Parameter(emb, requires_grad=False)
+        self.cos_pos = torch.empty(0)
+        self.cos_neg = torch.empty(0)
+        self.cos_zero = torch.ones(1, 1, 1, 1)
+        self.sin_pos = torch.empty(0)
+        self.sin_neg = torch.empty(0)
+        self.sin_zero = torch.ones(1, 1, 1, 1)
         # index
         self.index = torch.empty(0)
 
         logging_info(f"causal: {self.causal}")
-        logging_info(f"k: {k}")
-        logging_info(f"c: {c}")
+        logging_info(f"gamma: {self.gamma}")
+        logging_info(f"embed_type: {self.embed_type}")
         logging_info(f"max_len: {self.max_len}")
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
@@ -191,6 +217,23 @@ class CtnnDecoder(TransformerDecoder):
         x = self.dropout_module(x)
 
         self.update_cache(x)
+        if not self.causal:
+            # 1, n, 1
+            decay = torch.cat([self.zero, self.pos, self.zero, self.neg], dim=1)
+            # 1, n, k, 1
+            cos = torch.cat([self.cos_zero, self.cos_pos, self.cos_zero, self.cos_neg], dim=1)
+            sin = torch.cat([self.sin_zero, self.sin_pos, self.sin_zero, self.sin_neg], dim=1)
+            # n, 1
+            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos, self.rpe_zero, self.rpe_neg], dim=0)
+        else:
+            # 1, n, 1
+            decay = torch.cat([self.zero, self.pos], dim=1)
+            # 1, n, k, 1
+            cos = torch.cat([self.cos_zero, self.cos_pos], dim=1) 
+            sin = torch.cat([self.sin_zero, self.sin_pos], dim=1)
+            # n, 1
+            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos], dim=0)
+        tri = torch.cat([cos, sin], dim=-2)
         index = self.index
 
         # B x T x C -> T x B x C
@@ -214,7 +257,8 @@ class CtnnDecoder(TransformerDecoder):
                 self_attn_padding_mask=self_attn_padding_mask,
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
-                vander=self.vander,
+                decay=decay,
+                cos=tri, 
                 index=index,
             )
 
@@ -244,8 +288,32 @@ class CtnnDecoder(TransformerDecoder):
         n = x.size(1)
         if self.max_seq < n:
             self.max_seq = n
+            # decay
+            # 1, n - 1, 1
+            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
+            gamma = self.gamma ** coef
+            self.zero = torch.ones(1, 1, 1).to(x)
+            self.pos = gamma
+            self.neg = torch.flip(gamma, dims=[1])
+            # cos
+            # 1, n - 1, 1, 1
+            coef = coef.unsqueeze(-1)
+            # 1, n - 1, k, 1
+            self.cos_zero = torch.cos(0 * self.emb)
+            self.cos_pos = torch.cos(coef * self.emb)
+            if not self.causal:
+                self.cos_neg = torch.flip(self.cos_pos, dims=[1])
+            # sin
+            # 1, n - 1, k, 1
+            self.sin_zero = torch.sin(0 * self.emb)
+            self.sin_pos = torch.sin(coef * self.emb)
+            if not self.causal:
+                self.sin_neg = torch.flip(self.sin_pos, dims=[1])
             # index
             self.index = torch.tensor(range(self.max_seq)).to(x.device)
-            # n, k
-            self.vander = torch.vander(self.lambda_, N=self.max_seq, increasing=True).transpose(0, 1)
+            # rpe input
+            self.rpe_zero = torch.zeros(1, 1).to(x)
+            self.rpe_pos = torch.arange(1, n).reshape(-1, 1).to(x)
+            self.rpe_neg = torch.flip(self.rpe_pos, dims=[1])
+            
             

@@ -28,16 +28,22 @@ class Ctno(nn.Module):
         self.h = h
         self.dim = dim
         self.causal = causal
-        self.vander_coef = nn.Parameter(torch.randn(1, k), requires_grad=True)
-        self.dim_coef = nn.Parameter(torch.randn(h, 1, dim), requires_grad=True)
+        self.cos_coef = nn.Parameter(torch.randn(h, 1, k, 1) / np.sqrt(k), requires_grad=True)
+        self.dim_coef = nn.Parameter(torch.randn(1, 1, 1, dim) / np.sqrt(dim), requires_grad=True)
         
-    def forward(self, x, vander, index):
+    def forward(self, x, decay, cos, index):
         # x: ..., h, n, d
-        # vander: n, k
+        # causal:
+        # decay: 1, n, 1; lambda ^ (0, 1, ..., n - 1, 0, -(n-1), ... , -1)
+        # cos: 1, n, k, 1
+        # non causal:
+        # decay: 1, 2n - 1, 1; lambda ^ (0, 1, ..., n - 1, 0, -(n-1), ... , -1)
+        # cos: 1, 2n - 1, k, 1
         n = x.shape[-2]
-        # (n, k), (1, k) -> (n) -> (1, n, 1)
-        a = torch.sum(vander * self.vander_coef, dim=-1).unsqueeze(0).unsqueeze(-1)
-        # (1, n, 1), (h, 1, d) -> (h, n, d)
+        # (h, 1, k, 1), (1, n, k, 1) -> (h, n, k, 1) -> (h, n, 1)
+        # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
+        a = decay * torch.sum(self.cos_coef * cos, dim=-2)
+        # (h, n, 1), (1, 1, d) -> (h, n, d)
         a = a * self.dim_coef
         # x: ..., h, n, d
         # a: h, n, d
