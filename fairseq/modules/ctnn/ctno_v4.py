@@ -24,19 +24,21 @@ class Ctno(nn.Module):
         params = locals()
         # print params
         print_params(**params)
+        
         self.h = h
         self.dim = dim
         self.causal = causal
-        self.coef_real = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
-        self.coef_imag = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
+        self.vander_coef = nn.Parameter(torch.randn(1, k), requires_grad=True)
+        self.dim_coef = nn.Parameter(torch.randn(h, 1, dim), requires_grad=True)
         
     def forward(self, x, vander, index):
         # x: ..., h, n, d
         # vander: n, k
         n = x.shape[-2]
-        # (h, n, k, d), (1, 1, k, 1) -> (h, n, d)
-        coef = self.coef_real + 1j * self.coef_imag
-        a = torch.sum(vander * coef, dim=-2).real
+        # (n, k), (1, k) -> (n) -> (1, n, 1)
+        a = torch.sum(vander * self.vander_coef, dim=-1).unsqueeze(0).unsqueeze(-1)
+        # (1, n, 1), (h, 1, d) -> (h, n, d)
+        a = a * self.dim_coef
         # x: ..., h, n, d
         # a: h, n, d
         output = self.compute(x, a, n, index)

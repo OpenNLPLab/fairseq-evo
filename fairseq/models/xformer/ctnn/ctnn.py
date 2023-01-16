@@ -77,15 +77,16 @@ class CtnnDecoder(TransformerDecoder):
         self.max_seq = 0
         # cos
         k = getattr(args, 'k', 128)
-        c = getattr(args, 'c', 1)
-        self.lambda_ = nn.Parameter(1 - c / k * torch.arange(k), requires_grad=False)
+        h = args.decoder_attention_heads
+        d = args.decoder_embed_dim * args.expand_ratio // h
+        self.lambda_real = nn.Parameter(torch.randn(h, 1, k, d), requires_grad=True)
+        self.lambda_imag = nn.Parameter(torch.randn(h, 1, k, d), requires_grad=True)
         self.vander = torch.empty(0)
         # index
         self.index = torch.empty(0)
 
         logging_info(f"causal: {self.causal}")
         logging_info(f"k: {k}")
-        logging_info(f"c: {c}")
         logging_info(f"max_len: {self.max_len}")
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
@@ -192,6 +193,7 @@ class CtnnDecoder(TransformerDecoder):
 
         self.update_cache(x)
         index = self.index
+        vander = self.vander
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
@@ -214,7 +216,7 @@ class CtnnDecoder(TransformerDecoder):
                 self_attn_padding_mask=self_attn_padding_mask,
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
-                vander=self.vander,
+                vander=vander,
                 index=index,
             )
 
@@ -246,6 +248,7 @@ class CtnnDecoder(TransformerDecoder):
             self.max_seq = n
             # index
             self.index = torch.tensor(range(self.max_seq)).to(x.device)
-            # n, k
-            self.vander = torch.vander(self.lambda_, N=self.max_seq, increasing=True).transpose(0, 1)
-            
+        # h, 1, k, d
+        lambda_ = -self.lambda_real.exp() + 1j * self.lambda_imag
+        # exp(i k lambda)
+        self.vander = (lambda_ * torch.arange(self.max_seq).reshape(1, -1, 1, 1).to(x)).exp()
