@@ -90,7 +90,7 @@ class CtnnEncoderLayer(nn.Module):
                     state_dict["{}.{}.{}".format(name, new, m)] = state_dict[k]
                     del state_dict[k]
 
-    def forward(self, x, encoder_padding_mask: Optional[Tensor], attn_mask: Optional[Tensor] = None, vander=None, index=None):
+    def forward(self, x, encoder_padding_mask: Optional[Tensor], attn_mask: Optional[Tensor] = None, vander=None, index=None, decay=None, rpe_input=None):
         """
         Args:
             x (Tensor): input to the layer of shape `(seq_len, batch, embed_dim)`
@@ -126,6 +126,8 @@ class CtnnEncoderLayer(nn.Module):
             attn_mask=attn_mask,
             vander=vander,
             index=index,
+            decay=decay,
+            rpe_input=rpe_input,
         )
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
@@ -271,6 +273,8 @@ class CtnnDecoderLayer(nn.Module):
         need_head_weights: bool = False,
         vander=None,
         index=None,
+        decay=None,
+        rpe_input=None,
     ):
         """
         Args:
@@ -337,6 +341,8 @@ class CtnnDecoderLayer(nn.Module):
             attn_mask=self_attn_mask,
             vander=vander,
             index=index,
+            decay=decay,
+            rpe_input=rpe_input,
         )
 
         x = self.dropout_module(x)
@@ -372,6 +378,8 @@ class CtnnDecoderLayer(nn.Module):
                 need_head_weights=need_head_weights,
                 vander=vander,
                 index=index,
+                decay=decay,
+                rpe_input=rpe_input,
             )
             x = self.dropout_module(x)
             x = self.residual_connection(x, residual)

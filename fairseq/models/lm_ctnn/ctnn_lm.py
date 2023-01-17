@@ -393,6 +393,7 @@ def ctnn_lm_k64_pre(args):
     args.causal = True
     args.expand_ratio = 3
     args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
     args.k = 64
     # glu
     args.glu_act = "silu"
@@ -412,7 +413,7 @@ def ctnn_lm_k128_pre(args):
     args.causal = True
     args.expand_ratio = 3
     args.norm_type = "simplermsnorm"
-    args.c = 1
+    args.gamma = 0.99
     args.k = 128
     # glu
     args.glu_act = "silu"
@@ -432,7 +433,7 @@ def ctnn_lm_k256_pre(args):
     args.causal = True
     args.expand_ratio = 3
     args.norm_type = "simplermsnorm"
-    args.c = 1
+    args.gamma = 0.99
     args.k = 256
     # glu
     args.glu_act = "silu"
@@ -452,7 +453,7 @@ def ctnn_lm_k512_pre(args):
     args.causal = True
     args.expand_ratio = 3
     args.norm_type = "simplermsnorm"
-    args.c = 1
+    args.gamma = 0.99
     args.k = 512
     # glu
     args.glu_act = "silu"
@@ -473,6 +474,7 @@ def ctnn_lm_k64_22_pre(args):
     args.causal = True
     args.expand_ratio = 2
     args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
     args.k = 64
     # glu
     args.glu_act = "silu"
@@ -492,7 +494,7 @@ def ctnn_lm_k128_22_pre(args):
     args.causal = True
     args.expand_ratio = 2
     args.norm_type = "simplermsnorm"
-    args.c = 1
+    args.gamma = 0.99
     args.k = 128
     # glu
     args.glu_act = "silu"
@@ -512,7 +514,7 @@ def ctnn_lm_k256_22_pre(args):
     args.causal = True
     args.expand_ratio = 2
     args.norm_type = "simplermsnorm"
-    args.c = 1
+    args.gamma = 0.99
     args.k = 256
     # glu
     args.glu_act = "silu"
@@ -532,7 +534,7 @@ def ctnn_lm_k512_22_pre(args):
     args.causal = True
     args.expand_ratio = 2
     args.norm_type = "simplermsnorm"
-    args.c = 1
+    args.gamma = 0.99
     args.k = 512
     # glu
     args.glu_act = "silu"

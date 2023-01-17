@@ -73,28 +73,19 @@ class CtnnDecoder(TransformerDecoder):
         self.embed_type = getattr(args, 'embed_type', -1)
         # causal
         self.causal = getattr(args, 'causal', True)
-        # gamma
-        self.gamma = getattr(args, 'gamma', 1)
         # max_seq_len
         self.max_seq = 0
         # cos
         k = getattr(args, 'k', 128)
         h = args.decoder_attention_heads
         d = args.decoder_embed_dim * args.expand_ratio // h
+        self.lambda_real = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
+        self.lambda_imag = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
         self.vander = torch.empty(0)
         # index
         self.index = torch.empty(0)
-        # decay
-        self.pos = torch.empty(0)
-        self.neg = torch.empty(0)
-        self.zero = torch.empty(0)
-        # rpe input
-        self.rpe_pos = torch.empty(0)
-        self.rpe_neg = torch.empty(0)
-        self.rpe_zero = torch.empty(0)
 
         logging_info(f"causal: {self.causal}")
-        logging_info(f"gamma: {self.gamma}")
         logging_info(f"k: {k}")
         logging_info(f"max_len: {self.max_len}")
 
@@ -203,16 +194,6 @@ class CtnnDecoder(TransformerDecoder):
         self.update_cache(x)
         index = self.index
         vander = self.vander
-        if not self.causal:
-            # 1, n, 1
-            decay = torch.cat([self.zero, self.pos, self.zero, self.neg], dim=1)
-            # n, 1
-            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos, self.rpe_zero, self.rpe_neg], dim=0)
-        else:
-            # 1, n, 1
-            decay = torch.cat([self.zero, self.pos], dim=1)
-            # n, 1
-            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos], dim=0)
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
@@ -237,8 +218,6 @@ class CtnnDecoder(TransformerDecoder):
                 need_head_weights=bool((idx == alignment_layer)),
                 vander=vander,
                 index=index,
-                decay=decay,
-                rpe_input=rpe_input,
             )
 
             inner_states.append(x)
@@ -269,16 +248,7 @@ class CtnnDecoder(TransformerDecoder):
             self.max_seq = n
             # index
             self.index = torch.tensor(range(self.max_seq)).to(x.device)
-            # decay
-            # 1, n - 1, 1
-            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
-            gamma = self.gamma ** coef
-            self.zero = torch.ones(1, 1, 1).to(x)
-            self.pos = gamma
-            if self.causal:
-                self.neg = torch.flip(gamma, dims=[1])
-            # rpe input
-            self.rpe_zero = torch.zeros(1, 1).to(x)
-            self.rpe_pos = torch.arange(1, n).reshape(-1, 1).to(x)
-            if self.causal:
-                self.rpe_neg = torch.flip(self.rpe_pos, dims=[1])
+        # h, 1, k, d
+        lambda_ = -self.lambda_real.exp() + 1j * self.lambda_imag
+        # exp(i k lambda)
+        self.vander = (lambda_ * torch.arange(self.max_seq).reshape(1, -1, 1, 1).to(x)).exp()
