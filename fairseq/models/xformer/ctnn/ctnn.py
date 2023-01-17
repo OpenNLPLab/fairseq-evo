@@ -79,8 +79,8 @@ class CtnnDecoder(TransformerDecoder):
         k = getattr(args, 'k', 128)
         h = args.decoder_attention_heads
         d = args.decoder_embed_dim * args.expand_ratio // h
-        self.lambda_real = nn.Parameter(torch.randn(h, 1, k, d), requires_grad=True)
-        self.lambda_imag = nn.Parameter(torch.randn(h, 1, k, d), requires_grad=True)
+        self.lambda_real = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
+        self.lambda_imag = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
         self.vander = torch.empty(0)
         # index
         self.index = torch.empty(0)

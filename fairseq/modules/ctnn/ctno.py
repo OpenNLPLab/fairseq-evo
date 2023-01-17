@@ -27,8 +27,8 @@ class Ctno(nn.Module):
         self.h = h
         self.dim = dim
         self.causal = causal
-        self.coef_real = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
-        self.coef_imag = nn.Parameter(torch.randn(1, 1, k, 1), requires_grad=True)
+        self.coef_real = nn.Parameter(torch.randn(h, 1, k, dim), requires_grad=True)
+        self.coef_imag = nn.Parameter(torch.randn(h, 1, k, dim), requires_grad=True)
         
     def forward(self, x, vander, index):
         # x: ..., h, n, d

@@ -457,3 +457,83 @@ def ctnn_lm_k512_pre(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
+
+# e22
+@register_model_architecture("ctnn_lm", "ctnn_lm_k64_22_pre")
+def ctnn_lm_k64_22_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 2
+    args.norm_type = "simplermsnorm"
+    args.k = 64
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim * 2
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_k128_22_pre")
+def ctnn_lm_k128_22_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 2
+    args.norm_type = "simplermsnorm"
+    args.c = 1
+    args.k = 128
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim * 2
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_k256_22_pre")
+def ctnn_lm_k256_22_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 2
+    args.norm_type = "simplermsnorm"
+    args.c = 1
+    args.k = 256
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim * 2
+    
+@register_model_architecture("ctnn_lm", "ctnn_lm_k512_22_pre")
+def ctnn_lm_k512_22_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 2
+    args.norm_type = "simplermsnorm"
+    args.c = 1
+    args.k = 512
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim * 2
