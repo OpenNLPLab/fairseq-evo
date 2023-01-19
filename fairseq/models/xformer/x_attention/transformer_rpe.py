@@ -177,6 +177,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             attn_heads = args.decoder_attention_heads
             # h, 1, 1
             self.slopes = torch.Tensor(get_slopes(attn_heads)).reshape(attn_heads, 1, 1)
+            print(self.slopes)
             self.buffered_future_mask = self.buffered_future_mask_rpe
 
         # kerple log
@@ -533,7 +534,6 @@ class TransformerRpeDecoder(TransformerDecoder):
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
                 attn = layer_attn.float().to(x)
-        assert False
 
         if attn is not None:
             if alignment_heads is not None:
