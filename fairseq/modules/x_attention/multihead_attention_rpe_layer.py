@@ -17,6 +17,27 @@ from fairseq.modules.quant_noise import quant_noise
 
 from .multihead_attention_rpe import MultiheadAttentionRpe
 
+def get_data_save_dir(args):
+    rpe_type = getattr(args, 'rpe_type', -1)
+    kerple_log = getattr(args, 'kerple_log', -1)
+    kerple_power = getattr(args, 'kerple_power', -1)
+    sandwich = getattr(args, 'sandwich', -1)
+    data_save_dir = "rpe"
+    if rpe_type != -1:
+        # for save
+        data_save_dir = rpe_type
+    elif kerple_log != -1:
+        # for save
+        data_save_dir = "kerple_log"
+    elif kerple_power != -1:
+        # for save
+        data_save_dir = "kerple_power"
+    elif sandwich != -1:
+        # for save
+        data_save_dir = "sandwich"
+    
+    return data_save_dir
+    
 
 class MhaRpeEncoderLayer(TransformerEncoderLayer):
     def __init__(self, args):
@@ -30,6 +51,8 @@ class MhaRpeEncoderLayer(TransformerEncoderLayer):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=args.index,
+            data_save_dir=get_data_save_dir(args),
         )
 
 class MhaRpeDecoderLayer(TransformerDecoderLayer):
@@ -50,6 +73,8 @@ class MhaRpeDecoderLayer(TransformerDecoderLayer):
             self_attention=not getattr(args, "cross_self_attention", False),
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=args.index,
+            data_save_dir=get_data_save_dir(args),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -62,4 +87,6 @@ class MhaRpeDecoderLayer(TransformerDecoderLayer):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            index=args.index,
+            data_save_dir=get_data_save_dir(args),
         )

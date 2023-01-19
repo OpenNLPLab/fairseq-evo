@@ -25,6 +25,7 @@ from fairseq.models.transformer import (DEFAULT_MAX_SOURCE_POSITIONS,
 from fairseq.modules import (AdaptiveInput, CharacterTokenEmbedder,
                              MhaRpeDecoderLayer, MhaRpeEncoderLayer)
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
+from fairseq.modules.helpers import logging_info
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 
 
@@ -177,6 +178,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             # h, 1, 1
             self.slopes = torch.Tensor(get_slopes(attn_heads)).reshape(attn_heads, 1, 1)
             self.buffered_future_mask = self.buffered_future_mask_rpe
+
         # kerple log
         self.kerple_log = getattr(args, 'kerple_log', -1)
         if self.kerple_log != -1:
@@ -202,6 +204,8 @@ class TransformerRpeDecoder(TransformerDecoder):
             self.causal_mask = nn.Parameter(self.get_causal_mask(), requires_grad=False)
             self.eps = 1e-2
             self.buffered_future_mask = self.buffered_future_mask_kerple_log
+            logging_info(f'bias_p {self.bias_p}')
+            logging_info(f'bias_a {self.bias_a}')
             
         # kerple power
         self.kerple_power = getattr(args, 'kerple_power', -1)
@@ -228,6 +232,8 @@ class TransformerRpeDecoder(TransformerDecoder):
             self.causal_mask = nn.Parameter(self.get_causal_mask(), requires_grad=False)
             self.eps = 1e-2
             self.buffered_future_mask = self.buffered_future_mask_kerple_power
+            logging_info(f'bias_p {self.bias_p}')
+            logging_info(f'bias_a {self.bias_a}')
             
         # sandwich
         self.sandwich = getattr(args, 'sandwich', -1)
@@ -527,6 +533,7 @@ class TransformerRpeDecoder(TransformerDecoder):
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
                 attn = layer_attn.float().to(x)
+        assert False
 
         if attn is not None:
             if alignment_heads is not None:

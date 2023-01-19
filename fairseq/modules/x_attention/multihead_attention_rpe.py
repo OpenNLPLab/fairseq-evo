@@ -42,9 +42,11 @@ class MultiheadAttentionRpe(nn.Module):
         qn_block_size=8,
         # add
         index=0,
+        data_save_dir="rpe",
     ):
         # add
         self.index = index
+        self.data_save_dir = data_save_dir
 
         super().__init__()
         self.embed_dim = embed_dim
@@ -178,6 +180,14 @@ class MultiheadAttentionRpe(nn.Module):
             
         # b h n m
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        ##### for save
+        import os
+        os.makedirs(f"{self.data_save_dir}", exist_ok=True)
+        print(attn_output_weights.shape)
+        with open(f"{self.data_save_dir}/{self.index}.npy", 'wb') as f:
+            data = attn_output_weights.detach().cpu().numpy()
+            np.save(f, data)
+        ##### for save
         # dropout
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)
         attn_output = torch.einsum('... n m, ... m d -> ... n d', attn_output_weights, v)
