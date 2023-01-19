@@ -11,6 +11,7 @@ class Gctu(nn.Module):
         embed_dim,
         num_heads,
         k=128,
+        c=0,
         bias=True,
         act_fun="silu",
         causal=False,
@@ -34,6 +35,7 @@ class Gctu(nn.Module):
             h=num_heads, 
             dim=self.head_dim,
             k=k,
+            c=c,
             causal=causal, 
         )
     

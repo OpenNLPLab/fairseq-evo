@@ -39,6 +39,7 @@ class GctuModule(nn.Module):
         causal=False,
         expand_ratio=2,
         k=128,
+        c=0,
     ):
         super().__init__()
         # get local varables
@@ -50,6 +51,7 @@ class GctuModule(nn.Module):
             embed_dim=embed_dim,
             num_heads=num_heads,
             k=k,
+            c=c,
             bias=bias,
             act_fun=act_fun,
             causal=causal,

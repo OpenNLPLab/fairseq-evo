@@ -17,7 +17,6 @@ class Ctno(nn.Module):
         h, # num of heads
         dim, # dim per heads
         k, # number of cos components
-        c=0,
         layers=3,
         causal=False, 
     ):
@@ -30,13 +29,13 @@ class Ctno(nn.Module):
         self.h = h
         self.dim = dim
         self.causal = causal
-        self.c = c
         rpe_dim = 32
         self.rpe = Rpe(
             dim=rpe_dim, 
-            outdim=h * dim, 
+            outdim=k, 
             layers=layers,
         )
+        self.coef = nn.Parameter(torch.randn(h, 1, k, dim), requires_grad=True)
 
     def forward(self, x, vander=None, index=None, decay=None, rpe_input=None):
         # x: ..., h, n, d
@@ -47,12 +46,11 @@ class Ctno(nn.Module):
         # decay: 1, 2n - 1, 1; lambda ^ (0, 1, ..., n - 1, 0, -(n-1), ... , -1)
         # cos: 1, 2n - 1, k, 1
         n = x.shape[-2]
-        # (n, h * d) -> (h, n, d)
-        coef = self.rpe(rpe_input) + self.c
-        coef = rearrange(coef, 'n (h d) -> h n d', n=n, h=self.h)
-        # (1, n, 1) (h, n, d) -> (h, n, d)
+        # (n, k) -> (1, n, k, 1)
+        base = self.rpe(rpe_input).unsqueeze(-1).unsqueeze(0)
+        # (1, n, k, 1), (h, 1, k, d) -> (h, n, d) -> (h, n, d)
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
-        a = decay * coef
+        a = decay * torch.sum(base * self.coef, dim=-2)
         # x: ..., h, n, d
         # a: h, n, d
         output = self.compute(x, a, n, index)

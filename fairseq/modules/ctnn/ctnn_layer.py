@@ -70,7 +70,8 @@ class CtnnEncoderLayer(nn.Module):
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", False),
             expand_ratio=getattr(args, "expand_ratio", 3),
-            k=getattr(args, "k", 128)
+            k=getattr(args, "k", 128),
+            c=getattr(args, "c", 0),
         )
         
     def residual_connection(self, x, residual):
@@ -228,7 +229,8 @@ class CtnnDecoderLayer(nn.Module):
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", True),
             expand_ratio=getattr(args, "expand_ratio", 3),
-            k=getattr(args, "k", 128)
+            k=getattr(args, "k", 128),
+            c=getattr(args, "c", 0),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -247,7 +249,8 @@ class CtnnDecoderLayer(nn.Module):
             act_fun=getattr(args, "act_fun", "silu"),
             causal=getattr(args, "causal", False),
             expand_ratio=getattr(args, "expand_ratio", 3),
-            k=getattr(args, "k", 128)
+            k=getattr(args, "k", 128),
+            c=getattr(args, "c", 0),
         )
         
     def prepare_for_onnx_export_(self):
