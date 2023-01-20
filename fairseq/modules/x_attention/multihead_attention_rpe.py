@@ -181,15 +181,15 @@ class MultiheadAttentionRpe(nn.Module):
         # b h n m
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)
         ##### for save
-        import os
-        os.makedirs(f"{self.data_save_dir}", exist_ok=True)
-        n = attn_output_weights.shape[-1]
-        print(attn_output_weights.shape)
-        if n >= 500:
-            with open(f"{self.data_save_dir}/{self.index}.npy", 'wb') as f:
-                data = attn_output_weights.detach().cpu().numpy()
-                np.save(f, data)
-            assert False
+        # import os
+        # os.makedirs(f"{self.data_save_dir}", exist_ok=True)
+        # n = attn_output_weights.shape[-1]
+        # print(attn_output_weights.shape)
+        # if n >= 500:
+        #     with open(f"{self.data_save_dir}/{self.index}.npy", 'wb') as f:
+        #         data = attn_output_weights.detach().cpu().numpy()
+        #         np.save(f, data)
+        #     assert False
         ##### for save
         # dropout
         attn_output_weights = F.dropout(attn_output_weights, self.dropout_module.p, training=self.training)

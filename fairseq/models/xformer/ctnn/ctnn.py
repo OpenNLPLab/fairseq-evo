@@ -26,6 +26,17 @@ from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from omegaconf import II
 from torch import Tensor
 
+def get_slopes(n):
+    def get_slopes_power_of_2(n):
+        start = (2**(-2**-(math.log2(n)-3)))
+        ratio = start
+        return [start*ratio**i for i in range(n)]
+
+    if math.log2(n).is_integer():
+        return get_slopes_power_of_2(n)                   #In the paper, we only train models that have 2^a heads for some a. This function has
+    else:                                                 #some good properties that only occur when the input is a power of 2. To maintain that even
+        closest_power_of_2 = 2**math.floor(math.log2(n))  #when the number of heads is not a power of 2, we use this workaround. 
+        return get_slopes_power_of_2(closest_power_of_2) + get_slopes(2*closest_power_of_2)[0::2][:n-closest_power_of_2]
 
 class CtnnEncoder(TransformerEncoder):
     """
@@ -92,7 +103,12 @@ class CtnnDecoder(TransformerDecoder):
         self.rpe_pos = torch.empty(0)
         self.rpe_neg = torch.empty(0)
         self.rpe_zero = torch.empty(0)
+        # slope
+        # (h, 1, 1)
+        slope = torch.Tensor(get_slopes(h)).reshape(h, -1, 1)
+        self.slope = nn.Parameter(torch.exp(-slope), requires_grad=False)
 
+        logging_info(f"slope: {self.slope}")
         logging_info(f"causal: {self.causal}")
         logging_info(f"gamma: {self.gamma}")
         logging_info(f"k: {k}")
@@ -272,7 +288,8 @@ class CtnnDecoder(TransformerDecoder):
             # decay
             # 1, n - 1, 1
             coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
-            gamma = self.gamma ** coef
+            gamma = self.slope ** coef
+            print(gamma.shape)
             self.zero = torch.ones(1, 1, 1).to(x)
             self.pos = gamma
             if self.causal:
