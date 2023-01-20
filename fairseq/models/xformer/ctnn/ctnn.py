@@ -92,6 +92,7 @@ class CtnnDecoder(TransformerDecoder):
         k = getattr(args, 'k', 128)
         h = args.decoder_attention_heads
         d = args.decoder_embed_dim * args.expand_ratio // h
+        self.h = h
         self.vander = torch.empty(0)
         # index
         self.index = torch.empty(0)
@@ -290,7 +291,7 @@ class CtnnDecoder(TransformerDecoder):
             coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
             gamma = self.slope ** coef
             print(gamma.shape)
-            self.zero = torch.ones(1, 1, 1).to(x)
+            self.zero = torch.ones(self.h, 1, 1).to(x)
             self.pos = gamma
             if self.causal:
                 self.neg = torch.flip(gamma, dims=[1])

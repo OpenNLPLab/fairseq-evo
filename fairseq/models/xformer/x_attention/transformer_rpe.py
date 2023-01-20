@@ -177,7 +177,6 @@ class TransformerRpeDecoder(TransformerDecoder):
             attn_heads = args.decoder_attention_heads
             # h, 1, 1
             self.slopes = torch.Tensor(get_slopes(attn_heads)).reshape(attn_heads, 1, 1)
-            print(self.slopes)
             self.buffered_future_mask = self.buffered_future_mask_rpe
 
         # kerple log
