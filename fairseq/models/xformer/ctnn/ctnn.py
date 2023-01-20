@@ -290,7 +290,6 @@ class CtnnDecoder(TransformerDecoder):
             # 1, n - 1, 1
             coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
             gamma = self.slope ** coef
-            print(gamma.shape)
             self.zero = torch.ones(self.h, 1, 1).to(x)
             self.pos = gamma
             if self.causal:
