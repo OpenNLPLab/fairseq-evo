@@ -228,13 +228,19 @@ class Urpe(nn.Module):
             theta = theta.reshape(1, 1, -1).to(x.device)
         matrix = theta * torch.arange(l).reshape(1, -1, 1).to(x.device)
         sin_cos = torch.complex(torch.cos(matrix),torch.sin(matrix)).to(x.device)
-        x = self.element_wise_complex(x, sin_cos)
+        if x.dtype != torch.cfloat:
+            x = self.element_wise_complex_real(x, sin_cos)
+        else:
+            x = self.element_wise_complex(x, sin_cos)
 
         return x
 
     # https://stackoverflow.com/questions/63855692/matrix-multiplication-for-complex-numbers-in-pytorch
     def element_wise_complex(self, t1, t2):
         return torch.complex(t1.real * t2.real - t1.imag * t2.imag, t1.real * t2.imag + t1.imag * t2.real)
+
+    def element_wise_complex_real(self, t1, t2):
+        return torch.complex(t1 * t2.real, t1 * t2.imag)
 
     def dct(self, x):
         """

@@ -98,6 +98,8 @@ class LinearKernelAttention(nn.Module):
         self.out_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
+        
+        self.layer_norm = nn.LayerNorm(embed_dim)
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
@@ -447,6 +449,33 @@ class LinearKernelAttention(nn.Module):
             q = torch.cat([q.real, q.imag], dim=-1)
             k = torch.cat([k.real, k.imag], dim=-1)
 
+        # if self.causal:
+        #     if (attn_mask == None):
+        #         attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+        #         attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
+        #     weights = torch.bmm(q, k.transpose(1, 2))
+        #     if self.causal:
+        #         weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+        #     # (N * h, L, S) -> (N * h, L, S)
+        #     denom = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
+        #     # (N * h, L, S) (N * h, L, S) -> (N * h, L, S)
+        #     attn_weights = weights / denom
+        #     # (N * h, L, S) (N * h, S, d) -> (N * h, L, d)
+        #     attn_output = torch.bmm(attn_weights, v)
+        #     # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        #     attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        # else:
+        #     # (N * h, L, 2 * d) (N * h, L, d) -> (N * h, 2 * d, d)
+        #     kv = torch.einsum('nld,nlm->ndm', k, v)
+        #     # (N * h, L, 2 * d) (N * h, 2 * d) -> (N * h, L)
+        #     z = 1 / torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
+        #     # (N * h, L, 2 * d) (N * h, d, 2 * d) (N * h, L) -> (N * h, L, d)
+        #     attn_output = torch.einsum('nld,ndm,nl->nlm', q, kv, z)
+        #     # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
+        #     attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        
+        # norm linear for stable training
         if self.causal:
             if (attn_mask == None):
                 attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
@@ -455,23 +484,19 @@ class LinearKernelAttention(nn.Module):
             weights = torch.bmm(q, k.transpose(1, 2))
             if self.causal:
                 weights = weights.masked_fill(attn_mask==float("-inf"), 0)
-            # (N * h, L, S) -> (N * h, L, S)
-            denom = torch.clamp_min(weights.sum(dim=-1, keepdim=True), eps)
-            # (N * h, L, S) (N * h, L, S) -> (N * h, L, S)
-            attn_weights = weights / denom
             # (N * h, L, S) (N * h, S, d) -> (N * h, L, d)
-            attn_output = torch.bmm(attn_weights, v)
+            attn_output = torch.bmm(weights, v)
             # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
             attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
         else:
             # (N * h, L, 2 * d) (N * h, L, d) -> (N * h, 2 * d, d)
             kv = torch.einsum('nld,nlm->ndm', k, v)
-            # (N * h, L, 2 * d) (N * h, 2 * d) -> (N * h, L)
-            z = 1 / torch.clamp_min(torch.einsum('nld,nd->nl', q, torch.sum(k, axis=1)), eps)
             # (N * h, L, 2 * d) (N * h, d, 2 * d) (N * h, L) -> (N * h, L, d)
-            attn_output = torch.einsum('nld,ndm,nl->nlm', q, kv, z)
+            attn_output = torch.einsum('nld,ndm->nlm', q, kv)
             # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
             attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
+        attn_output = self.layer_norm(attn_output)
+
         # L, N, E
         attn_output = self.out_proj(attn_output)
 

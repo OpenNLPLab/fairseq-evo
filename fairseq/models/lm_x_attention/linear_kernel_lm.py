@@ -1015,3 +1015,51 @@ def transformer_exp_wiki_base(args):
     args.kernel_type = "exp"
     args.max_seq_len = 512
 ########## exp
+
+########## icml
+# rotate learnable
+@register_model_architecture("linear_urpe_lm", "1+elu_l_ro_wiki_base")
+def transformer_1_elu_l_ro_wiki_base(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+    
+# permutate
+@register_model_architecture("linear_urpe_lm", "1+elu_l_per_wiki_base")
+def transformer_1_elu_l_per_wiki_base(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 3
+
+# unitary
+@register_model_architecture("linear_urpe_lm", "1+elu_l_un_wiki_base")
+def transformer_1_elu_l_un_wiki_base(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 3
+
+# unitary learned
+@register_model_architecture("linear_urpe_lm", "1+elu_l_unl_wiki_base")
+def transformer_1_elu_l_unl_wiki_base(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 3
+    args.theta_learned = True
+########## icml
