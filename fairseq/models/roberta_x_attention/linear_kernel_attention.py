@@ -461,3 +461,51 @@ def roberta_base_architecture_1_elu_krpe(args):
     args.use_krpe = True
     args.max_seq_len = 512
 ########## rebuttal
+
+########## icml
+# rotate learnable
+@register_model_architecture("roberta_linear_kernel", "roberta_1+elu_l_ro")
+def roberta_base_architecture_1_elu_l_ro(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 3
+    args.theta_learned = True
+
+# permutate
+@register_model_architecture("roberta_linear_kernel", "roberta_1+elu_l_per")
+def roberta_base_architecture_1_elu_l_per(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 3
+
+# unitary
+@register_model_architecture("roberta_linear_kernel", "roberta_1+elu_l_un")
+def roberta_base_architecture_1_elu_l_un(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 3
+
+# unitary learned
+@register_model_architecture("roberta_linear_kernel", "roberta_1+elu_l_unl")
+def roberta_base_architecture_1_elu_l_unl(args):
+    base_architecture(args)
+    ##### add
+    args.causal = False
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 3
+    args.theta_learned = True
+########## icml
