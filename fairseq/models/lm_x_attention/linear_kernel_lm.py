@@ -1062,4 +1062,12 @@ def transformer_1_elu_l_unl_wiki_base(args):
     args.core_matrix = 4
     args.p_matrix = 3
     args.theta_learned = True
+    
+# rope
+@register_model_architecture("linear_urpe_lm", "1+elu_rope_wiki_base")
+def transformer_1_elu_rope_wiki_base(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_rope = True
 ########## icml
