@@ -447,9 +447,9 @@ class TransformerRpeDecoder(TransformerDecoder):
                 - the decoder's features of shape `(batch, tgt_len, embed_dim)`
                 - a dictionary with any model-specific outputs
         """
-        # if self.kerple_log != -1 or self.kerple_power != -1:
-        #     logging_info(f'bias_p {self.bias_p}')
-        #     logging_info(f'bias_a {self.bias_a}')
+        if self.kerple_log != -1 or self.kerple_power != -1:
+            logging_info(f'bias_p {self.bias_p}')
+            logging_info(f'bias_a {self.bias_a}')
         bs, slen = prev_output_tokens.size()
         #logging_info('transformer decoder input:', prev_output_tokens.shape)
         if alignment_layer is None:
