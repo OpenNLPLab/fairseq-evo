@@ -1070,4 +1070,102 @@ def transformer_1_elu_rope_wiki_base(args):
     args.causal = True
     ##### add
     args.use_rope = True
+    
+##### abl
+##### identity
+# rotate learnable
+@register_model_architecture("linear_urpe_lm", "1+elu_l_ro_wiki_base_identity")
+def transformer_1_elu_l_ro_wiki_base_identity(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 1
+    args.theta_learned = True
+    
+# permutate
+@register_model_architecture("linear_urpe_lm", "1+elu_l_per_wiki_base_identity")
+def transformer_1_elu_l_per_wiki_base_identity(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 1
+
+# unitary
+@register_model_architecture("linear_urpe_lm", "1+elu_l_un_wiki_base_identity")
+def transformer_1_elu_l_un_wiki_base_identity(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 1
+
+# unitary learned
+@register_model_architecture("linear_urpe_lm", "1+elu_l_unl_wiki_base_identity")
+def transformer_1_elu_l_unl_wiki_base_identity(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 1
+    args.theta_learned = True
+##### identity
+
+##### per
+# rotate learnable
+@register_model_architecture("linear_urpe_lm", "1+elu_l_ro_wiki_base_per")
+def transformer_1_elu_l_ro_wiki_base_per(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 1
+    args.p_matrix = 5
+    args.theta_learned = True
+    
+# permutate
+@register_model_architecture("linear_urpe_lm", "1+elu_l_per_wiki_base_per")
+def transformer_1_elu_l_per_wiki_base_per(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 3
+    args.p_matrix = 5
+
+# unitary
+@register_model_architecture("linear_urpe_lm", "1+elu_l_un_wiki_base_per")
+def transformer_1_elu_l_un_wiki_base_per(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 5
+
+# unitary learned
+@register_model_architecture("linear_urpe_lm", "1+elu_l_unl_wiki_base_per")
+def transformer_1_elu_l_unl_wiki_base_per(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_urpe = True
+    args.kernel_type = "1+elu"
+    args.core_matrix = 4
+    args.p_matrix = 5
+    args.theta_learned = True
+##### per
+##### abl
 ########## icml

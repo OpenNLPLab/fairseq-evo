@@ -161,7 +161,6 @@ class Urpe(nn.Module):
 
     def do_permutation(self, x):
         b, l, e = x.shape
-        print(self.permutation[:, :l, :].shape, self.permutation[:, :l, :].expand_as(x).shape)
         x = x.gather(-1, self.permutation[:, :l, :].expand_as(x))
 
         return x
