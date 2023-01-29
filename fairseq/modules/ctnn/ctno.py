@@ -18,7 +18,7 @@ class Ctno(nn.Module):
         dim, # dim per heads
         k, # number of cos components
         c=0,
-        layers=3,
+        layers=1,
         causal=False, 
     ):
         super().__init__()
@@ -48,7 +48,7 @@ class Ctno(nn.Module):
         # cos: 1, 2n - 1, k, 1
         n = x.shape[-2]
         # (n, h * d) -> (h, n, d)
-        coef = self.rpe(rpe_input) + self.c
+        coef = self.rpe(rpe_input)
         coef = rearrange(coef, 'n (h d) -> h n d', n=n, h=self.h)
         # (1, n, 1) (h, n, d) -> (h, n, d)
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)

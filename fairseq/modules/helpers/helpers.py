@@ -89,6 +89,8 @@ def get_activation_fn(activation):
             return f
     elif activation == "silu":
         return F.silu
+    elif activation == "sine":
+        return torch.sin
     else:
         return lambda x: x
     
