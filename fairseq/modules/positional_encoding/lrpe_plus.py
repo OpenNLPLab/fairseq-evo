@@ -51,8 +51,9 @@ class Lrpe_plus(nn.Module):
         if self.core_matrix == 1:
             d = embedding_dim
             # self.ratio = nn.Parameter((torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
-            ratio = torch.exp(-torch.Tensor(get_slopes(self.num_heads)).reshape(-1, 1, 1))
-            self.ratio = nn.Parameter(ratio, requires_grad=False)
+            # ratio = torch.exp(-torch.Tensor(get_slopes(self.num_heads)).reshape(-1, 1, 1))
+            # self.ratio = nn.Parameter(ratio, requires_grad=False)
+            self.ratio = nn.Parameter(torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=False)
             theta = 10000 ** (-2 / d * torch.arange(d))
             theta = repeat(theta, 'd -> h n d', h=self.num_heads, n=1)
             self.theta = nn.Parameter(theta, requires_grad=True)
@@ -60,8 +61,9 @@ class Lrpe_plus(nn.Module):
         elif self.core_matrix == 2:
             d = embedding_dim // 2
             # self.ratio = nn.Parameter((torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
-            ratio = torch.exp(-torch.Tensor(get_slopes(self.num_heads)).reshape(-1, 1, 1))
-            self.ratio = nn.Parameter(ratio, requires_grad=False)
+            self.ratio = nn.Parameter(torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=False)
+            # ratio = torch.exp(-torch.Tensor(get_slopes(self.num_heads)).reshape(-1, 1, 1))
+            # self.ratio = nn.Parameter(ratio, requires_grad=False)
             theta = 10000 ** (-2 / d * torch.arange(d))
             # h, 1, d / 2, 1, 1
             theta = repeat(theta, 'd -> h n d', h=self.num_heads, n=1).unsqueeze(-1).unsqueeze(-1)
