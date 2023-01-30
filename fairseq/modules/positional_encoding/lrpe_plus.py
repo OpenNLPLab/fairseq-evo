@@ -43,7 +43,7 @@ class Lrpe_plus(nn.Module):
             logging.info("Core: Diag")
         elif self.core_matrix == 2:
             d = embedding_dim // 2
-            self.ratio = nn.Parameter(torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
+            self.ratio = nn.Parameter((torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
             theta = 10000 ** (-2 / d * torch.arange(d))
             # h, 1, d / 2, 1, 1
             theta = repeat(theta, 'd -> h n d', h=self.num_heads, n=1).unsqueeze(-1).unsqueeze(-1)
@@ -122,7 +122,7 @@ class Lrpe_plus(nn.Module):
         elif self.core_matrix == 2:
             return self.block_2
 
-    def diag(self, x, dim=-2, is_q=True):
+    def diag(self, x, dim=-2, is_q=True, eps=1e-3):
         # assume the input has dim : ..., h, n, d
         if dim < 0:
             dim += len(x.shape)
@@ -130,10 +130,10 @@ class Lrpe_plus(nn.Module):
         m = len(x.shape)
         if is_q:
             theta = self.theta
-            ratio = self.ratio
+            ratio = torch.sigmoid(torch.self.ratio) + eps
         else:
             theta = -self.theta
-            ratio = 1 / self.ratio
+            ratio = 1 / (torch.sigmoid(self.ratio) + eps)
         # h, 1, d
         theta = self.theta
         # 调整为相同形状
@@ -162,7 +162,7 @@ class Lrpe_plus(nn.Module):
     def element_wise_complex_real(self, t1, t2):
         return torch.complex(t1 * t2.real, t1 * t2.imag)
     
-    def block_2(self, x, dim=-2, is_q=True):
+    def block_2(self, x, dim=-2, is_q=True, eps=1e-3):
         # assume the input has dim : ..., h, n, d
         if dim < 0:
             dim += len(x.shape)
@@ -170,10 +170,10 @@ class Lrpe_plus(nn.Module):
         m = len(x.shape)
         if is_q:
             theta = self.theta
-            ratio = self.ratio
+            ratio = torch.sigmoid(self.ratio) + eps
         else:
             theta = -self.theta
-            ratio = 1 / self.ratio
+            ratio = 1 / (torch.sigmoid(self.ratio) + eps)
         # theta h, 1, d
         # ..., h, 1, d / 2, 1, 1
         for _ in range(m - 3):
