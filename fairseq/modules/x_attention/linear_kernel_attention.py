@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
-from fairseq.modules import (T5RPE, RpeVanilla, SineSPE, SPEFilter, Urpe,
+from fairseq.modules import (Lrpe_plus, T5RPE, RpeVanilla, SineSPE, SPEFilter, Urpe,
                              print_params, rope)
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
@@ -52,6 +52,8 @@ class LinearKernelAttention(nn.Module):
         use_permutate=False,
         use_krpe=False,
         max_seq_len=512,
+        # lrpe_plus
+        use_lrpe_plus=False,
         # index
         index=0,
     ):
@@ -150,6 +152,17 @@ class LinearKernelAttention(nn.Module):
             # [-(n-1),...,-1]
             self.neg = nn.Parameter(torch.randn(h, n - 1).reshape(h, n - 1))
             self.forward = self.forward_krpe
+            
+        self.use_lrpe_plus = use_lrpe_plus
+        if self.use_lrpe_plus:
+            self.lrpe_plus = Lrpe_plus(
+                core_matrix=self.core_matrix, 
+                p_matrix=self.p_matrix, 
+                embedding_dim=self.head_dim, 
+                num_heads=self.num_heads,
+            )
+            self.layer_norm = nn.LayerNorm(embed_dim)
+            self.forward = self.forward_lrpe_plus
 
     # https://github.com/cpcp1998/PermuteFormer/blob/master/language_model/permute/__init__.py
     def generate_random_permutation(self, num_head, head_size, seed):
@@ -497,6 +510,92 @@ class LinearKernelAttention(nn.Module):
                 # (N * h, L, d) -> (L, N * h, d) -> (L, N, E)
                 attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, -1)
             
+        # L, N, E
+        attn_output = self.out_proj(attn_output)
+
+        return attn_output, None
+
+    def forward_lrpe_plus(
+        self,
+        query,
+        key: Optional[Tensor],
+        value: Optional[Tensor],
+        key_padding_mask: Optional[Tensor] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        need_weights: bool = True,
+        static_kv: bool = False,
+        attn_mask: Optional[Tensor] = None,
+        before_softmax: bool = False,
+        need_head_weights: bool = False,
+        eps=1e-6,
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        """Input shape: Time x Batch x Channel
+
+        Args:
+            key_padding_mask (ByteTensor, optional): mask to exclude
+                keys that are pads, of shape `(batch, src_len)`, where
+                padding elements are indicated by 1s.
+            need_weights (bool, optional): return the attention weights,
+                averaged over heads (default: False).
+            attn_mask (ByteTensor, optional): typically used to
+                implement causal attention, where the mask prevents the
+                attention from looking forward in time (default: None).
+            before_softmax (bool, optional): return the raw attention
+                weights and values before the attention softmax.
+            need_head_weights (bool, optional): return the attention
+                weights for each head. Implies *need_weights*. Default:
+                return the average attention weights over all heads.
+        """
+        if need_head_weights:
+            need_weights = True
+
+        assert key is not None and value is not None
+
+        '''
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+          the embedding dimension.
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+          the embedding dimension.
+        '''
+        num_heads = self.num_heads
+        tgt_len, bsz, embed_dim = query.size()
+        src_len = key.size(0)
+        head_dim = embed_dim // num_heads
+
+        tgt_len, bsz, embed_dim = query.size()
+        # L, N, E
+        q = self.q_proj(query)
+        # S, N, E
+        k = self.k_proj(key)
+        # S, N, E
+        v = self.v_proj(value)
+
+        q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
+        # act
+        q = self.act(q)
+        k = self.act(k)
+        # lrpe_plus
+        q = self.lrpe_plus(q, is_q=True)
+        k = self.lrpe_plus(k, is_q=False)
+        q = torch.cat([q.real, q.imag], dim=-1)
+        k = torch.cat([k.real, k.imag], dim=-1)
+
+        if self.causal:
+            if (attn_mask == None):
+                attn_mask = (torch.triu(torch.ones(tgt_len, tgt_len)) == 1).transpose(0, 1)
+                attn_mask = attn_mask.float().masked_fill(attn_mask == 0, float('-inf')).to(q)
+            
+            weights = torch.einsum('... n d, ... m d -> ... n m', q, k)
+            if self.causal:
+                weights = weights.masked_fill(attn_mask==float("-inf"), 0)
+            attn_output = torch.einsum('... n m, ... m d -> ... n d', weights, v)
+        else:
+            kv = torch.einsum('... n d, ... n e -> ... d e', k, v)
+            attn_output = torch.einsum('... n d, ... de -> ... n e', q, kv)
+        attn_output = rearrange(attn_output, 'b h n d -> n b (h d)')
+        attn_output = self.layer_norm(attn_output)
         # L, N, E
         attn_output = self.out_proj(attn_output)
 

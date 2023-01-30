@@ -1169,3 +1169,41 @@ def transformer_1_elu_l_unl_wiki_base_per(args):
 ##### per
 ##### abl
 ########## icml
+
+########## lrpe plus
+@register_model_architecture("linear_urpe_lm", "1+elu_lrpe_plus_diag_identity")
+def transformer_1_elu_lrpe_plus_diag_identity(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_lrpe_plus = True
+    args.core_matrix = 1
+    args.p_matrix = 1
+    
+@register_model_architecture("linear_urpe_lm", "1+elu_lrpe_plus_diag_diag")
+def transformer_1_elu_lrpe_plus_diag_diag(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_lrpe_plus = True
+    args.core_matrix = 1
+    args.p_matrix = 2
+    
+@register_model_architecture("linear_urpe_lm", "1+elu_lrpe_plus_block_identity")
+def transformer_1_elu_lrpe_plus_block_identity(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_lrpe_plus = True
+    args.core_matrix = 2
+    args.p_matrix = 1
+    
+@register_model_architecture("linear_urpe_lm", "1+elu_lrpe_plus_block_diag")
+def transformer_1_elu_lrpe_plus_block_diag(args):
+    base_lm_architecture(args)
+    args.causal = True
+    ##### add
+    args.use_lrpe_plus = True
+    args.core_matrix = 2
+    args.p_matrix = 2
+########## lrpe plus

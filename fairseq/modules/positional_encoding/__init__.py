@@ -1,4 +1,4 @@
-
+from .lrpe_plus import Lrpe_plus
 from .rope import rope
 from .rpe_vanilla import RpeVanilla
 from .spe import ConvSPE, SineSPE, SPEFilter

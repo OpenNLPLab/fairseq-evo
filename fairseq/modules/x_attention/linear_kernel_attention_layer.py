@@ -44,6 +44,7 @@ class LinearKernelAttentionEncoderLayer(TransformerEncoderLayer):
             use_permutate=getattr(args, "use_permutate", False),
             use_krpe=getattr(args, "use_krpe", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            use_lrpe_plus=getattr(args, "use_lrpe_plus", False),
             # index
             index=args.index
         )
@@ -81,6 +82,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             use_permutate=getattr(args, "use_permutate", False),
             use_krpe=getattr(args, "use_krpe", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            use_lrpe_plus=getattr(args, "use_lrpe_plus", False),
             # index
             index=args.index
         )
@@ -110,6 +112,7 @@ class LinearKernelAttentionDecoderLayer(TransformerDecoderLayer):
             use_permutate=getattr(args, "use_permutate", False),
             use_krpe=getattr(args, "use_krpe", False),
             max_seq_len=getattr(args, "max_seq_len", 512),
+            use_lrpe_plus=getattr(args, "use_lrpe_plus", False),
             # index
             index=args.index
         )
