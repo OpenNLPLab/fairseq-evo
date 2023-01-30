@@ -130,7 +130,7 @@ class Lrpe_plus(nn.Module):
         m = len(x.shape)
         if is_q:
             theta = self.theta
-            ratio = torch.sigmoid(torch.self.ratio) + eps
+            ratio = torch.sigmoid(self.ratio) + eps
         else:
             theta = -self.theta
             ratio = 1 / (torch.sigmoid(self.ratio) + eps)
