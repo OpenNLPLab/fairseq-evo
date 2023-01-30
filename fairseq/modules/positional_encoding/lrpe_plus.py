@@ -2,6 +2,7 @@
 # - https://github.com/zh217/torch-dct/issues/15
 
 import logging
+import math
 
 import numpy as np
 import torch
@@ -10,6 +11,19 @@ import torch.nn as nn
 from fairseq.modules import print_params
 
 from einops import repeat, rearrange
+
+# from alibi
+def get_slopes(n):
+    def get_slopes_power_of_2(n):
+        start = (2**(-2**-(math.log2(n)-3)))
+        ratio = start
+        return [start*ratio**i for i in range(n)]
+
+    if math.log2(n).is_integer():
+        return get_slopes_power_of_2(n)                   #In the paper, we only train models that have 2^a heads for some a. This function has
+    else:                                                 #some good properties that only occur when the input is a power of 2. To maintain that even
+        closest_power_of_2 = 2**math.floor(math.log2(n))  #when the number of heads is not a power of 2, we use this workaround. 
+        return get_slopes_power_of_2(closest_power_of_2) + get_slopes(2*closest_power_of_2)[0::2][:n-closest_power_of_2]
 
 class Lrpe_plus(nn.Module):
     def __init__(
@@ -36,14 +50,18 @@ class Lrpe_plus(nn.Module):
 
         if self.core_matrix == 1:
             d = embedding_dim
-            self.ratio = nn.Parameter(torch.sigmoid(torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
+            # self.ratio = nn.Parameter((torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
+            ratio = torch.exp(-torch.Tensor(get_slopes(self.num_heads)).reshape(-1, 1, 1))
+            self.ratio = nn.Parameter(ratio, requires_grad=False)
             theta = 10000 ** (-2 / d * torch.arange(d))
             theta = repeat(theta, 'd -> h n d', h=self.num_heads, n=1)
             self.theta = nn.Parameter(theta, requires_grad=True)
             logging.info("Core: Diag")
         elif self.core_matrix == 2:
             d = embedding_dim // 2
-            self.ratio = nn.Parameter((torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
+            # self.ratio = nn.Parameter((torch.arange(self.num_heads) / self.num_heads * 3 + 2).reshape(-1, 1, 1), requires_grad=True)
+            ratio = torch.exp(-torch.Tensor(get_slopes(self.num_heads)).reshape(-1, 1, 1))
+            self.ratio = nn.Parameter(ratio, requires_grad=False)
             theta = 10000 ** (-2 / d * torch.arange(d))
             # h, 1, d / 2, 1, 1
             theta = repeat(theta, 'd -> h n d', h=self.num_heads, n=1).unsqueeze(-1).unsqueeze(-1)
@@ -130,10 +148,12 @@ class Lrpe_plus(nn.Module):
         m = len(x.shape)
         if is_q:
             theta = self.theta
-            ratio = torch.sigmoid(self.ratio) + eps
+            # ratio = torch.sigmoid(self.ratio) + eps
+            ratio = self.ratio
         else:
             theta = -self.theta
-            ratio = 1 / (torch.sigmoid(self.ratio) + eps)
+            # ratio = 1 / (torch.sigmoid(self.ratio) + eps)
+            ratio = 1 / self.ratio
         # h, 1, d
         theta = self.theta
         # 调整为相同形状
@@ -170,10 +190,12 @@ class Lrpe_plus(nn.Module):
         m = len(x.shape)
         if is_q:
             theta = self.theta
-            ratio = torch.sigmoid(self.ratio) + eps
+            # ratio = torch.sigmoid(self.ratio) + eps
+            ratio = self.ratio
         else:
             theta = -self.theta
-            ratio = 1 / (torch.sigmoid(self.ratio) + eps)
+            # ratio = 1 / (torch.sigmoid(self.ratio) + eps)
+            ratio = 1 / self.ratio
         # theta h, 1, d
         # ..., h, 1, d / 2, 1, 1
         for _ in range(m - 3):
