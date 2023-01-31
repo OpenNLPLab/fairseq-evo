@@ -634,6 +634,8 @@ def ctnn_lm_pre(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
+    # ada
+    args.coef_update_freq = 100
 
 @register_model_architecture("ctnn_lm", "ctnn_lm_pre_ada")
 def ctnn_lm_pre_ada(args):
@@ -717,6 +719,8 @@ def ctnn_lm_post(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
+    # ada
+    args.coef_update_freq = 100
 
 @register_model_architecture("ctnn_lm", "ctnn_lm_post_ada")
 def ctnn_lm_post_ada(args):
