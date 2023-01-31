@@ -92,11 +92,9 @@ class TransformerSpeLanguageModel(TransformerLanguageModel):
 def transformer_lm_spe_sincos(args):
     base_lm_architecture(args)
     args.max_seq = 512
-    args.max_seq = 2
     
 @register_model_architecture("transformer_spe_lm", "transformer_lm_spe_learned")
 def transformer_lm_spe_learned(args):
     base_lm_architecture(args)
     args.decoder_learned_pos = True
     args.max_seq = 512
-    args.max_seq = 2
