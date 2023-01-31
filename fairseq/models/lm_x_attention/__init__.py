@@ -12,6 +12,7 @@ from .rela_lm import *
 from .sparse_transformer_lm import *
 from .transformer_cos_lm import *
 from .transformer_plus_lm import *
+from .transformer_spe_lm import *
 from .transformer_rpe_lm import *
 from .transnormer_v2_lm import *
 from .weight_linear_lm import *

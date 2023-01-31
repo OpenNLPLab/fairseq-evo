@@ -20,5 +20,6 @@ from .transformer_cos import TransformerCosDecoder, TransformerCosEncoder
 from .transformer_plus import (TransfomerPlusModel, TransformerDecoderPlus,
                                TransformerEncoderPlus)
 from .transformer_rpe import TransformerRpeDecoder
+from .transformer_spe import TransformerSpeDecoder
 from .transnormer_v2 import TransnormerV2Decoder, TransnormerV2Encoder
 from .weight_linear import WeightLinearDecoder, WeightLinearEncoder
