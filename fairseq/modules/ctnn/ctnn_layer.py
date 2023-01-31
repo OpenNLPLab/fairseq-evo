@@ -208,6 +208,21 @@ class CtnnDecoderLayer(nn.Module):
         self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
 
         self.final_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
+        
+        # adaptive coef
+        self.use_ada_coef = getattr(args, 'use_ada_coef', False)
+        logging_info(f"use_ada_coef: {self.use_ada_coef}")
+        if self.use_ada_coef:
+            self.token_coef = nn.Parameter(torch.ones(1, 1, self.embed_dim), requires_grad=False)
+            self.feature_coef = nn.Parameter(torch.ones(1, 1, self.embed_dim), requires_grad=False)
+            self.alpha = getattr(args, 'alpha', 0.99)
+            self.update_freq = getattr(args, 'update_freq', [1])[-1]
+            self.coef_update_freq = getattr(args, 'coef_update_freq', 100) * self.update_freq
+            self.cnt = 0
+            self.index = getattr(args, 'index', 0)
+            logging_info(f"update_freq: {self.update_freq}")
+            logging_info(f"coef_update_freq: {self.coef_update_freq}")
+            logging_info(f"alpha: {self.alpha}")
 
         self.need_attn = True
 
@@ -292,6 +307,10 @@ class CtnnDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
+        # adaptive coef
+        if self.use_ada_coef:
+            self.cnt += 1
+        
         if need_head_weights:
             need_attn = True
 
@@ -350,7 +369,27 @@ class CtnnDecoderLayer(nn.Module):
 
         x = self.dropout_module(x)
 
-        x = self.residual_connection(x, residual)
+        # adaptive coef
+        if self.use_ada_coef:
+            c = x.shape[0] * x.shape[1]
+            if  self.cnt % self.coef_update_freq == 0:
+                with torch.no_grad():
+                    sigma1 = ((residual ** 2).sum(dim=0).sum(dim=0).reshape(1, 1, -1) / c) ** 0.5
+                    sigma2 = ((x ** 2).sum(dim=0).sum(dim=0).reshape(1, 1, -1) / c) ** 0.5
+                    sigma = sigma1 / sigma2
+                    self.token_coef.data = self.alpha * sigma + (1 - self.alpha) * self.token_coef.data
+                    # mean
+                    sigma1_mean = torch.mean(sigma1)
+                    sigma2_mean = torch.mean(sigma2)
+                    coef_mean = sigma1_mean / sigma2_mean
+                logging_info(f"Layer {self.index}")
+                logging_info(f"Mean of Token mixer")
+                logging_info(f"Mean of x: {sigma1_mean}")
+                logging_info(f"Mean of f(x): {sigma2_mean}")
+                logging_info(f"Mean of coef: {coef_mean}")
+            x = self.residual_connection(self.token_coef * x, residual)
+        else:
+            x = self.residual_connection(x, residual)
 
         if not self.normalize_before:
             x = self.self_attn_layer_norm(x)
@@ -394,7 +433,25 @@ class CtnnDecoderLayer(nn.Module):
             x = self.final_layer_norm(x)
         x = self.glu(x)
         x = self.dropout_module(x)
-        x = self.residual_connection(x, residual)
+        if self.use_ada_coef:
+            c = x.shape[0] * x.shape[1]
+            if  self.cnt % self.coef_update_freq == 0:
+                with torch.no_grad():
+                    sigma1 = ((residual ** 2).sum(dim=0).sum(dim=0).reshape(1, 1, -1) / c) ** 0.5
+                    sigma2 = ((x ** 2).sum(dim=0).sum(dim=0).reshape(1, 1, -1) / c) ** 0.5
+                    sigma = sigma1 / sigma2
+                    self.feature_coef.data = self.alpha * sigma + (1 - self.alpha) * self.feature_coef.data
+                    # mean
+                    sigma1_mean = torch.mean(sigma1)
+                    sigma2_mean = torch.mean(sigma2)
+                    coef_mean = sigma1_mean / sigma2_mean
+                logging_info(f"Mean of Feature mixer")
+                logging_info(f"Mean of x: {sigma1_mean}")
+                logging_info(f"Mean of f(x): {sigma2_mean}")
+                logging_info(f"Mean of coef: {coef_mean}")
+            x = self.residual_connection(self.feature_coef * x, residual)
+        else:
+            x = self.residual_connection(x, residual)
 
         if not self.normalize_before:
             x = self.final_layer_norm(x)

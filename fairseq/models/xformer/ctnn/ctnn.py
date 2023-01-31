@@ -218,19 +218,19 @@ class CtnnDecoder(TransformerDecoder):
         x = self.dropout_module(x)
 
         self.update_cache(x)
-        index = self.index
+        n = x.shape[1]
+        index = self.index[:n]
         vander = self.vander
         if not self.causal:
             # 1, n, 1
-            decay = torch.cat([self.zero, self.pos, self.zero, self.neg], dim=1)
+            decay = torch.cat([self.zero, self.pos[:, :n - 1], self.zero, self.neg[:, -(n-1):]], dim=1)
             # n, 1
-            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos, self.rpe_zero, self.rpe_neg], dim=0)
+            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos[:n - 1], self.rpe_zero, self.rpe_neg[-(n-1):]], dim=0)
         else:
             # 1, n, 1
-            decay = torch.cat([self.zero, self.pos], dim=1)
+            decay = torch.cat([self.zero, self.pos[:, :n - 1]], dim=1)
             # n, 1
-            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos], dim=0)
-
+            rpe_input = torch.cat([self.rpe_zero, self.rpe_pos[:n - 1]], dim=0)
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
 

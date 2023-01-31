@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torch.nn.utils import weight_norm
 
 from ..helpers import get_activation_fn, get_norm_fn, print_params
 from ..norm import SimpleRMSNorm
@@ -10,8 +11,8 @@ class Rpe(nn.Module):
         self, 
         dim, 
         outdim, 
-        residual=False, 
-        act="relu", 
+        residual=True, 
+        act="sine", 
         bias=True, 
         layers=3, 
         norm_type="simplermsnorm",
@@ -26,20 +27,20 @@ class Rpe(nn.Module):
         self.outdim = outdim
         self.pos_dim = dim
         self.act = act
-        self.pos_proj = nn.Linear(1, self.pos_dim, bias=bias)
+        self.pos_proj = weight_norm(nn.Linear(1, self.pos_dim, bias=bias))
         self.layers = nn.ModuleList([])
         for i in range(layers):
             self.layers.append(
                 nn.Sequential(
                     get_norm_fn(norm_type)(self.pos_dim),
                     self.get_act(),
-                    nn.Linear(self.pos_dim, self.pos_dim, bias=bias),
+                    weight_norm(nn.Linear(self.pos_dim, self.pos_dim, bias=bias)),
                 )
             )
         self.out = nn.Sequential(
             get_norm_fn(norm_type)(self.pos_dim),
             self.get_act(),
-            nn.Linear(self.pos_dim, self.outdim, bias=bias),
+            weight_norm(nn.Linear(self.pos_dim, self.outdim, bias=bias)),
         )
         
     def get_act(self):

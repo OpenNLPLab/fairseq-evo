@@ -613,3 +613,129 @@ def ctnn_lm_22_pre_sine_wn(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim * 2
+
+##### ada
+# pre
+@register_model_architecture("ctnn_lm", "ctnn_lm_pre")
+def ctnn_lm_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_pre_ada")
+def ctnn_lm_pre_ada(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # ada
+    args.use_ada_coef = True
+    args.coef_update_freq = 100
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_22_pre")
+def ctnn_lm_22_pre(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 2
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim * 2
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_22_pre_ada")
+def ctnn_lm_22_pre_ada(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 2
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim * 2
+    # ada
+    args.use_ada_coef = True
+    args.coef_update_freq = 100
+    
+# post
+@register_model_architecture("ctnn_lm", "ctnn_lm_post")
+def ctnn_lm_post(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = False
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
+@register_model_architecture("ctnn_lm", "ctnn_lm_post_ada")
+def ctnn_lm_post_ada(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = False
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 6
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.norm_type = "simplermsnorm"
+    args.gamma = 0.99
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # ada
+    args.use_ada_coef = True
+    args.coef_update_freq = 100
