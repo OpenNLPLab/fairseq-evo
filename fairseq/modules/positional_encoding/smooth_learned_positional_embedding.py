@@ -21,7 +21,7 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
     """
 
     def __init__(self, num_embeddings: int, embedding_dim: int, padding_idx: int, max_seq=512):
-        super().__init__(num_embeddings, embedding_dim, padding_idx)
+        super().__init__(max_seq + padding_idx + 1, embedding_dim, padding_idx)
         self.onnx_trace = False
         if self.padding_idx is not None:
             self.max_positions = self.num_embeddings - self.padding_idx - 1
@@ -47,7 +47,7 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
         pos_embedding = 0
         n = len(pos_list)
         for i in range(n):
-            pos_embedding += coef_list[i] * \
+            pos_embedding += coef_list[i].unsqueeze(-1) * \
                              F.embedding(
                                 pos_list[i],
                                 self.weight,

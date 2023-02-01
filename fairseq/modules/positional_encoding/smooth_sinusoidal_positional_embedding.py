@@ -85,7 +85,7 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
         n = len(pos_list)
         
         for i in range(n):
-            pos_embedding += coef_list[i] * \
+            pos_embedding += coef_list[i].unsqueeze(-1) * \
                             (
                                 self.weights.index_select(0, pos_list[i].view(-1))
                                 .view(bsz, seq_len, -1)

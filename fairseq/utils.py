@@ -263,6 +263,38 @@ def make_positions(tensor, padding_idx: int, onnx_trace: bool = False):
 ##### smooth position
 import numpy as np
 
+# def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, max_seq=512):
+#     """Replace non-padding symbols with their position numbers.
+
+#     Position numbers begin at padding_idx+1. Padding symbols are ignored.
+#     """
+#     # The series of casts and type-conversions here are carefully
+#     # balanced to both work with ONNX export and XLA. In particular XLA
+#     # prefers ints, cumsum defaults to output longs, and ONNX doesn't know
+#     # how to handle the dtype kwarg in cumsum.
+#     mask = tensor.ne(padding_idx).int()
+#     index = torch.cumsum(mask, dim=1).type_as(mask)
+#     # seqlength
+#     n = mask.shape[1]
+#     l = int(np.log(n) / np.log(max_seq))
+#     d = max_seq ** l
+#     pos_list = []
+#     coef_list = []
+#     base = 1
+
+#     for i in range(l + 1):
+#         # compute
+#         pos = torch.remainder(index, max_seq)
+#         coef = base / d
+#         # append
+#         pos_list.append((pos * mask).long() + padding_idx)
+#         coef_list.append(coef)
+#         # update
+#         base *= max_seq
+#         index = torch.div(index, max_seq, rounding_mode='trunc')
+    
+#     return pos_list, coef_list
+
 def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, max_seq=512):
     """Replace non-padding symbols with their position numbers.
 
@@ -273,21 +305,24 @@ def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, ma
     # prefers ints, cumsum defaults to output longs, and ONNX doesn't know
     # how to handle the dtype kwarg in cumsum.
     mask = tensor.ne(padding_idx).int()
-    index = torch.cumsum(mask, dim=1).type_as(mask)
+    # 1,...,n -> 0,...,n - 1
+    index = (torch.cumsum(mask, dim=1).type_as(mask) * mask).long() - 1
     # seqlength
     n = mask.shape[1]
     l = int(np.log(n) / np.log(max_seq))
     d = max_seq ** l
+    
     pos_list = []
     coef_list = []
-    base = 1
+    base = torch.ones_like(index)
 
     for i in range(l + 1):
         # compute
         pos = torch.remainder(index, max_seq)
         coef = base / d
+        coef[pos == 0] = 0
         # append
-        pos_list.append((pos * mask).long() + padding_idx)
+        pos_list.append((pos * mask).long() + padding_idx + 1)
         coef_list.append(coef)
         # update
         base *= max_seq
