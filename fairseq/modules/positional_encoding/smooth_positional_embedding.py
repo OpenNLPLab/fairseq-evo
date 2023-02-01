@@ -15,6 +15,7 @@ def SmoothPositionalEmbedding(
     padding_idx: int,
     learned: bool = False,
     max_seq=512,
+    method=1,
 ):
     if learned:
         # if padding_idx is specified then offset the embedding ids by
@@ -23,7 +24,7 @@ def SmoothPositionalEmbedding(
         # LearnedPositionalEmbedding. Move this there for a cleaner implementation.
         if padding_idx is not None:
             num_embeddings = num_embeddings + padding_idx + 1
-        m = SmoothLearnedPositionalEmbedding(num_embeddings, embedding_dim, padding_idx, max_seq=max_seq)
+        m = SmoothLearnedPositionalEmbedding(num_embeddings, embedding_dim, padding_idx, max_seq=max_seq, method=method)
         nn.init.normal_(m.weight, mean=0, std=embedding_dim ** -0.5)
         if padding_idx is not None:
             nn.init.constant_(m.weight[padding_idx], 0)
@@ -33,5 +34,6 @@ def SmoothPositionalEmbedding(
             padding_idx,
             init_size=num_embeddings + padding_idx + 1,
             max_seq=max_seq,
+            method=method
         )
     return m

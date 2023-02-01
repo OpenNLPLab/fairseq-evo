@@ -351,10 +351,10 @@ def make_group_positions(tensor, padding_idx: int, onnx_trace: bool = False, max
     k = 0
     for i in range(max_seq):
         for j in range(group):
-            index[:, k] = i + 1
-            k += 1
             if k == n:
                 break
+            index[:, k] = i + 1
+            k += 1
     
     return (index * mask).long() + padding_idx
 ##### smooth position

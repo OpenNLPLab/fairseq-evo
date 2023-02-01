@@ -18,7 +18,7 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
     Padding symbols are ignored.
     """
 
-    def __init__(self, embedding_dim, padding_idx, init_size=1024, max_seq=512):
+    def __init__(self, embedding_dim, padding_idx, init_size=1024, max_seq=512, method=1):
         super().__init__()
         self.embedding_dim = embedding_dim
         self.padding_idx = padding_idx if padding_idx is not None else 0
@@ -29,6 +29,7 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
         self.register_buffer("_float_tensor", torch.FloatTensor(1))
         self.max_positions = int(1e5)
         self.max_seq = max_seq
+        self.method = method
         
 
     def prepare_for_onnx_export_(self):
@@ -81,25 +82,26 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
             input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
         )
 
-        pos_embedding = 0
-        n = len(pos_list)
-        
-        for i in range(n):
-            pos_embedding += coef_list[i].unsqueeze(-1) * \
-                            (
-                                self.weights.index_select(0, pos_list[i].view(-1))
-                                .view(bsz, seq_len, -1)
-                                .detach()
-                            )
-        
-        return pos_embedding
-        
-        # positions = utils.make_group_positions(
-        #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-        # )
-        
-        # return (
-        #     self.weights.index_select(0, positions.view(-1))
-        #     .view(bsz, seq_len, -1)
-        #     .detach()
-        # )
+        if self.method == 1:
+            pos_embedding = 0
+            n = len(pos_list)
+            
+            for i in range(n):
+                pos_embedding += coef_list[i].unsqueeze(-1) * \
+                                (
+                                    self.weights.index_select(0, pos_list[i].view(-1))
+                                    .view(bsz, seq_len, -1)
+                                    .detach()
+                                )
+            
+            return pos_embedding
+        elif self.method == 2:
+            positions = utils.make_group_positions(
+                input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            )
+            
+            return (
+                self.weights.index_select(0, positions.view(-1))
+                .view(bsz, seq_len, -1)
+                .detach()
+            )

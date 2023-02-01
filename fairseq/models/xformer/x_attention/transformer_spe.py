@@ -173,14 +173,17 @@ class TransformerSpeDecoder(TransformerDecoder):
         super().__init__(args, dictionary, embed_tokens, no_encoder_attn, output_projection)
         # smooth pe
         max_seq = getattr(args, "max_seq", 512)
-        logging_info(f"max_seq: {max_seq}")
+        method = getattr(args, "method", 1)
+        logging_info(f"max_seq {max_seq}")
+        logging_info(f"method {method}")
         self.embed_positions = (
             SmoothPositionalEmbedding(
                 self.max_target_positions,
                 self.embed_dim,
                 self.padding_idx,
                 learned=args.decoder_learned_pos,
-                max_seq=max_seq
+                max_seq=max_seq,
+                method=method,
             )
             # if not args.no_token_positional_embeddings
             if not args.no_decoder_token_positional_embeddings

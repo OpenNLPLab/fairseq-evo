@@ -20,7 +20,7 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
     position ids are passed to the forward function.
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int, padding_idx: int, max_seq=512):
+    def __init__(self, num_embeddings: int, embedding_dim: int, padding_idx: int, max_seq=512, method=1):
         super().__init__(max_seq + padding_idx + 1, embedding_dim, padding_idx)
         self.onnx_trace = False
         if self.padding_idx is not None:
@@ -28,6 +28,7 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
         else:
             self.max_positions = self.num_embeddings
         self.max_seq = max_seq
+        self.method = method
 
     def forward(
         self,
@@ -44,32 +45,33 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
             input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
         )
         
-        pos_embedding = 0
-        n = len(pos_list)
-        for i in range(n):
-            pos_embedding += coef_list[i].unsqueeze(-1) * \
-                             F.embedding(
-                                pos_list[i],
-                                self.weight,
-                                self.padding_idx,
-                                self.max_norm,
-                                self.norm_type,
-                                self.scale_grad_by_freq,
-                                self.sparse,
-                            )
-        
-        return pos_embedding
-        
-        # positions = utils.make_group_positions(
-        #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-        # )
-        
-        # return F.embedding(
-        #     positions,
-        #     self.weight,
-        #     self.padding_idx,
-        #     self.max_norm,
-        #     self.norm_type,
-        #     self.scale_grad_by_freq,
-        #     self.sparse,
-        # )
+        if self.method == 1:
+            pos_embedding = 0
+            n = len(pos_list)
+            for i in range(n):
+                pos_embedding += coef_list[i].unsqueeze(-1) * \
+                                F.embedding(
+                                    pos_list[i],
+                                    self.weight,
+                                    self.padding_idx,
+                                    self.max_norm,
+                                    self.norm_type,
+                                    self.scale_grad_by_freq,
+                                    self.sparse,
+                                )
+            
+            return pos_embedding
+        else:
+            positions = utils.make_group_positions(
+                input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            )
+
+            return F.embedding(
+                positions,
+                self.weight,
+                self.padding_idx,
+                self.max_norm,
+                self.norm_type,
+                self.scale_grad_by_freq,
+                self.sparse,
+            )
