@@ -88,17 +88,28 @@ class TransformerSpeLanguageModel(TransformerLanguageModel):
         )
         return cls(decoder)
 
-@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_sincos")
-def transformer_lm_spe_sincos(args):
+@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_sincos_m1")
+def transformer_lm_spe_sincos_m1(args):
+    base_lm_architecture(args)
+    args.max_seq = 512
+    args.method = 1
+    
+@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_learned_m1")
+def transformer_lm_spe_learned_m1(args):
+    base_lm_architecture(args)
+    args.decoder_learned_pos = True
+    args.max_seq = 512
+    args.method = 1
+
+@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_sincos_m2")
+def transformer_lm_spe_sincos_m2(args):
     base_lm_architecture(args)
     args.max_seq = 512
     args.method = 2
-    # args.max_seq = 4
     
-@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_learned")
-def transformer_lm_spe_learned(args):
+@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_learned_m2")
+def transformer_lm_spe_learned_m2(args):
     base_lm_architecture(args)
     args.decoder_learned_pos = True
     args.max_seq = 512
     args.method = 2
-    # args.max_seq = 4
