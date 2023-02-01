@@ -93,3 +93,13 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
                             )
         
         return pos_embedding
+        
+        # positions = utils.make_group_positions(
+        #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+        # )
+        
+        # return (
+        #     self.weights.index_select(0, positions.view(-1))
+        #     .view(bsz, seq_len, -1)
+        #     .detach()
+        # )

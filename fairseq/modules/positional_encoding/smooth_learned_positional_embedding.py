@@ -59,3 +59,17 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
                             )
         
         return pos_embedding
+        
+        # positions = utils.make_group_positions(
+        #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+        # )
+        
+        # return F.embedding(
+        #     positions,
+        #     self.weight,
+        #     self.padding_idx,
+        #     self.max_norm,
+        #     self.norm_type,
+        #     self.scale_grad_by_freq,
+        #     self.sparse,
+        # )
