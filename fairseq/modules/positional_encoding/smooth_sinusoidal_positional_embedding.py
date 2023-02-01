@@ -30,7 +30,7 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
         self.max_positions = int(1e5)
         self.max_seq = max_seq
         self.method = method
-        
+        self.cnt = 1
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -100,6 +100,22 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
                 input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
             )
             
+            return (
+                self.weights.index_select(0, positions.view(-1))
+                .view(bsz, seq_len, -1)
+                .detach()
+            )
+        elif self.method == 3:
+            if self.training:
+                positions = utils.make_group_positions_training(
+                    input, self.padding_idx, onnx_trace=self.onnx_trace, group=self.cnt
+                )
+                self.cnt = (self.cnt + 1) % self.max_seq
+            else:
+                positions = utils.make_group_positions(
+                    input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+                )
+                
             return (
                 self.weights.index_select(0, positions.view(-1))
                 .view(bsz, seq_len, -1)
