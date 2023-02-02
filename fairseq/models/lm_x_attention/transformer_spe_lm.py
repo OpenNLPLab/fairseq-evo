@@ -100,6 +100,21 @@ def transformer_lm_spe_learned_m1(args):
     args.decoder_learned_pos = True
     args.max_seq = 512
     args.method = 1
+    
+@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_sincos_m1_penorm")
+def transformer_lm_spe_sincos_m1_penorm(args):
+    base_lm_architecture(args)
+    args.max_seq = 512
+    args.method = 1
+    args.use_penorm = True
+    
+@register_model_architecture("transformer_spe_lm", "transformer_lm_spe_learned_m1_penorm")
+def transformer_lm_spe_learned_m1_penorm(args):
+    base_lm_architecture(args)
+    args.decoder_learned_pos = True
+    args.max_seq = 512
+    args.method = 1
+    args.use_penorm = True
 
 @register_model_architecture("transformer_spe_lm", "transformer_lm_spe_sincos_m2")
 def transformer_lm_spe_sincos_m2(args):
