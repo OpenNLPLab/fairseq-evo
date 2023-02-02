@@ -323,12 +323,12 @@ def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, ma
         # compute
         pos = torch.remainder(index, max_seq)
         # coef = base.clone() / d
-        # coef = base.clone() / d
-        coef = base.clone()
+        coef = base.clone() / d
+        # coef = base.clone()
         coef[pos == 0] = 0
         if i == 0:
-            # coef[:, 0] = 1 / d
-            coef[:, 0] = 1
+            coef[:, 0] = 1 / d
+            # coef[:, 0] = 1
         # append
         pos_list.append((pos * mask).long() + padding_idx + 1)
         coef_list.append(coef)
