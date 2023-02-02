@@ -310,7 +310,9 @@ def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, ma
     index = (torch.cumsum(mask, dim=1).type_as(mask) * mask).long() - 1
     # seqlength
     n = mask.shape[1]
-    l = int(np.log(n) / np.log(max_seq))
+    l = int(np.log(max(1, n - 1)) / np.log(max_seq))
+    # if max_seq ** l != n:
+    #     l += 1
     d = max_seq ** l
     
     pos_list = []
@@ -320,9 +322,12 @@ def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, ma
     for i in range(l + 1):
         # compute
         pos = torch.remainder(index, max_seq)
-        coef = base / d
+        # coef = base.clone() / d
+        # coef = base.clone() / d
+        coef = base.clone()
         coef[pos == 0] = 0
         if i == 0:
+            # coef[:, 0] = 1 / d
             coef[:, 0] = 1
         # append
         pos_list.append((pos * mask).long() + padding_idx + 1)

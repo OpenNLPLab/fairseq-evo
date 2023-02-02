@@ -22,6 +22,7 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
 
     def __init__(self, num_embeddings: int, embedding_dim: int, padding_idx: int, max_seq=512, method=1):
         super().__init__(max_seq + padding_idx + 1, embedding_dim, padding_idx)
+        self.num_embeddings = num_embeddings
         self.onnx_trace = False
         if self.padding_idx is not None:
             self.max_positions = self.num_embeddings - self.padding_idx - 1
@@ -41,14 +42,14 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
         assert (positions is None) or (
             self.padding_idx is None
         ), "If positions is pre-computed then padding_idx should not be set."
-
-        pos_list, coef_list = utils.make_smooth_positions(
-            input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-        )
         
         if self.method == 1:
+            pos_list, coef_list = utils.make_smooth_positions(
+                input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            )
             pos_embedding = 0
             n = len(pos_list)
+            
             for i in range(n):
                 pos_embedding += coef_list[i].unsqueeze(-1) * \
                                 F.embedding(

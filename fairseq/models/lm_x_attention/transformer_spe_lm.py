@@ -93,7 +93,6 @@ def transformer_lm_spe_sincos_m1(args):
     base_lm_architecture(args)
     args.max_seq = 512
     args.method = 1
-    args.max_seq = 2
     
 @register_model_architecture("transformer_spe_lm", "transformer_lm_spe_learned_m1")
 def transformer_lm_spe_learned_m1(args):
@@ -101,7 +100,6 @@ def transformer_lm_spe_learned_m1(args):
     args.decoder_learned_pos = True
     args.max_seq = 512
     args.method = 1
-    args.max_seq = 2
 
 @register_model_architecture("transformer_spe_lm", "transformer_lm_spe_sincos_m2")
 def transformer_lm_spe_sincos_m2(args):

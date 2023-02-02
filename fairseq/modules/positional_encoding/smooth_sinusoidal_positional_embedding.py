@@ -78,11 +78,10 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
             )
         self.weights = self.weights.to(self._float_tensor)
 
-        pos_list, coef_list = utils.make_smooth_positions(
-            input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-        )
-
         if self.method == 1:
+            pos_list, coef_list = utils.make_smooth_positions(
+                input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            )
             pos_embedding = 0
             n = len(pos_list)
             
