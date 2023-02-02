@@ -295,7 +295,6 @@ import numpy as np
     
 #     return pos_list, coef_list
 
-# has bug
 def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, max_seq=512):
     """Replace non-padding symbols with their position numbers.
 
@@ -338,6 +337,33 @@ def make_smooth_positions(tensor, padding_idx: int, onnx_trace: bool = False, ma
     
     return pos_list, coef_list
 
+# def make_group_positions(tensor, padding_idx: int, onnx_trace: bool = False, max_seq=512):
+#     """Replace non-padding symbols with their position numbers.
+
+#     Position numbers begin at padding_idx+1. Padding symbols are ignored.
+#     """
+#     # The series of casts and type-conversions here are carefully
+#     # balanced to both work with ONNX export and XLA. In particular XLA
+#     # prefers ints, cumsum defaults to output longs, and ONNX doesn't know
+#     # how to handle the dtype kwarg in cumsum.
+#     mask = tensor.ne(padding_idx).int()
+#     # 1,...,n -> 0,...,n - 1
+#     index = (torch.ones_like(tensor) * mask).long()
+#     # seqlength
+#     n = mask.shape[1]
+#     group = n // max_seq
+#     if n % max_seq != 0:
+#         group += 1
+#     k = 0
+#     for i in range(max_seq):
+#         for j in range(group):
+#             if k == n:
+#                 break
+#             index[:, k] = i + 1
+#             k += 1
+    
+#     return (index * mask).long() + padding_idx
+
 def make_group_positions(tensor, padding_idx: int, onnx_trace: bool = False, max_seq=512):
     """Replace non-padding symbols with their position numbers.
 
@@ -353,8 +379,6 @@ def make_group_positions(tensor, padding_idx: int, onnx_trace: bool = False, max
     # seqlength
     n = mask.shape[1]
     group = n // max_seq
-    if n % max_seq != 0:
-        group += 1
     k = 0
     for i in range(max_seq):
         for j in range(group):
@@ -362,8 +386,12 @@ def make_group_positions(tensor, padding_idx: int, onnx_trace: bool = False, max
                 break
             index[:, k] = i + 1
             k += 1
+    while k < n:
+        index[:, k] = max_seq
+        k += 1
     
     return (index * mask).long() + padding_idx
+
 
 def make_group_positions_training(tensor, padding_idx: int, onnx_trace: bool = False, group=1):
     """Replace non-padding symbols with their position numbers.
