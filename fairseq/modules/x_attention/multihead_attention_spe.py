@@ -20,7 +20,7 @@ from fairseq.modules.quant_noise import quant_noise
 
 
 @with_incremental_state
-class MultiheadAttentionRpe(nn.Module):
+class MultiheadAttentionSpe(nn.Module):
     """Multi-headed attention.
 
     See "Attention Is All You Need" for more details.
@@ -43,10 +43,12 @@ class MultiheadAttentionRpe(nn.Module):
         # add
         index=0,
         data_save_dir="rpe",
+        max_seq=512,
     ):
         # add
         self.index = index
         self.data_save_dir = data_save_dir
+        self.max_seq = max_seq
 
         super().__init__()
         self.embed_dim = embed_dim
@@ -167,8 +169,7 @@ class MultiheadAttentionRpe(nn.Module):
         # b h n d
         q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
         # b h n m
-        # attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling
-        attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling * (np.log(src_len) / np.log(512))
+        attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling * (np.log(src_len) / np.log(self.max_seq))
 
         # attn_mask
         if attn_mask is not None:

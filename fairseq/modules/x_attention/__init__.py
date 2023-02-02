@@ -23,6 +23,9 @@ from .multihead_attention_plus_layer import (TransformerDecoderLayerPlus,
 from .multihead_attention_rpe import MultiheadAttentionRpe
 from .multihead_attention_rpe_layer import (MhaRpeDecoderLayer,
                                             MhaRpeEncoderLayer)
+from .multihead_attention_spe import MultiheadAttentionSpe
+from .multihead_attention_spe_layer import (MhaSpeDecoderLayer,
+                                            MhaSpeEncoderLayer)
 from .multihead_cos_attention import MultiheadCosAttention
 from .multihead_cos_attention_layer import (TransformerCosDecoderLayer,
                                             TransformerCosEncoderLayer)
