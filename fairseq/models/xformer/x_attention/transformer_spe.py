@@ -194,6 +194,11 @@ class TransformerSpeDecoder(TransformerDecoder):
         logging_info(f"use_penorm {self.use_penorm}")
         if self.use_penorm:
             self.penorm = nn.LayerNorm(self.embed_dim)
+        # token norm
+        self.use_token_norm = getattr(args, "use_token_norm", False)
+        logging_info(f"use_token_norm {self.use_token_norm}")
+        if self.use_token_norm:
+            self.token_norm = nn.LayerNorm(self.embed_dim)
         
         self.rpe_type = getattr(args, 'rpe_type', -1)
         if self.rpe_type != -1:
@@ -509,6 +514,9 @@ class TransformerSpeDecoder(TransformerDecoder):
 
         if self.project_in_dim is not None:
             x = self.project_in_dim(x)
+            
+        if self.use_token_norm:
+            x = self.token_norm(x)
 
         if positions is not None:
             if self.use_penorm:
