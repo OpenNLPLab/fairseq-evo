@@ -109,7 +109,8 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
                 positions = utils.make_group_positions_training(
                     input, self.padding_idx, onnx_trace=self.onnx_trace, group=self.cnt
                 )
-                self.cnt = (self.cnt + 1) % self.max_seq
+                # self.cnt = (self.cnt + 1) % self.max_seq
+                self.cnt = (self.cnt + 1) % 20
             else:
                 positions = utils.make_group_positions(
                     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
