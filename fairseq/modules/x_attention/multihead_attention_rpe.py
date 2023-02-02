@@ -168,7 +168,8 @@ class MultiheadAttentionRpe(nn.Module):
         q, k, v = map(lambda x: rearrange(x, 'n b (h d) -> b h n d', h=num_heads), [q, k, v])
         # b h n m
         # attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling
-        attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling * (np.log(src_len) / np.log(512))
+        # attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling * (np.log(src_len) / np.log(512))
+        attn_output_weights = torch.einsum('... n d, ... m d -> ... n m', q, k) * self.scaling * (512 / src_len)
 
         # attn_mask
         if attn_mask is not None:
