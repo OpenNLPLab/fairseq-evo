@@ -11,4 +11,3 @@ from .norm_mix_attention import *
 from .performer_attention import *
 from .rela_attention import *
 from .weight_linear import *
-from .transnormer_v2 import *
