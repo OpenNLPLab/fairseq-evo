@@ -97,32 +97,15 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
             
             return pos_embedding
         elif self.method == 2:
-            # positions = utils.make_group_positions(
-            #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-            # )
-            
-            # return (
-            #     self.weights.index_select(0, positions.view(-1))
-            #     .view(bsz, seq_len, -1)
-            #     .detach()
-            # )
-            
-            pos1, pos2, coef = utils.make_group_positions(
+            positions = utils.make_group_positions(
                 input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
             )
             
-            pe1 = (
-                self.weights.index_select(0, pos1.view(-1))
+            return (
+                self.weights.index_select(0, positions.view(-1))
                 .view(bsz, seq_len, -1)
                 .detach()
             )
-            pe2 = (
-                self.weights.index_select(0, pos2.view(-1))
-                .view(bsz, seq_len, -1)
-                .detach()
-            )
-            
-            return pe1 * coef + pe2 * (1 - coef)
         elif self.method == 3:
             if self.training:
                 positions = utils.make_group_positions_training(
@@ -140,3 +123,21 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
                 .view(bsz, seq_len, -1)
                 .detach()
             )
+        elif self.method == 4:
+            pos1, pos2, coef = utils.make_group_positions(
+                input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            )
+            
+            pe1 = (
+                self.weights.index_select(0, pos1.view(-1))
+                .view(bsz, seq_len, -1)
+                .detach()
+            )
+            pe2 = (
+                self.weights.index_select(0, pos2.view(-1))
+                .view(bsz, seq_len, -1)
+                .detach()
+            )
+            
+            return pe1 * coef + pe2 * (1 - coef)
+            

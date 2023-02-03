@@ -64,20 +64,40 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
             
             return pos_embedding
         elif self.method == 2:
-            # positions = utils.make_group_positions(
-            #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-            # )
+            positions = utils.make_group_positions(
+                input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            )
 
-            # return F.embedding(
-            #     positions,
-            #     self.weight,
-            #     self.padding_idx,
-            #     self.max_norm,
-            #     self.norm_type,
-            #     self.scale_grad_by_freq,
-            #     self.sparse,
-            # )
-            
+            return F.embedding(
+                positions,
+                self.weight,
+                self.padding_idx,
+                self.max_norm,
+                self.norm_type,
+                self.scale_grad_by_freq,
+                self.sparse,
+            )
+        elif self.method == 3:
+            if self.training:
+                positions = utils.make_group_positions_training(
+                    input, self.padding_idx, onnx_trace=self.onnx_trace, group=self.cnt
+                )
+                self.cnt = (self.cnt + 1) % self.max_seq
+            else:
+                positions = utils.make_group_positions(
+                    input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+                )
+
+            return F.embedding(
+                positions,
+                self.weight,
+                self.padding_idx,
+                self.max_norm,
+                self.norm_type,
+                self.scale_grad_by_freq,
+                self.sparse,
+            )
+        elif self.method == 4:
             pos1, pos2, coef = utils.make_group_positions(
                 input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
             )
@@ -102,23 +122,3 @@ class SmoothLearnedPositionalEmbedding(nn.Embedding):
             )
             
             return pe1 * coef + pe2 * (1 - coef)
-        elif self.method == 3:
-            if self.training:
-                positions = utils.make_group_positions_training(
-                    input, self.padding_idx, onnx_trace=self.onnx_trace, group=self.cnt
-                )
-                self.cnt = (self.cnt + 1) % self.max_seq
-            else:
-                positions = utils.make_group_positions(
-                    input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
-                )
-
-            return F.embedding(
-                positions,
-                self.weight,
-                self.padding_idx,
-                self.max_norm,
-                self.norm_type,
-                self.scale_grad_by_freq,
-                self.sparse,
-            )
