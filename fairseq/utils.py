@@ -375,23 +375,33 @@ def make_group_positions(tensor, padding_idx: int, onnx_trace: bool = False, max
     # how to handle the dtype kwarg in cumsum.
     mask = tensor.ne(padding_idx).int()
     # 1,...,n -> 0,...,n - 1
-    index = (torch.ones_like(tensor) * mask).long()
+    index1 = (torch.ones_like(tensor) * mask).long()
+    index2 = (torch.ones_like(tensor) * mask).long()
     # seqlength
     n = mask.shape[1]
     group = n // max_seq
+    if n % max_seq != 0:
+        group += 1
     k = 0
+    
+    coef = torch.ones_like(index1) * 1.0
+    
     for i in range(max_seq):
         for j in range(group):
             if k == n:
                 break
-            index[:, k] = i + 1
+            index1[:, k] = i + 1
+            coef[:, k] = 1.0 * (group - j) / group
+            if k < group * (max_seq - 1):
+                index2[:, k] = i + 2
+            else:
+                index2[:, k] = i + 1
             k += 1
-    while k < n:
-        index[:, k] = max_seq
-        k += 1
     
-    return (index * mask).long() + padding_idx
-
+    index1 = (index1 * mask).long() + padding_idx
+    index2 = (index2 * mask).long() + padding_idx
+    
+    return index1, index2, coef.unsqueeze(-1)
 
 def make_group_positions_training(tensor, padding_idx: int, onnx_trace: bool = False, group=1):
     """Replace non-padding symbols with their position numbers.

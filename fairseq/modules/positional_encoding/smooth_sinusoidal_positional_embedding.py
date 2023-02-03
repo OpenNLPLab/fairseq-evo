@@ -71,9 +71,11 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
         bspair = torch.onnx.operators.shape_as_tensor(input)
         bsz, seq_len = bspair[0], bspair[1]
         max_pos = self.padding_idx + 1 + seq_len
+        # add
+        max_pos += 1
         if self.weights is None or max_pos > self.weights.size(0):
             # recompute/expand embeddings if needed
-            self.weights = SinusoidalPositionalEmbedding.get_embedding(
+            self.weights = SmoothSinusoidalPositionalEmbedding.get_embedding(
                 max_pos, self.embedding_dim, self.padding_idx
             )
         self.weights = self.weights.to(self._float_tensor)
@@ -95,15 +97,32 @@ class SmoothSinusoidalPositionalEmbedding(nn.Module):
             
             return pos_embedding
         elif self.method == 2:
-            positions = utils.make_group_positions(
+            # positions = utils.make_group_positions(
+            #     input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
+            # )
+            
+            # return (
+            #     self.weights.index_select(0, positions.view(-1))
+            #     .view(bsz, seq_len, -1)
+            #     .detach()
+            # )
+            
+            pos1, pos2, coef = utils.make_group_positions(
                 input, self.padding_idx, onnx_trace=self.onnx_trace, max_seq=self.max_seq
             )
             
-            return (
-                self.weights.index_select(0, positions.view(-1))
+            pe1 = (
+                self.weights.index_select(0, pos1.view(-1))
                 .view(bsz, seq_len, -1)
                 .detach()
             )
+            pe2 = (
+                self.weights.index_select(0, pos2.view(-1))
+                .view(bsz, seq_len, -1)
+                .detach()
+            )
+            
+            return pe1 * coef + pe2 * (1 - coef)
         elif self.method == 3:
             if self.training:
                 positions = utils.make_group_positions_training(
