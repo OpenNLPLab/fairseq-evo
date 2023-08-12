@@ -6,3 +6,4 @@ from .test import *
 from .tnn import *
 from .tnn_test import *
 from .x_attention import *
+from .rnn import *

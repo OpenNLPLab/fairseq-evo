@@ -75,6 +75,7 @@ from .fourier import *
 from .mlp import *
 from .tnn import *
 from .ctnn import *
+from .rnn import *
 ##### test
 from .tnn_test import *
 from .token_mixer_test import *
